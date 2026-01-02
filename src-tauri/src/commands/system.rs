@@ -93,7 +93,6 @@ pub fn set_device_name(app: AppHandle, name: String) -> Result<bool, String> {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct AppSettings {
-    pub sync_interval_minutes: i32,
     pub launch_on_startup: bool,
     pub desktop_notifications: bool,
     pub auto_sync_enabled: bool,
@@ -102,7 +101,6 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         AppSettings {
-            sync_interval_minutes: 5,
             launch_on_startup: true,
             desktop_notifications: false,
             auto_sync_enabled: true,
@@ -129,9 +127,6 @@ pub fn get_app_settings(app: AppHandle) -> Result<AppSettings, String> {
         for row in rows {
             if let Ok((key, value)) = row {
                 match key.as_str() {
-                    "setting_sync_interval" => {
-                        settings.sync_interval_minutes = value.parse().unwrap_or(5);
-                    }
                     "setting_launch_startup" => {
                         settings.launch_on_startup = value == "true";
                     }
@@ -153,12 +148,6 @@ pub fn get_app_settings(app: AppHandle) -> Result<AppSettings, String> {
 #[command]
 pub fn save_app_settings(app: AppHandle, settings: AppSettings) -> Result<bool, String> {
     let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
-
-    conn.execute(
-        "INSERT OR REPLACE INTO device_config (key, value) VALUES ('setting_sync_interval', ?1)",
-        [settings.sync_interval_minutes.to_string()],
-    )
-    .map_err(|e| e.to_string())?;
 
     conn.execute(
         "INSERT OR REPLACE INTO device_config (key, value) VALUES ('setting_launch_startup', ?1)",

@@ -16,14 +16,6 @@ import { SaveInput } from '@/components/common/SaveInput'
 import { useGamesStore } from '@/stores/gamesStore'
 import { getUserDevices, registerCurrentDevice, removeDevice, getRelativeTime, type Device } from '@/lib/devices'
 
-const syncIntervals = [
-    { key: '1', label: 'Every 1 minute' },
-    { key: '5', label: 'Every 5 minutes' },
-    { key: '10', label: 'Every 10 minutes' },
-    { key: '15', label: 'Every 15 minutes' },
-    { key: '30', label: 'Every 30 minutes' },
-]
-
 const osIcons: Record<string, typeof Laptop> = {
     windows: Monitor,
     linux: Laptop,
@@ -42,7 +34,6 @@ export default function Settings() {
     
     // Settings state
     const [settings, setSettings] = useState<AppSettings>({
-        sync_interval_minutes: 5,
         launch_on_startup: true,
         desktop_notifications: false,
         auto_sync_enabled: true
@@ -221,32 +212,7 @@ export default function Settings() {
                                 <h3 className="text-xl font-bold text-white tracking-tight">Sync Settings</h3>
                             </div>
 
-                            <div className="space-y-8">
-                                <Select
-                                    placeholder="Select frequency"
-                                    selectedKey={settings.sync_interval_minutes.toString()}
-                                    onSelectionChange={(key) => {
-                                        updateSetting('sync_interval_minutes', parseInt(key as string))
-                                    }}
-                                    className="w-full"
-                                >
-                                    <Label>Sync Frequency</Label>
-                                    <Select.Trigger className="rounded-lg border border-white/10 bg-bg-elevated/50 px-3 py-2 text-sm hover:border-white/20 transition-colors">
-                                        <Select.Value />
-                                        <Select.Indicator />
-                                    </Select.Trigger>
-                                    <Select.Popover>
-                                        <ListBox>
-                                            {syncIntervals.map((interval) => (
-                                                <ListBox.Item key={interval.key} id={interval.key} textValue={interval.label}>
-                                                    {interval.label}
-                                                </ListBox.Item>
-                                            ))}
-                                        </ListBox>
-                                    </Select.Popover>
-                                </Select>
-
-                                <div className="space-y-4">
+                            <div className="space-y-6">
                                     <div className="flex items-center justify-between p-4 rounded-xl bg-bg-elevated/30 border border-white/5 hover:border-white/10 transition-colors cursor-pointer group">
                                         <div className="space-y-0.5 text-left">
                                             <p className="text-sm font-semibold text-white group-hover:text-primary-300 transition-colors">Launch on Startup</p>
@@ -292,7 +258,6 @@ export default function Settings() {
                                         </Switch>
                                     </div>
                                 </div>
-                            </div>
                         </CardContent>
                     </Card>
                 </div>

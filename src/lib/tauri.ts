@@ -52,7 +52,6 @@ export async function setDeviceName(name: string): Promise<boolean> {
 }
 
 export interface AppSettings {
-  sync_interval_minutes: number
   launch_on_startup: boolean
   desktop_notifications: boolean
   auto_sync_enabled: boolean
@@ -64,7 +63,6 @@ export async function getAppSettings(): Promise<AppSettings> {
   } catch (error) {
     console.error('Failed to get app settings:', error)
     return {
-      sync_interval_minutes: 5,
       launch_on_startup: true,
       desktop_notifications: false,
       auto_sync_enabled: true
