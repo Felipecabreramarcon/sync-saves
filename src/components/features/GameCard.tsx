@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Card, CardBody, Button, Tooltip } from '@heroui/react'
 import { Folder, RefreshCw, Settings } from 'lucide-react'
 import { type Game, type GamePlatform } from '@/stores/gamesStore'
@@ -9,7 +10,7 @@ const platformConfig: Record<GamePlatform, { label: string; color: string }> = {
     other: { label: 'OTHER', color: 'bg-gray-600' },
 }
 
-export default function GameCard({ game }: { game: Game }) {
+function GameCard({ game }: { game: Game }) {
     const getTimeAgo = (date?: string) => {
         if (!date) return 'Syncing...'
         const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
@@ -100,3 +101,5 @@ export default function GameCard({ game }: { game: Game }) {
         </Card>
     )
 }
+
+export default memo(GameCard)
