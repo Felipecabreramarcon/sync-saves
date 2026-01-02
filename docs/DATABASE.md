@@ -179,39 +179,35 @@ USING (EXISTS (SELECT 1 FROM games g WHERE g.id = sync_logs.game_id AND g.user_i
 -- Configuração do dispositivo
 CREATE TABLE device_config (
     key TEXT PRIMARY KEY,
-    value TEXT NOT NULL,
-    updated_at TEXT DEFAULT (datetime('now'))
+    value TEXT NOT NULL
 );
 
--- Cache de jogos
+-- Cache de jogos (espelho local + paths)
 CREATE TABLE games_cache (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     slug TEXT NOT NULL,
+    cover_url TEXT,
+    platform TEXT,
     local_path TEXT,
     sync_enabled INTEGER DEFAULT 1,
+    last_synced_at TEXT,
     last_synced_version INTEGER,
-    last_synced_at TEXT
+    status TEXT DEFAULT 'idle', -- 'idle', 'syncing', 'error'
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Queue de sincronização
 CREATE TABLE sync_queue (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     game_id TEXT NOT NULL,
-    action TEXT NOT NULL,
-    status TEXT DEFAULT 'pending',
-    attempts INTEGER DEFAULT 0,
-    created_at TEXT DEFAULT (datetime('now'))
-);
-
--- Log local
-CREATE TABLE sync_log_local (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    game_id TEXT NOT NULL,
-    action TEXT NOT NULL,
-    status TEXT NOT NULL,
-    message TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
+    action TEXT NOT NULL, -- 'upload' ou 'download'
+    status TEXT DEFAULT 'pending', -- 'pending', 'processing', 'failed'
+    file_path TEXT,
+    priority INTEGER DEFAULT 0,
+    retry_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(game_id) REFERENCES games_cache(id) ON DELETE CASCADE
 );
 ```
 

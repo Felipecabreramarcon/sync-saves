@@ -134,14 +134,20 @@ VITE_DEV_MODE=true
 ## Desenvolvimento
 
 ### Executar em Modo Dev
-
+1. Iniciar o dev server do Vite (porta 1420):
+   ```bash
+   npm run dev
+   ```
+2. Iniciar o Tauri (em outro terminal):
+   ```bash
+   npm run tauri dev
+   ```
+Ou, se configurado corretamente no `tauri.conf.json`:
 ```bash
-# Inicia o frontend + backend Tauri
-pnpm tauri dev
+npm run tauri dev
 ```
-
 Isso irá:
-1. Iniciar o Vite dev server (frontend) em `http://localhost:5173`
+1. Iniciar o Vite dev server (frontend) em `http://localhost:1420`
 2. Compilar o código Rust
 3. Abrir a janela do app
 

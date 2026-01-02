@@ -375,20 +375,42 @@ export interface Database {
 
 ---
 
-## Error Handling
+## Tauri Commands (IPC Bridge)
 
-```typescript
-import { PostgrestError } from '@supabase/supabase-js'
+Estes comandos são implementados em Rust (`src-tauri/src/commands/`) e chamados pelo Frontend via Tauri `invoke`.
 
-function handleSupabaseError(error: PostgrestError | null): string {
-  if (!error) return ''
-  
-  switch (error.code) {
-    case '23505': return 'Este registro já existe'
-    case '23503': return 'Referência inválida'
-    case '42501': return 'Sem permissão para esta operação'
-    case 'PGRST116': return 'Registro não encontrado'
-    default: return error.message
-  }
-}
-```
+### Sistema
+- **`get_system_info`**: Retorna informações do hardware e SO.
+  ```typescript
+  // Bridge: src/lib/tauri.ts
+  const info = await invoke('get_system_info');
+  ```
+
+### Autenticação
+- **`set_current_user`**: Define o ID do usuário atual no SQLite.
+  ```typescript
+  await invoke('set_current_user', { userId: 'uuid' });
+  ```
+- **`get_current_user`**: Recupera o ID do usuário persistido localmente.
+
+### Jogos
+- **`get_all_games`**: Lista todos os jogos do cache local (`games_cache`).
+- **`add_game`**: Adiciona um novo jogo ao sistema.
+  ```typescript
+  await invoke('add_game', { 
+    name: 'Game Name', 
+    localPath: 'C:\\Path', 
+    platform: 'PC' 
+  });
+  ```
+
+---
+
+## Estrutura de Comunicação
+
+O Frontend utiliza o diretório `src/lib/` para encapsular as chamadas ao Tauri:
+- `tauri.ts`: Comandos gerais.
+- `tauri-games.ts`: Comandos específicos de jogos.
+- `tauri-auth.ts`: Comandos de autenticação e contexto.
+
+Os dados são armazenados e sincronizados via **Zustand Stores** (`src/stores/`), que coordenam as chamadas ao Tauri e Supabase.

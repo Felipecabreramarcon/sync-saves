@@ -77,31 +77,27 @@ Responsável pela interface do usuário e experiência visual.
 ```
 src/
 ├── components/          # Componentes reutilizáveis
-│   ├── ui/             # Componentes de UI base (Button, Input, Card...)
-│   ├── layout/         # Layout components (Sidebar, Header...)
-│   └── features/       # Componentes de features específicas
+│   ├── layout/         # Componentes de estrutura (Sidebar, PageHeader...)
+│   └── features/       # Componentes de funcionalidades (GameCard, StatCard...)
 ├── pages/              # Páginas da aplicação
 │   ├── Login.tsx
 │   ├── Dashboard.tsx
 │   ├── Games.tsx
 │   ├── Settings.tsx
 │   └── History.tsx
-├── hooks/              # Custom React hooks
-│   ├── useAuth.ts
-│   ├── useGames.ts
-│   ├── useSync.ts
-│   └── useDevice.ts
-├── lib/                # Utilitários e configurações
+├── stores/             # Gerenciamento de estado (Zustand com persistência)
+│   ├── authStore.ts    # Autenticação e estado do usuário
+│   ├── gamesStore.ts   # Lista de jogos e atividades
+│   └── syncStore.ts    # Status global de sincronização
+├── lib/                # Utilitários e integrações
 │   ├── supabase.ts     # Cliente Supabase
-│   ├── tauri.ts        # Bridge com Tauri
-│   └── utils.ts
-├── stores/             # State management (Zustand)
-│   ├── authStore.ts
-│   ├── gamesStore.ts
-│   └── syncStore.ts
-├── types/              # TypeScript types
-│   └── index.ts
-└── styles/             # Estilos globais
+│   ├── tauri.ts        # Bridge genérica com Tauri
+│   ├── tauri-games.ts  # Bridge específica para operações de jogos
+│   └── utils.ts        # Utilitários de estilo e helpers
+├── types/              # Definições de tipos TypeScript
+│   ├── database.ts     # Tipos do Supabase
+│   └── index.ts        # Barrel export
+└── styles/             # Estilos globais (Tailwind + HeroUI)
     └── globals.css
 ```
 
@@ -306,10 +302,21 @@ src-tauri/
 
 ---
 
-## Próximos Passos
+## Status Atual & Próximos Passos
 
-1. **Implementação do Frontend** - UI completa em React
-2. **Backend Rust** - Commands e services
-3. **Integração Supabase** - Auth e Storage
-4. **Testes** - Unitários e integração
-5. **Build e Deploy** - Instaladores para cada OS
+### Concluído ✅
+- [x] Estrutura base do projeto (Tauri v2 + React)
+- [x] Sistema de design com HeroUI e Glassmorphism
+- [x] Todas as páginas da interface (Login, Dashboard, Games, History, Settings)
+- [x] Store management com Zustand e persistência
+- [x] Backend Rust inicial (Configuração, SQLite, SysInfo)
+- [x] Bridge TypeScript-Rust (Commands)
+
+### Em Andamento 🚧
+- [/] Implementação da lógica de sincronização (Sync Logic)
+- [/] Operações de sistema de arquivos (Rust) para detecção de saves
+
+### Pendente ⏳
+- [ ] Monitoramento em tempo real (File Watcher)
+- [ ] Lógica de resolução de conflitos (Cloud vs Local)
+- [ ] Build final e empacotamento
