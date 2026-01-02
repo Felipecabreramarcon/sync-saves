@@ -49,10 +49,27 @@ fn create_tables(conn: &Connection) -> Result<()> {
             last_synced_at TEXT,
             last_synced_version INTEGER,
             status TEXT DEFAULT 'idle',
+            completion_percentage REAL DEFAULT 0,
+            play_time_seconds INTEGER DEFAULT 0,
+            last_analyzed_at TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )",
         [],
     )?;
+
+    // Add new columns if they don't exist (migration for existing DBs)
+    let _ = conn.execute(
+        "ALTER TABLE games_cache ADD COLUMN completion_percentage REAL DEFAULT 0",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE games_cache ADD COLUMN play_time_seconds INTEGER DEFAULT 0",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE games_cache ADD COLUMN last_analyzed_at TEXT",
+        [],
+    );
 
     // Sync queue table
     conn.execute(
