@@ -76,7 +76,7 @@ export default function AddGameModal({ isOpen, onClose, onAdd }: AddGameModalPro
                         </Modal.Header>
                         <Modal.Body className="p-6">
                             <div className="space-y-6">
-                                <div className="space-y-1.5">
+                                <div className="space-y-1.5 flex flex-col">
                                     <Label className="text-sm text-gray-400 font-medium ml-1">Game Title</Label>
                                     <SaveInput
                                         placeholder="e.g. Elden Ring"
@@ -139,7 +139,7 @@ export default function AddGameModal({ isOpen, onClose, onAdd }: AddGameModalPro
                                 </div>
                             </div>
                         </Modal.Body>
-                        <Modal.Footer className="gap-3 px-6 pb-8 border-t border-white/5">
+                        <Modal.Footer className="gap-3 px-6 pt-4 border-t border-white/5">
                             <Button
                                 variant="ghost"
                                 onPress={onClose}
