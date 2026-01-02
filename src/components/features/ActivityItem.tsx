@@ -1,4 +1,4 @@
-import { Avatar, Chip } from '@heroui/react'
+import { Avatar, AvatarImage, AvatarFallback, Chip } from '@heroui/react'
 import { ArrowUp, ArrowDown, RefreshCw, ChevronRight } from 'lucide-react'
 import { type SyncActivity } from '@/stores/gamesStore'
 import { cn } from '@/lib/utils'
@@ -33,15 +33,11 @@ export default function ActivityItem({ activity }: { activity: SyncActivity }) {
         <div className="flex items-center gap-4 p-4 rounded-xl bg-bg-elevated/30 border border-transparent hover:border-white/5 hover:bg-bg-elevated/50 transition-all duration-200 group cursor-pointer">
             {/* Game cover */}
             <div className="relative shrink-0">
-                <Avatar
-                    src={activity.game_cover}
-                    name={activity.game_name}
-                    radius="lg"
-                    className="w-12 h-12"
-                    classNames={{
-                        base: "ring-2 ring-white/5 group-hover:ring-white/10 transition-all",
-                    }}
-                />
+                <Avatar className="w-12 h-12 ring-2 ring-white/5 group-hover:ring-white/10 transition-all">
+                    -
+                    <AvatarImage src={activity.game_cover} alt={activity.game_name} />
+                    <AvatarFallback>{activity.game_name?.charAt(0) ?? '?'}</AvatarFallback>
+                </Avatar>
                 <div className={cn(
                     "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-bg-elevated",
                     status.color === 'success' ? 'bg-success/20 text-success' :
@@ -60,7 +56,7 @@ export default function ActivityItem({ activity }: { activity: SyncActivity }) {
                 <div className="flex items-center gap-2">
                     <span className={cn("text-xs font-medium", action.color)}>{action.text}</span>
                     <span className="text-gray-700 mx-1">•</span>
-                    <Chip size="sm" color={status.color} variant="flat" className="h-4 text-[9px] font-bold px-1.5 min-w-0">
+                    <Chip size="sm" color={status.color}  className="h-4 text-[9px] font-bold px-1.5 min-w-0">
                         {status.label}
                     </Chip>
                 </div>
