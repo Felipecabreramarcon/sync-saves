@@ -150,7 +150,7 @@ export default function Settings() {
         subtitle="Manage your device configuration and sync preferences"
         showSyncButton={false}
         rightContent={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             <Button
               variant="tertiary"
               isDisabled={!hasChanges}
@@ -170,12 +170,12 @@ export default function Settings() {
         }
       />
 
-      <div className="p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 max-w-7xl mx-auto">
         {/* Left Column (Main Settings) */}
         <div className="lg:col-span-7 space-y-6">
           {/* This Device */}
           <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl shadow-black/20">
-            <Card.Content className="p-8">
+            <Card.Content className="p-4 sm:p-6 lg:p-8">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-primary-900/30 flex items-center justify-center border border-primary-500/20 shadow-inner shadow-primary-500/10">
@@ -248,7 +248,7 @@ export default function Settings() {
 
           {/* Sync Settings */}
           <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl shadow-black/20">
-            <Card.Content className="p-8 text-center sm:text-left">
+            <Card.Content className="p-4 sm:p-6 lg:p-8 text-center sm:text-left">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 rounded-xl bg-secondary-900/30 flex items-center justify-center border border-secondary-500/20 shadow-inner shadow-secondary-500/10">
                   <Clock className="w-6 h-6 text-secondary-400" />
@@ -333,7 +333,7 @@ export default function Settings() {
             {/* Background blur effect */}
             <div className="absolute top-0 right-0 w-48 h-48 bg-primary-500/10 blur-[60px] -mr-16 -mt-16 rounded-full pointer-events-none" />
 
-            <Card.Content className="p-8 relative">
+            <Card.Content className="p-4 sm:p-6 lg:p-8 relative">
               <div className="flex items-center gap-4 mb-8">
                 <div className="relative">
                   <Avatar className="w-16 h-16 text-large border-2 border-white/10">

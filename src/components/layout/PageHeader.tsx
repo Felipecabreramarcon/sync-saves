@@ -26,7 +26,7 @@ export default function PageHeader({
     }[status] || "bg-gray-500";
 
   return (
-    <header className="px-8 py-6 border-b border-white/5">
+    <header className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-white/5">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Left Side: Title & Subtitle */}
         <div>
@@ -47,7 +47,7 @@ export default function PageHeader({
         </div>
 
         {/* Right Side: Sync Status & Actions */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center items-start gap-3 sm:gap-4">
           {showSyncButton && (
             <div className="hidden sm:flex items-center gap-3 bg-bg-elevated px-4 py-2 rounded-xl border border-white/5">
               <span className={`w-2.5 h-2.5 rounded-full ${statusColor}`} />
@@ -66,7 +66,9 @@ export default function PageHeader({
           )}
 
           {rightContent && (
-            <div className="flex items-center gap-3">{rightContent}</div>
+            <div className="flex flex-col sm:flex-row sm:items-center items-stretch gap-2 sm:gap-3 w-full sm:w-auto">
+              {rightContent}
+            </div>
           )}
         </div>
       </div>

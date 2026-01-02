@@ -46,7 +46,7 @@ export default function Login() {
 
       {/* Login Card */}
       <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md mx-4 relative z-10 shadow-2xl shadow-primary-900/20">
-        <Card.Content className="p-8 pt-8">
+        <Card.Content className="p-6 sm:p-8 pt-8">
           {/* Logo */}
           <motion.div
             initial={{ y: -20, opacity: 0 }}

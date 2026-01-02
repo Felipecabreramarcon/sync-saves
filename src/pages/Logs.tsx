@@ -71,7 +71,7 @@ export default function Logs() {
         showSyncButton={false}
       />
 
-      <div className="p-8 max-w-6xl mx-auto space-y-4">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-4">
         {!user ? (
           <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
             <p className="text-gray-500">Sign in to view your cloud backups.</p>
@@ -163,7 +163,7 @@ export default function Logs() {
                       {b.versions.map((v) => (
                         <div
                           key={`${b.cloud_game_id}:${v.version}`}
-                          className="flex items-center justify-between gap-3 p-3 rounded-xl bg-bg-elevated/30 border border-white/5"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-bg-elevated/30 border border-white/5"
                         >
                           <div className="min-w-0">
                             <p className="text-sm text-white font-semibold">

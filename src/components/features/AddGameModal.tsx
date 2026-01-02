@@ -160,7 +160,7 @@ export default function AddGameModal({
     <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Modal.Backdrop variant="blur">
         <Modal.Container>
-          <Modal.Dialog className="bg-bg-card border border-white/10 shadow-2xl rounded-2xl">
+          <Modal.Dialog className="bg-bg-card border border-white/10 shadow-2xl rounded-2xl w-[calc(100vw-2rem)] max-w-lg max-h-[85vh] overflow-y-auto">
             <Modal.CloseTrigger />
             <Modal.Header className="border-b border-white/5 p-6">
               <div className="flex items-center gap-3">

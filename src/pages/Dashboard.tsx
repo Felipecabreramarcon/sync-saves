@@ -18,7 +18,10 @@ import StatCard from "@/components/features/StatCard";
 import ActivityItem from "@/components/features/ActivityItem";
 import { SaveButton } from "@/components/common/SaveButton";
 import { Card } from "@heroui/react";
-import { filterUserVisibleActivities, dedupeConsecutiveActivities } from "@/lib/cloudSync";
+import {
+  filterUserVisibleActivities,
+  dedupeConsecutiveActivities,
+} from "@/lib/cloudSync";
 
 export default function Dashboard() {
   const {
@@ -77,7 +80,7 @@ export default function Dashboard() {
         subtitle={`Welcome back, ${user?.name || "Gamer"}`}
       />
 
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         {/* Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatCard
@@ -198,11 +201,17 @@ export default function Dashboard() {
                 dedupeConsecutiveActivities(
                   filterUserVisibleActivities(activities)
                     .slice()
-                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+                    .sort(
+                      (a, b) =>
+                        new Date(b.created_at).getTime() -
+                        new Date(a.created_at).getTime()
+                    ),
                   2 * 60 * 1000
-                ).slice(0, 5).map((activity) => (
-                  <ActivityItem key={activity.id} activity={activity} />
-                ))
+                )
+                  .slice(0, 5)
+                  .map((activity) => (
+                    <ActivityItem key={activity.id} activity={activity} />
+                  ))
               ) : (
                 <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
                   <p className="text-gray-500">
