@@ -8,7 +8,7 @@ import {
 import PageHeader from '@/components/layout/PageHeader'
 import { useGamesStore } from '@/stores/gamesStore'
 import GameCard from '@/components/features/GameCard'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import AddGameCard from '@/components/features/AddGameCard'
 import AddGameModal from '@/components/features/AddGameModal'
 import { SaveInput } from '@/components/common/SaveInput'
@@ -26,7 +26,7 @@ export default function Games() {
 
     const filteredGames = games.filter(game =>
         game.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    ), [displayGames, searchQuery])
 
     const handleAddGame = async (gameData: { name: string; path: string; autoSync: boolean }) => {
         try {
