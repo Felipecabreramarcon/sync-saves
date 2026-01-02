@@ -54,6 +54,59 @@ Notas:
 - O bloco `silksong` só aparece quando o jogo/caminho indica Silksong e existe a estrutura esperada (`default/`).
 - A leitura de “progress” depende do `*.dat.json` gerado pelo `hollow.py` (o app não decodifica o `.dat` diretamente).
 
+### PCGamingWiki
+
+O app desktop (Tauri) pode consultar a API pública do PCGamingWiki para sugerir possíveis caminhos de save, reduzindo o trabalho manual ao adicionar um jogo.
+
+Observações:
+
+- Essa integração é **best-effort**: o PCGamingWiki não garante padronização perfeita; a extração é baseada em wikitext (templates do tipo `Game data/saves`).
+- Atualmente o backend filtra para caminhos **Windows** e tenta expandir alguns tokens comuns (ex: `{{p|appdata}}`, `{{p|localappdata}}`).
+
+#### `pcgw_search_games`
+
+Busca páginas do PCGamingWiki pelo nome.
+
+Entrada:
+
+- `query: string`
+- `limit?: number` (default 8)
+
+Retorno:
+
+```ts
+type PcgwSearchResult = {
+  title: string
+  pageid: number
+}
+```
+
+#### `pcgw_get_save_locations`
+
+Obtém os caminhos de save sugeridos para uma página do PCGamingWiki.
+
+Entrada:
+
+- `title: string`
+
+Retorno:
+
+```ts
+type PcgwSaveLocations = {
+  title: string
+  paths: Array<{
+    os: string
+    raw: string
+    expanded?: string | null
+  }>
+}
+```
+
+Notas:
+
+- `raw` é o valor extraído do wikitext (pode conter tokens).
+- `expanded` é um valor “resolvido” para uma string de path no Windows quando possível; quando `expanded` está ausente, use `raw`.
+
 ---
 
 ## Configuração do Supabase

@@ -169,6 +169,14 @@ RUST_LOG=debug pnpm tauri dev
 # "build": { "devtools": true }
 ```
 
+### PCGamingWiki (Sugestões de Save Path)
+
+O app desktop pode consultar o PCGamingWiki para sugerir caminhos de saves ao adicionar um jogo.
+
+- Requer acesso HTTPS a `https://www.pcgamingwiki.com/`.
+- Em redes corporativas (proxy/inspeção TLS), erros podem ocorrer se certificados não forem confiáveis no sistema.
+- Em caso de falha, rode com `RUST_LOG=debug` para inspecionar detalhes do erro HTTP.
+
 ---
 
 ## Estrutura do Projeto

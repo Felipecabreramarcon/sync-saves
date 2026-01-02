@@ -118,8 +118,8 @@ export default function AddGameModal({
         e instanceof Error
           ? e.message
           : typeof e === "string"
-            ? e
-            : "Failed to query PCGamingWiki.";
+          ? e
+          : "Failed to query PCGamingWiki.";
       setPcgwError(message);
     } finally {
       setPcgwIsSearching(false);
@@ -148,8 +148,8 @@ export default function AddGameModal({
         e instanceof Error
           ? e.message
           : typeof e === "string"
-            ? e
-            : "Failed to load save locations.";
+          ? e
+          : "Failed to load save locations.";
       setPcgwError(message);
     } finally {
       setPcgwIsLoadingPaths(false);

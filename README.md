@@ -167,6 +167,7 @@ Consulte `docs/SETUP.md` para instruções detalhadas.
 1. Clique em **"+ Adicionar Jogo"**
 2. Digite o nome do jogo
 3. Selecione a pasta onde ficam os saves
+	- Opcional (desktop/Tauri): use **Suggestions (PCGamingWiki)** para buscar pelo nome e escolher um caminho sugerido
 4. O jogo será sincronizado automaticamente
 
 ### Sincronização

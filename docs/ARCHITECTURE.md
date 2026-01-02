@@ -96,6 +96,7 @@ src/
 │   ├── supabase.ts     # Cliente Supabase (Auth, DB, Storage)
 │   ├── tauri.ts        # Bridge genérica (system info, settings)
 │   ├── tauri-games.ts  # Bridge para jogos (CRUD, sync, restore)
+│   ├── tauri-pcgw.ts   # Bridge para PCGamingWiki (sugestão de paths)
 │   ├── devices.ts      # Gestão de dispositivos
 │   └── utils.ts        # Utilitários (cn, isProtectedPath)
 ├── types/              # Definições de tipos TypeScript
@@ -128,6 +129,7 @@ src-tauri/
 │   │   ├── mod.rs
 │   │   ├── auth.rs          # set_current_user, get_current_user
 │   │   ├── games.rs         # get_all_games, add_game, delete_game, update_game
+│   │   ├── pcgw.rs          # pcgw_search_games, pcgw_get_save_locations
 │   │   ├── sync.rs          # sync_game, restore_game
 │   │   └── system.rs        # get_system_info, device_id/name, app_settings
 │   ├── services/            # Business logic
