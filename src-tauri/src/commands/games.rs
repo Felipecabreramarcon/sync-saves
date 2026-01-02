@@ -98,3 +98,80 @@ pub fn delete_game(app: AppHandle, game_id: String) -> Result<bool, String> {
 
     Ok(true)
 }
+
+#[derive(Deserialize, Debug)]
+pub struct UpdateGameParams {
+    pub name: Option<String>,
+    pub local_path: Option<String>,
+    pub platform: Option<String>,
+    pub sync_enabled: Option<bool>,
+    pub cover_url: Option<String>,
+}
+
+#[command]
+pub fn update_game(
+    app: AppHandle,
+    game_id: String,
+    updates: UpdateGameParams,
+) -> Result<LocalGame, String> {
+    let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
+
+    // First, get the current game data
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, name, slug, cover_url, platform, local_path, sync_enabled, status 
+             FROM games_cache WHERE id = ?1",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let current_game = stmt
+        .query_row([&game_id], |row| {
+            Ok(LocalGame {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                slug: row.get(2)?,
+                cover_url: row.get(3)?,
+                platform: row.get(4)?,
+                local_path: row.get(5)?,
+                sync_enabled: row.get::<_, i32>(6)? != 0,
+                status: row.get(7)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    // Apply updates
+    let new_name = updates.name.unwrap_or(current_game.name);
+    let new_slug = new_name.to_lowercase().replace(" ", "-");
+    let new_local_path = updates.local_path.unwrap_or(current_game.local_path);
+    let new_platform = updates.platform.unwrap_or(current_game.platform);
+    let new_sync_enabled = updates.sync_enabled.unwrap_or(current_game.sync_enabled);
+    let new_cover_url = updates.cover_url.or(current_game.cover_url);
+
+    // Update the database
+    conn.execute(
+        "UPDATE games_cache 
+         SET name = ?1, slug = ?2, local_path = ?3, platform = ?4, sync_enabled = ?5, cover_url = ?6
+         WHERE id = ?7",
+        rusqlite::params![
+            &new_name,
+            &new_slug,
+            &new_local_path,
+            &new_platform,
+            if new_sync_enabled { 1 } else { 0 },
+            &new_cover_url,
+            &game_id
+        ],
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(LocalGame {
+        id: game_id,
+        name: new_name,
+        slug: new_slug,
+        cover_url: new_cover_url,
+        platform: new_platform,
+        local_path: new_local_path,
+        sync_enabled: new_sync_enabled,
+        status: current_game.status,
+    })
+}

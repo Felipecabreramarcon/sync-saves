@@ -62,3 +62,20 @@ export async function deleteGame(gameId: string): Promise<boolean> {
     throw error
   }
 }
+
+export interface UpdateGameParams {
+  name?: string
+  local_path?: string
+  platform?: string
+  sync_enabled?: boolean
+  cover_url?: string
+}
+
+export async function updateGame(gameId: string, updates: UpdateGameParams): Promise<LocalGameDto> {
+  try {
+    return await invoke<LocalGameDto>('update_game', { gameId, updates })
+  } catch (error) {
+    console.error('Failed to update game:', error)
+    throw error
+  }
+}
