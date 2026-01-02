@@ -12,7 +12,7 @@ Este documento rastreia o progresso real para o lançamento do MVP (Minimum Viab
 - [x] Estrutura de Rotas e Navegação (React Router v7)
 - [x] Design System (HeroUI v3 + Glassmorphism)
 - [x] Páginas Visuais (Dashboard, Games, Settings, Logs)
-- [x] Padronização de Componentes (SaveButton, SaveInput, Cards)
+- [x] Padronização de Componentes (SaveButton, SaveInput)
 - [x] Diálogos Nativos (Folder Picker implementado)
 - [x] Integração de Lógica Real (Zustand Stores conectadas ao Tauri/Supabase)
 - [x] Sistema de Toast Notifications (feedback visual para ações)
@@ -22,6 +22,7 @@ Este documento rastreia o progresso real para o lançamento do MVP (Minimum Viab
 - [x] Atualização para React 19
 - [x] Gráfico de atividades no Dashboard (Recharts AreaChart)
 - [x] Modal de configurações por jogo (GameSettingsModal)
+- [x] Cards usando HeroUI v3 Card (substituindo custom Card.tsx)
 - [ ] ⚠️ Login por Email não funcional (apenas Google OAuth ativo)
 
 ### 🦀 Backend Rust & Tauri (100%)

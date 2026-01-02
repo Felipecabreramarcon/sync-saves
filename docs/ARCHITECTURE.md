@@ -77,7 +77,7 @@ Responsável pela interface do usuário e experiência visual.
 ```
 src/
 ├── components/          # Componentes reutilizáveis
-│   ├── common/         # Card, SaveButton, SaveInput, ToastContainer
+│   ├── common/         # SaveButton, SaveInput, ToastContainer
 │   ├── layout/         # Sidebar, PageHeader, MainLayout
 │   └── features/       # GameCard, StatCard, ActivityItem, GameSettingsModal, AddGameModal
 ├── pages/              # Páginas da aplicação
