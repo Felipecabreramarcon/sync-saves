@@ -1,0 +1,31 @@
+[package]
+name = "sync-saves"
+version = "0.1.0"
+description = "System for automatic cloud game save synchronization"
+authors = ["you"]
+edition = "2021"
+rust-version = "1.77.2"
+
+[build-dependencies]
+tauri-build = { version = "2.0.3", features = [] }
+
+[dependencies]
+tauri = { version = "2.2.0", features = [] }
+tauri-plugin-shell = "2.2.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+rusqlite = { version = "0.32.1", features = ["bundled"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5.0"
+walkdir = "2"
+sha2 = "0.10"
+hex = "0.4"
+ignore = "0.4"
+zip = "2.2.2"
+base64 = "0.22"
+log = "0.4"
+env_logger = "0.11"
+sysinfo = "0.30"
+
