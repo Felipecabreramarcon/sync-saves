@@ -83,14 +83,12 @@ export default function Logs() {
                 showSyncButton={false}
                 rightContent={
                     <Select
-                        label=""
+                        aria-label="Filter by game"
                         placeholder="Filter by game"
                         selectedKeys={[selectedGame]}
                         onSelectionChange={(keys) => setSelectedGame(Array.from(keys)[0] as string)}
-                        classNames={{
-                            base: "w-48",
-                            trigger: "bg-bg-elevated border-white/10",
-                        }}
+                        variant="bordered"
+                        className="w-48"
                     >
                         {games.map((game) => (
                             <SelectItem key={game.key}>{game.label}</SelectItem>

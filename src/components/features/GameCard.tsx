@@ -79,7 +79,7 @@ export default function GameCard({ game }: { game: Game }) {
                                 isIconOnly
                                 size="sm"
                                 variant="light"
-                                className="text-gray-400 hover:text-white flex flex-row items-center justify-center"
+                                className="text-gray-400 hover:text-white"
                             >
                                 <RefreshCw className="w-4 h-4" />
                             </Button>
@@ -89,7 +89,7 @@ export default function GameCard({ game }: { game: Game }) {
                                 isIconOnly
                                 size="sm"
                                 variant="light"
-                                className="text-gray-400 hover:text-white flex flex-row items-center justify-center"
+                                className="text-gray-400 hover:text-white"
                             >
                                 <Settings className="w-4 h-4" />
                             </Button>
