@@ -39,6 +39,8 @@ pub fn run() {
             crate::commands::games::delete_game,
             crate::commands::games::update_game,
             crate::commands::games::get_game_save_stats,
+            crate::commands::pcgw::pcgw_search_games,
+            crate::commands::pcgw::pcgw_get_save_locations,
             crate::commands::sync::sync_game,
             crate::commands::sync::restore_game,
         ])

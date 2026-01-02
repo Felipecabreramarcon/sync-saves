@@ -44,7 +44,10 @@ function formatPlayTime(seconds?: number | null): string | null {
   return `${hours}h ${minutes}m`;
 }
 
-function formatHp(health?: number | null, maxHealth?: number | null): string | null {
+function formatHp(
+  health?: number | null,
+  maxHealth?: number | null
+): string | null {
   if (health == null || maxHealth == null) return null;
   if (!Number.isFinite(health) || !Number.isFinite(maxHealth)) return null;
   if (maxHealth <= 0) return null;
@@ -254,11 +257,18 @@ function GameCard({ game }: { game: Game }) {
                 <p className="text-xs text-gray-400 leading-snug wrap-break-word">
                   <span>{saveStats.file_count} files</span>
                   <span className="text-gray-600 mx-1">•</span>
-                  <span>{formatBytes(saveStats.total_bytes, { empty: "0 B" })}</span>
+                  <span>
+                    {formatBytes(saveStats.total_bytes, { empty: "0 B" })}
+                  </span>
                   {saveStats.newest_mtime_ms ? (
                     <>
                       <span className="text-gray-600 mx-1">•</span>
-                      <span>updated {timeAgo(saveStats.newest_mtime_ms, { empty: "Unknown" })}</span>
+                      <span>
+                        updated{" "}
+                        {timeAgo(saveStats.newest_mtime_ms, {
+                          empty: "Unknown",
+                        })}
+                      </span>
                     </>
                   ) : null}
                 </p>
@@ -272,7 +282,9 @@ function GameCard({ game }: { game: Game }) {
                   <p className="text-xs text-gray-400 leading-snug wrap-break-word">
                     <span>{saveStats.silksong.user_dat_files} slots</span>
                     <span className="text-gray-600 mx-1">•</span>
-                    <span>{saveStats.silksong.restore_point_files} restore files</span>
+                    <span>
+                      {saveStats.silksong.restore_point_files} restore files
+                    </span>
                     {saveStats.silksong.progress ? (
                       (() => {
                         const p = saveStats.silksong?.progress;
@@ -280,9 +292,15 @@ function GameCard({ game }: { game: Game }) {
                         const date = p?.save_date ?? null;
                         const scene = p?.respawn_scene ?? null;
                         const hp = formatHp(p?.health, p?.max_health);
-                        const silk = formatResource("Silk", p?.silk, p?.silk_max);
+                        const silk = formatResource(
+                          "Silk",
+                          p?.silk,
+                          p?.silk_max
+                        );
                         const geo = formatResource("Geo", p?.geo, null);
-                        const bits = [play, date, scene, hp, silk, geo].filter(Boolean);
+                        const bits = [play, date, scene, hp, silk, geo].filter(
+                          Boolean
+                        );
                         return bits.length ? (
                           <>
                             <span className="text-gray-600 mx-1">•</span>

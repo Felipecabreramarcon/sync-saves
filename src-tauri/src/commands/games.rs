@@ -291,7 +291,9 @@ pub fn get_game_save_stats(app: AppHandle, game_id: String) -> Result<GameSaveSt
         .map_err(|e| e.to_string())?;
 
     let (name, slug, local_path): (String, String, String) = stmt
-        .query_row([&game_id], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))
+        .query_row([&game_id], |row| {
+            Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+        })
         .map_err(|e| e.to_string())?;
 
     let path = Path::new(&local_path);
@@ -351,19 +353,13 @@ pub fn get_game_save_stats(app: AppHandle, game_id: String) -> Result<GameSaveSt
 #[command]
 pub fn delete_game(app: AppHandle, game_id: String) -> Result<bool, String> {
     let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
-    
-    conn.execute(
-        "DELETE FROM games_cache WHERE id = ?1",
-        [&game_id],
-    )
-    .map_err(|e| e.to_string())?;
-    
+
+    conn.execute("DELETE FROM games_cache WHERE id = ?1", [&game_id])
+        .map_err(|e| e.to_string())?;
+
     // Also remove from sync queue if any pending
-    conn.execute(
-        "DELETE FROM sync_queue WHERE game_id = ?1",
-        [&game_id],
-    )
-    .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM sync_queue WHERE game_id = ?1", [&game_id])
+        .map_err(|e| e.to_string())?;
 
     Ok(true)
 }
