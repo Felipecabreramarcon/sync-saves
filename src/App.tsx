@@ -54,19 +54,24 @@ function App() {
                 try {
                     await performSync(gameId)
 
-                    // Show notification
-                    const { isPermissionGranted, requestPermission, sendNotification } = await import('@tauri-apps/plugin-notification')
-                    let permission = await isPermissionGranted()
-                    if (!permission) {
-                        permission = await requestPermission() === 'granted'
-                    }
+                    // Check if desktop notifications are enabled before sending
+                    const { getAppSettings } = await import('@/lib/tauri')
+                    const settings = await getAppSettings()
+                    
+                    if (settings.desktop_notifications) {
+                        const { isPermissionGranted, requestPermission, sendNotification } = await import('@tauri-apps/plugin-notification')
+                        let permission = await isPermissionGranted()
+                        if (!permission) {
+                            permission = await requestPermission() === 'granted'
+                        }
 
-                    if (permission) {
-                        sendNotification({
-                            title: 'Sync Saves: Auto-Backup',
-                            body: `Your save for this game has been successfully backed up to the cloud!`,
-                            icon: 'cloud'
-                        })
+                        if (permission) {
+                            sendNotification({
+                                title: 'Sync Saves: Auto-Backup',
+                                body: `Your save for this game has been successfully backed up to the cloud!`,
+                                icon: 'cloud'
+                            })
+                        }
                     }
                     
                     toast.success('Auto-Sync Complete', 'Your save has been backed up to the cloud')
