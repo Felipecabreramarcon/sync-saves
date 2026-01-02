@@ -1,4 +1,4 @@
-import { Card, CardContent } from '@/components/common/Card'
+import { Card } from '@heroui/react'
 
 interface StatCardProps {
     icon: React.ElementType
@@ -16,8 +16,8 @@ export default function StatCard({
     gradient
 }: StatCardProps) {
     return (
-        <Card glass className="overflow-hidden group hover:border-primary-500/30 transition-all duration-300">
-            <CardContent className="p-6 relative">
+        <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden group hover:border-primary-500/30 transition-all duration-300">
+            <Card.Content className="p-6 relative">
                 <div className={`absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity ${gradient}`} />
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-3">
@@ -31,7 +31,7 @@ export default function StatCard({
                         <p className="text-xs text-primary-400 mt-1 font-medium">{subtitle}</p>
                     )}
                 </div>
-            </CardContent>
+            </Card.Content>
         </Card>
     )
 }

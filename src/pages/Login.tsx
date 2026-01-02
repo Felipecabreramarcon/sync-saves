@@ -1,8 +1,7 @@
-import { Button, Separator,  } from '@heroui/react'
+import { Button, Separator, Card } from '@heroui/react'
 import { Cloud, Mail } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { motion } from 'framer-motion'
-import { Card as GlassCard, CardContent } from '@/components/common/Card'
 
 export default function Login() {
     const { setLoading } = useAuthStore()
@@ -46,8 +45,8 @@ export default function Login() {
             </div>
 
             {/* Login Card */}
-            <GlassCard glass className="w-full max-w-md mx-4 relative z-10 border-white/10 shadow-2xl shadow-primary-900/20">
-                <CardContent className="p-8 pt-8">
+            <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md mx-4 relative z-10 shadow-2xl shadow-primary-900/20">
+                <Card.Content className="p-8 pt-8">
                     {/* Logo */}
                     <motion.div
                         initial={{ y: -20, opacity: 0 }}
@@ -140,8 +139,8 @@ export default function Login() {
                         <a href="#" className="text-xs text-content-secondary hover:text-white transition-colors">Privacy Policy</a>
                         <a href="#" className="text-xs text-content-secondary hover:text-white transition-colors">Terms of Service</a>
                     </motion.div>
-                </CardContent>
-            </GlassCard>
+                </Card.Content>
+            </Card>
 
             {/* Version footer */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-content-tertiary font-mono tracking-wide opacity-50">

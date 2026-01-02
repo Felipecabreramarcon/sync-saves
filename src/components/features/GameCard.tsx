@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react'
-import { Button, Tooltip, Dropdown } from '@heroui/react'
+import { Button, Tooltip, Dropdown, Card } from '@heroui/react'
 import { Folder, RefreshCw, Settings, CloudDownload, Trash2, MoreVertical, FolderOpen } from 'lucide-react'
 import { type Game, type GamePlatform, useGamesStore } from '@/stores/gamesStore'
-import { Card, CardContent } from '@/components/common/Card'
 import { useSyncStore } from '@/stores/syncStore'
 import { toast } from '@/stores/toastStore'
 import GameSettingsModal from './GameSettingsModal'
@@ -109,8 +108,10 @@ export default function GameCard({ game }: { game: Game }) {
         }
     }, [handleOpenFolder, handleDelete])
 
+    
+
     return (
-        <Card glass className="border-primary-600/20 flex flex-col hover:border-primary-500/50 transition-all duration-300  group">
+        <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl border-primary-600/20 flex flex-col hover:border-primary-500/50 transition-all duration-300 overflow-hidden group">
             {/* Cover Image */}
             <div className="relative h-36 overflow-hidden shrink-0">
                 {game.cover_url ? (
@@ -134,7 +135,7 @@ export default function GameCard({ game }: { game: Game }) {
                 <div className="absolute inset-0 bg-linear-to-t from-bg-card via-transparent to-transparent opacity-80" />
             </div>
 
-            <CardContent className="p-4 pt-2 overflow-hidden">
+            <Card.Content className="p-4 pt-2 overflow-hidden">
                 {/* Title and status */}
                 <div className="mb-2 -translate-y-4 min-w-0">
                     <h3 className="font-bold text-white text-lg leading-tight truncate drop-shadow-md">{game.name}</h3>
@@ -222,7 +223,7 @@ export default function GameCard({ game }: { game: Game }) {
                         </div>
                     </div>
                 </div>
-            </CardContent>
+            </Card.Content>
 
             {/* Game Settings Modal */}
             <GameSettingsModal

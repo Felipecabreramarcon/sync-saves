@@ -17,7 +17,7 @@ import { useAuthStore } from '@/stores/authStore'
 import StatCard from '@/components/features/StatCard'
 import ActivityItem from '@/components/features/ActivityItem'
 import { SaveButton } from '@/components/common/SaveButton'
-import { Card } from '@/components/common/Card'
+import { Card } from '@heroui/react'
 
 export default function Dashboard() {
     const {
@@ -109,7 +109,7 @@ export default function Dashboard() {
                             <Calendar className="w-5 h-5 text-primary-400" />
                             <h2 className="text-lg font-semibold text-white">Sync Activity</h2>
                         </div>
-                        <Card glass className="h-87.5 p-6">
+                        <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl h-87.5 p-6">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={chartData}>
                                     <defs>

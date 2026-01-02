@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Select, Label, ListBox, Switch, Button, Avatar, Chip, Tooltip } from '@heroui/react'
+import { Switch, Button, Avatar, Chip, Tooltip, Card, Label } from '@heroui/react'
 import {
     Monitor,
     Clock,
@@ -11,7 +11,6 @@ import {
 import PageHeader from '@/components/layout/PageHeader'
 import { useAuthStore } from '@/stores/authStore'
 import { getSystemInfo, type SystemInfo, getDeviceName, setDeviceName, getAppSettings, saveAppSettings, type AppSettings } from '@/lib/tauri'
-import { Card, CardContent } from '@/components/common/Card'
 import { SaveInput } from '@/components/common/SaveInput'
 import { useGamesStore } from '@/stores/gamesStore'
 import { getUserDevices, registerCurrentDevice, removeDevice, getRelativeTime, type Device } from '@/lib/devices'
@@ -142,8 +141,8 @@ export default function Settings() {
                 {/* Left Column (Main Settings) */}
                 <div className="lg:col-span-7 space-y-6">
                     {/* This Device */}
-                    <Card glass className="shadow-2xl shadow-black/20">
-                        <CardContent className="p-8">
+                    <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl shadow-black/20">
+                        <Card.Content className="p-8">
                             <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-xl bg-primary-900/30 flex items-center justify-center border border-primary-500/20 shadow-inner shadow-primary-500/10">
@@ -199,12 +198,12 @@ export default function Settings() {
                                     <p className="text-[10px] text-gray-500">Unique hardware identifier used for conflict resolution.</p>
                                 </div>
                             </div>
-                        </CardContent>
+                        </Card.Content>
                     </Card>
 
                     {/* Sync Settings */}
-                    <Card glass className="shadow-2xl shadow-black/20">
-                        <CardContent className="p-8 text-center sm:text-left">
+                    <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl shadow-black/20">
+                        <Card.Content className="p-8 text-center sm:text-left">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="w-12 h-12 rounded-xl bg-secondary-900/30 flex items-center justify-center border border-secondary-500/20 shadow-inner shadow-secondary-500/10">
                                     <Clock className="w-6 h-6 text-secondary-400" />
@@ -258,18 +257,18 @@ export default function Settings() {
                                         </Switch>
                                     </div>
                                 </div>
-                        </CardContent>
+                        </Card.Content>
                     </Card>
                 </div>
 
                 {/* Right Column (Account & Devices) */}
                 <div className="lg:col-span-5 space-y-6">
                     {/* User Profile */}
-                    <Card glass className="shadow-2xl shadow-primary-900/10 overflow-hidden relative">
+                    <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl shadow-primary-900/10 overflow-hidden relative">
                         {/* Background blur effect */}
                         <div className="absolute top-0 right-0 w-48 h-48 bg-primary-500/10 blur-[60px] -mr-16 -mt-16 rounded-full pointer-events-none" />
 
-                        <CardContent className="p-8 relative">
+                        <Card.Content className="p-8 relative">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="relative">
                                     <Avatar className="w-16 h-16 text-large border-2 border-white/10">
@@ -316,12 +315,12 @@ export default function Settings() {
                                     </Button>
                                 </div>
                             </div>
-                        </CardContent>
+                        </Card.Content>
                     </Card>
 
                     {/* Your Devices */}
-                    <Card glass className="shadow-2xl shadow-black/20">
-                        <CardContent className="p-8">
+                    <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl shadow-black/20">
+                        <Card.Content className="p-8">
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-xl font-bold text-white tracking-tight">Your Devices</h3>
                                 <Chip size="sm" variant="soft" className="bg-primary-900/30 text-primary-400 border border-primary-500/20">
@@ -397,7 +396,7 @@ export default function Settings() {
                                     })
                                 )}
                             </div>
-                        </CardContent>
+                        </Card.Content>
                     </Card>
                 </div>
             </div>
