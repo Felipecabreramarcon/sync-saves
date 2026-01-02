@@ -2,8 +2,8 @@
 
 > Sistema multiplataforma para sincronização automática de saves de jogos na nuvem
 
-[![Tauri](https://img.shields.io/badge/Tauri-2.0-blue?logo=tauri)](https://tauri.app/)
-[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org/)
+[![Tauri](https://img.shields.io/badge/Tauri-2.2-blue?logo=tauri)](https://tauri.app/)
+[![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://reactjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-green?logo=supabase)](https://supabase.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
@@ -48,20 +48,21 @@ O Sync Saves monitora as pastas de saves dos seus jogos e sincroniza automaticam
 | Funcionalidade | Descrição |
 |----------------|-----------|
 | 🔐 **Login com Google** | Autenticação segura via Google OAuth |
-| 📁 **Configurar Jogos** | Adicione qualquer jogo definindo a pasta de saves |
-| 💾 **Sync Automático** | Sincronização periódica em segundo plano |
-| 📱 **Multi-dispositivo** | Cada dispositivo pode ter caminho diferente |
-| 📜 **Histórico** | Mantém versões dos últimos 10 dias |
-| ⚡ **Sync Inteligente** | Sempre usa o save mais recente |
+| 📁 **Configurar Jogos** | Adicione jogos definindo nome, pasta e plataforma |
+| ⚙️ **Settings por Jogo** | Configure cada jogo individualmente |
+| 💾 **Sync Automático** | File Watcher detecta mudanças e sincroniza |
+| 📱 **Multi-dispositivo** | Cada dispositivo registrado automaticamente |
+| ☁️ **Restore** | Baixe saves da nuvem para qualquer dispositivo |
+| 🔔 **Notificações** | Alertas desktop configuráveis |
 | 🖥️ **Multiplataforma** | Windows, Linux e macOS |
 
 ### Futuro
 
 - [ ] Catálogo de jogos com caminhos pré-configurados
 - [ ] Detecção automática de jogos instalados
-- [ ] Sincronização ao detectar mudança (file watcher)
+- [ ] Histórico de versões de saves
 - [ ] Resolução manual de conflitos
-- [ ] Compressão e criptografia de saves
+- [ ] Login por email
 
 ---
 
@@ -77,10 +78,12 @@ O Sync Saves monitora as pastas de saves dos seus jogos e sincroniza automaticam
 
 | Tecnologia | Uso |
 |------------|-----|
-| [Tauri 2.0](https://tauri.app/) | Framework desktop (Rust) |
-| [React 18](https://reactjs.org/) | UI Library |
+| [Tauri 2.2](https://tauri.app/) | Framework desktop (Rust) |
+| [React 19](https://reactjs.org/) | UI Library |
 | [TypeScript](https://www.typescriptlang.org/) | Tipagem estática |
-| [Tailwind CSS](https://tailwindcss.com/) | Estilização |
+| [HeroUI v3](https://heroui.com/) | Componentes UI |
+| [Tailwind CSS v4](https://tailwindcss.com/) | Estilização |
+| [Zustand](https://zustand-demo.pmnd.rs/) | Gerenciamento de estado |
 | [SQLite](https://sqlite.org/) | Cache local |
 
 ### Backend
@@ -168,9 +171,11 @@ Consulte `docs/SETUP.md` para instruções detalhadas.
 
 ### Sincronização
 
-- O app sincroniza automaticamente a cada intervalo configurado (padrão: 5 minutos)
-- O ícone na bandeja do sistema indica o status
+- O app monitora as pastas de save em tempo real (File Watcher)
+- Quando detecta mudanças, sincroniza automaticamente
+- Notificações desktop informam sobre backups (se habilitadas)
 - Você pode forçar uma sincronização manual a qualquer momento
+- Use o botão Restore para baixar saves da nuvem
 
 ---
 
@@ -192,11 +197,14 @@ Consulte `docs/SETUP.md` para instruções detalhadas.
 ### Fase 1 - MVP ✅
 - [x] Definição da arquitetura
 - [x] Documentação do projeto
-- [x] Setup do projeto Tauri + React
-- [x] Integração com Supabase
-- [x] UI Fluida e Moderna (HeroUI)
-- [x] Lógica de sincronização e Watcher
+- [x] Setup do projeto Tauri 2.2 + React 19
+- [x] Integração com Supabase (Auth, DB, Storage)
+- [x] UI Fluida e Moderna (HeroUI v3 + Glassmorphism)
+- [x] Lógica de sincronização e File Watcher
 - [x] Persistência SQLite local
+- [x] Gestão de dispositivos
+- [x] Notificações desktop configuráveis
+- [x] Modal de configurações por jogo
 
 ### Fase 2 - Catálogo
 - [ ] Base de dados de jogos conhecidos

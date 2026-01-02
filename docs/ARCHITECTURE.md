@@ -77,25 +77,30 @@ Responsável pela interface do usuário e experiência visual.
 ```
 src/
 ├── components/          # Componentes reutilizáveis
-│   ├── layout/         # Componentes de estrutura (Sidebar, PageHeader...)
-│   └── features/       # Componentes de funcionalidades (GameCard, StatCard...)
+│   ├── common/         # Card, SaveButton, SaveInput, ToastContainer
+│   ├── layout/         # Sidebar, PageHeader, MainLayout
+│   └── features/       # GameCard, StatCard, ActivityItem, GameSettingsModal, AddGameModal
 ├── pages/              # Páginas da aplicação
 │   ├── Login.tsx
 │   ├── Dashboard.tsx
 │   ├── Games.tsx
 │   ├── Settings.tsx
-│   └── History.tsx
+│   └── Logs.tsx
 ├── stores/             # Gerenciamento de estado (Zustand com persistência)
 │   ├── authStore.ts    # Autenticação e estado do usuário
-│   ├── gamesStore.ts   # Lista de jogos e atividades
-│   └── syncStore.ts    # Status global de sincronização
+│   ├── gamesStore.ts   # Lista de jogos, atividades, CRUD
+│   ├── syncStore.ts    # Status global de sincronização
+│   ├── toastStore.ts   # Sistema de notificações toast
+│   └── uiStore.ts      # Estado da UI (sidebar, etc)
 ├── lib/                # Utilitários e integrações
-│   ├── supabase.ts     # Cliente Supabase
-│   ├── tauri.ts        # Bridge genérica com Tauri
-│   ├── tauri-games.ts  # Bridge específica para operações de jogos
-│   └── utils.ts        # Utilitários de estilo e helpers
+│   ├── supabase.ts     # Cliente Supabase (Auth, DB, Storage)
+│   ├── tauri.ts        # Bridge genérica (system info, settings)
+│   ├── tauri-games.ts  # Bridge para jogos (CRUD, sync, restore)
+│   ├── devices.ts      # Gestão de dispositivos
+│   └── utils.ts        # Utilitários (cn, isProtectedPath)
 ├── types/              # Definições de tipos TypeScript
 │   ├── database.ts     # Tipos do Supabase
+│   ├── global.d.ts     # Tipos globais (Tauri)
 │   └── index.ts        # Barrel export
 └── styles/             # Estilos globais (Tailwind CSS v4 + HeroUI v3)
     └── globals.css     # Usa @import "tailwindcss" e @theme
@@ -118,26 +123,22 @@ Responsável por operações de sistema, gerenciamento de arquivos e sincroniza�
 src-tauri/
 ├── src/
 │   ├── main.rs              # Entry point
-│   ├── lib.rs               # Library exports
+│   ├── lib.rs               # Library exports e registro de comandos
 │   ├── commands/            # Tauri commands (IPC)
 │   │   ├── mod.rs
-│   │   ├── auth.rs          # Comandos de autenticação
-│   │   ├── games.rs         # CRUD de jogos
-│   │   ├── sync.rs          # Operações de sincronização
-│   │   └── files.rs         # Operações de arquivo
+│   │   ├── auth.rs          # set_current_user, get_current_user
+│   │   ├── games.rs         # get_all_games, add_game, delete_game, update_game
+│   │   ├── sync.rs          # sync_game, restore_game
+│   │   └── system.rs        # get_system_info, device_id/name, app_settings
 │   ├── services/            # Business logic
 │   │   ├── mod.rs
-│   │   ├── sync_service.rs  # Lógica de sincronização
-│   │   ├── zip_service.rs   # Compressão/descompressão
-│   │   └── scheduler.rs     # Agendador de tarefas
+│   │   ├── compression.rs   # Compressão ZIP de pastas de save
+│   │   ├── extraction.rs    # Extração de saves do ZIP
+│   │   └── watcher.rs       # File watcher em tempo real
 │   ├── db/                  # SQLite local
-│   │   ├── mod.rs
-│   │   ├── schema.rs
-│   │   └── queries.rs
+│   │   └── mod.rs           # Schema e conexão
 │   └── utils/
-│       ├── mod.rs
-│       ├── paths.rs         # Manipulação de caminhos
-│       └── checksum.rs      # Cálculo de hash
+│       └── mod.rs           # Utilitários gerais
 ├── Cargo.toml
 └── tauri.conf.json
 ```
@@ -270,15 +271,19 @@ src-tauri/
 3. **Performance**: Leitura/escrita instantânea
 4. **Dados sensíveis**: Tokens ficam localmente
 
-### Sincronização Periódica vs Real-time
+### Sincronização: File Watcher + Manual
 
 | Abordagem | Prós | Contras |
 |-----------|------|---------|
 | Periódica | Simples, previsível, menos recursos | Delay de alguns minutos |
-| Real-time | Instantâneo | Complexo, more API calls, battery drain |
-| File Watcher | Reage a mudanças | Pode triggerar muitos syncs |
+| Real-time | Instantâneo | Complexo, mais API calls, battery drain |
+| **File Watcher** | Reage a mudanças, eficiente | Pode triggerar muitos syncs |
 
-**Decisão**: Periódica (configurável, padrão 5 min) + opção de sync manual
+**Decisão Implementada**: File Watcher (via crate `notify`) + sync manual
+- O watcher monitora pastas de save em tempo real
+- Debounce de 30 segundos para evitar múltiplos syncs
+- Emite evento `sync-required` que o frontend processa
+- Notificações desktop opcionais (configurável pelo usuário)
 
 ---
 
@@ -312,18 +317,28 @@ src-tauri/
 ## Status Atual & Próximos Passos
 
 ### Concluído ✅
-- [x] Estrutura base do projeto (Tauri v2 + React)
-- [x] Sistema de design com HeroUI e Glassmorphism
-- [x] Todas as páginas da interface (Login, Dashboard, Games, History, Settings)
+- [x] Estrutura base do projeto (Tauri v2 + React 19)
+- [x] Sistema de design com HeroUI v3 e Glassmorphism
+- [x] Migração para Tailwind CSS v4 (@tailwindcss/vite)
+- [x] Todas as páginas da interface (Login, Dashboard, Games, Logs, Settings)
 - [x] Store management com Zustand e persistência
-- [x] Backend Rust inicial (Configuração, SQLite, SysInfo)
-- [x] Bridge TypeScript-Rust (Commands)
-
-### Em Andamento 🚧
-- [/] Implementação da lógica de sincronização (Sync Logic)
-- [/] Operações de sistema de arquivos (Rust) para detecção de saves
+- [x] Backend Rust completo:
+  - SQLite para cache local (games_cache, device_config, sync_queue)
+  - Device ID único (UUID v4 persistido)
+  - Compressão ZIP e extração de saves
+  - File Watcher em tempo real (via crate `notify`)
+  - Comandos: auth, games (CRUD + update), sync, restore, system
+- [x] Bridge TypeScript-Rust completa (tauri.ts, tauri-games.ts)
+- [x] Autenticação real com Google OAuth via Supabase
+- [x] Sincronização funcional (Upload/Download para Supabase Storage)
+- [x] Gestão de dispositivos (registro, listagem, remoção)
+- [x] Sistema de notificações desktop (com respeito às preferências)
+- [x] Modal de configurações por jogo (GameSettingsModal)
+- [x] Launch on Startup via autostart plugin
 
 ### Pendente ⏳
-- [ ] Monitoramento em tempo real (File Watcher)
-- [ ] Lógica de resolução de conflitos (Cloud vs Local)
-- [ ] Build final e empacotamento
+- [ ] Persistir logs no Supabase (tabela sync_logs)
+- [ ] Histórico de versões de saves
+- [ ] Detecção e resolução de conflitos
+- [ ] Login por email (magic link)
+- [ ] Testes unitários e de integração
