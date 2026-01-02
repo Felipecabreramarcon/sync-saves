@@ -17,7 +17,7 @@ import { useAuthStore } from '@/stores/authStore'
 import StatCard from '@/components/features/StatCard'
 import ActivityItem from '@/components/features/ActivityItem'
 import { SaveButton } from '@/components/common/SaveButton'
-import { Card, CardContent } from '@/components/common/Card'
+import { Card } from '@/components/common/Card'
 
 export default function Dashboard() {
     const {
@@ -165,10 +165,6 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between mb-2">
                             <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
                             <SaveButton
-                                variant="light"
-                                size="sm"
-                                radius="lg"
-                                className="text-primary-400 hover:text-primary-300 font-bold tracking-wide"
                                 onPress={() => navigate('/logs')}
                             >
                                 View All

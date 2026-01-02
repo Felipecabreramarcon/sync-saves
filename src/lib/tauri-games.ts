@@ -53,3 +53,12 @@ export async function restoreGame(gameId: string, base64Data: string): Promise<b
     throw error
   }
 }
+
+export async function deleteGame(gameId: string): Promise<boolean> {
+  try {
+    return await invoke<boolean>('delete_game', { gameId })
+  } catch (error) {
+    console.error('Failed to delete game:', error)
+    throw error
+  }
+}

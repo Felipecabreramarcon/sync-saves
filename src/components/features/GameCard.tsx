@@ -1,6 +1,6 @@
-import { Button, Tooltip } from '@heroui/react'
-import { Folder, RefreshCw, Settings, CloudDownload } from 'lucide-react'
-import { type Game, type GamePlatform } from '@/stores/gamesStore'
+import { Button, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react'
+import { Folder, RefreshCw, Settings, CloudDownload, Trash2, MoreVertical, FolderOpen } from 'lucide-react'
+import { type Game, type GamePlatform, useGamesStore } from '@/stores/gamesStore'
 import { Card, CardContent } from '@/components/common/Card'
 import { useSyncStore } from '@/stores/syncStore'
 
@@ -14,6 +14,7 @@ const platformConfig: Record<GamePlatform, { label: string; color: string }> = {
 export default function GameCard({ game }: { game: Game }) {
     const performSync = useSyncStore(state => state.performSync)
     const performRestore = useSyncStore(state => state.performRestore)
+    const removeGame = useGamesStore(state => state.removeGame)
 
     const handleSync = async () => {
         await performSync(game.id)
@@ -22,6 +23,21 @@ export default function GameCard({ game }: { game: Game }) {
     const handleRestore = async () => {
         if (confirm(`Do you want to restore the latest cloud backup for ${game.name}? This will overwrite your current local saves.`)) {
             await performRestore(game.id)
+        }
+    }
+
+    const handleDelete = async () => {
+        if (confirm(`Are you sure you want to remove "${game.name}" from tracking? This will NOT delete your save files.`)) {
+            await removeGame(game.id)
+        }
+    }
+
+    const handleOpenFolder = async () => {
+        try {
+            const { open } = await import('@tauri-apps/plugin-shell')
+            await open(game.local_path)
+        } catch (e) {
+            console.error('Failed to open folder:', e)
         }
     }
 
@@ -102,7 +118,6 @@ export default function GameCard({ game }: { game: Game }) {
                                     isIconOnly
                                     size="sm"
                                     variant="light"
-                                    className="text-gray-400 hover:text-white hover:bg-white/10"
                                     onPress={handleSync}
                                     isDisabled={game.status === 'syncing'}
                                 >
@@ -114,23 +129,46 @@ export default function GameCard({ game }: { game: Game }) {
                                     isIconOnly
                                     size="sm"
                                     variant="light"
-                                    className="text-gray-400 hover:text-white hover:bg-white/10"
                                     onPress={handleRestore}
                                     isDisabled={game.status === 'syncing'}
                                 >
                                     <CloudDownload className="w-4 h-4" />
                                 </Button>
                             </Tooltip>
-                            <Tooltip content="Settings" closeDelay={0}>
-                                <Button
-                                    isIconOnly
-                                    size="sm"
-                                    variant="light"
-                                    className="text-gray-400 hover:text-white hover:bg-white/10"
-                                >
-                                    <Settings className="w-4 h-4" />
-                                </Button>
-                            </Tooltip>
+                            <Dropdown>
+                                <DropdownTrigger>
+                                    <Button
+                                        isIconOnly
+                                        size="sm"
+                                        variant="light"
+                                    >
+                                        <MoreVertical className="w-4 h-4" />
+                                    </Button>
+                                </DropdownTrigger>
+                                <DropdownMenu aria-label="Game actions">
+                                    <DropdownItem
+                                        key="open"
+                                        startContent={<FolderOpen className="w-4 h-4" />}
+                                        onPress={handleOpenFolder}
+                                    >
+                                        Open Folder
+                                    </DropdownItem>
+                                    <DropdownItem
+                                        key="settings"
+                                        startContent={<Settings className="w-4 h-4" />}
+                                    >
+                                        Settings
+                                    </DropdownItem>
+                                    <DropdownItem
+                                        key="delete"
+                                        startContent={<Trash2 className="w-4 h-4" />}
+                                        color="danger"
+                                        onPress={handleDelete}
+                                    >
+                                        Remove Game
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
                         </div>
                     </div>
                 </div>

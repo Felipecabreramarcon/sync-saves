@@ -97,9 +97,16 @@ src/
 ├── types/              # Definições de tipos TypeScript
 │   ├── database.ts     # Tipos do Supabase
 │   └── index.ts        # Barrel export
-└── styles/             # Estilos globais (Tailwind + HeroUI)
-    └── globals.css
+└── styles/             # Estilos globais (Tailwind CSS v4 + HeroUI v3)
+    └── globals.css     # Usa @import "tailwindcss" e @theme
 ```
+
+**Tecnologias principais:**
+- **React 19** - Framework de UI
+- **HeroUI v3** - Componentes (padrão com dot-notation: Modal.Dialog, Avatar.Image, etc.)
+- **Tailwind CSS v4** - Estilos (via @tailwindcss/vite plugin)
+- **Zustand** - Gerenciamento de estado
+- **Framer Motion** - Animações
 
 ### 2. Backend (Rust/Tauri)
 

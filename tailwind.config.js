@@ -1,4 +1,6 @@
-/** @type {import('tailwindcss').Config} */
+// Tailwind CSS v4 - configuração migrada para src/styles/globals.css usando @theme
+// Este arquivo é mantido apenas para compatibilidade com plugins que ainda precisam dele
+
 import { heroui } from "@heroui/react";
 
 export default {
@@ -7,29 +9,6 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
     "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
-  theme: {
-    extend: {
-      colors: {
-        // Custom colors from UI_DESIGN.md
-        'bg-primary': '#09090b', // Zinc 950
-        'bg-secondary': '#121214', // Slightly lighter than primary
-        'bg-elevated': '#18181b', // Zinc 900
-        'bg-card': '#27272a', // Zinc 800
-        'content-primary': '#fafafa',
-        'content-secondary': '#a1a1aa',
-        'content-tertiary': '#71717a',
-        'border-primary': '#27272a',
-        'border-secondary': '#3f3f46',
-      },
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
-      },
-      backdropBlur: {
-        xs: '2px',
-      },
-    },
-  },
   darkMode: "class",
   plugins: [heroui({
     themes: {

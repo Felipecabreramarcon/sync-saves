@@ -23,14 +23,18 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::system::get_system_info,
+            commands::system::get_device_id,
+            commands::system::get_device_name,
+            commands::system::set_device_name,
+            commands::system::get_app_settings,
+            commands::system::save_app_settings,
             commands::auth::set_current_user,
             commands::auth::get_current_user,
             crate::commands::games::get_all_games,
             crate::commands::games::add_game,
+            crate::commands::games::delete_game,
             crate::commands::sync::sync_game,
             crate::commands::sync::restore_game,
-            commands::system::get_device_name,
-            commands::system::set_device_name,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

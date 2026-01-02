@@ -12,8 +12,19 @@ export interface Database {
           last_seen_at: string
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['devices']['Row'], 'id' | 'created_at' | 'last_seen_at'>
-        Update: Partial<Database['public']['Tables']['devices']['Insert']>
+        Insert: {
+          user_id: string
+          name: string
+          os?: 'windows' | 'linux' | 'macos' | null
+          machine_id?: string | null
+          last_seen_at?: string
+        }
+        Update: {
+          name?: string
+          os?: 'windows' | 'linux' | 'macos' | null
+          machine_id?: string | null
+          last_seen_at?: string
+        }
       }
       games: {
         Row: {

@@ -54,7 +54,6 @@ export default function PageHeader({
                                 size="sm"
                                 variant="light"
                                 radius="full"
-                                className="ml-2 text-gray-400 hover:text-white min-w-8 w-8 h-8 flex items-center justify-center p-0"
                             >
                                 <RefreshCw className={`w-4 h-4 ${status === 'syncing' ? 'animate-spin' : ''}`} />
                             </Button>

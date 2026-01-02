@@ -1,17 +1,14 @@
 import { useState } from 'react'
 import {
     Modal,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
     Switch,
-    Tooltip
+    Tooltip,
+    Label,
+    Button
 } from '@heroui/react'
 import { open } from '@tauri-apps/plugin-dialog'
 import { FolderOpen, Gamepad2, Info, Plus } from 'lucide-react'
 import { SaveInput } from '@/components/common/SaveInput'
-import { SaveButton } from '@/components/common/SaveButton'
 
 interface AddGameModalProps {
     isOpen: boolean
@@ -63,105 +60,94 @@ export default function AddGameModal({ isOpen, onClose, onAdd }: AddGameModalPro
     }
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            backdrop="blur"
-            classNames={{
-                base: "bg-bg-card border border-white/10 shadow-2xl rounded-2xl",
-                header: "border-b border-white/5 p-6",
-                body: "p-6",
-                footer: "border-t border-white/5 p-6",
-                closeButton: "hover:bg-white/10 active:scale-95 transition-all"
-            }}
-        >
-            <ModalContent>
-                <ModalHeader className="flex flex-col gap-1">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary-900/30 flex items-center justify-center border border-primary-500/20">
-                            <Gamepad2 className="w-5 h-5 text-primary-400" />
-                        </div>
-                        <h2 className="text-xl font-bold text-white tracking-tight">Add New Game</h2>
-                    </div>
-                </ModalHeader>
-                <ModalBody>
-                    <div className="space-y-6">
-                        <div className="space-y-1.5">
-                            <label className="text-sm text-gray-400 font-medium ml-1">Game Title</label>
-                            <SaveInput
-                                placeholder="e.g. Elden Ring"
-                                value={newGameName}
-                                onValueChange={setNewGameName}
-                                labelPlacement="outside"
-                            />
-                        </div>
+        <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <Modal.Backdrop variant="blur">
+                <Modal.Container>
+                    <Modal.Dialog className="bg-bg-card border border-white/10 shadow-2xl rounded-2xl">
+                        <Modal.CloseTrigger />
+                        <Modal.Header className="border-b border-white/5 p-6">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-primary-900/30 flex items-center justify-center border border-primary-500/20">
+                                    <Gamepad2 className="w-5 h-5 text-primary-400" />
+                                </div>
+                                <Modal.Heading className="text-xl font-bold text-white tracking-tight">Add New Game</Modal.Heading>
+                            </div>
+                        </Modal.Header>
+                        <Modal.Body className="p-6">
+                            <div className="space-y-6">
+                                <div className="space-y-1.5">
+                                    <Label className="text-sm text-gray-400 font-medium ml-1">Game Title</Label>
+                                    <SaveInput
+                                        placeholder="e.g. Elden Ring"
+                                        value={newGameName}
+                                        onChange={(e) => setNewGameName(e.target.value)}
+                                    />
+                                </div>
 
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <label className="text-sm text-gray-400 font-medium">Save Folder Location</label>
-                                <Tooltip content="Select the directory where the game stores its .sl2, .sav or .dat files">
-                                    <Info className="w-3.5 h-3.5 text-gray-600 cursor-help" />
-                                </Tooltip>
-                            </div>
-                            <div className="flex gap-2">
-                                <SaveInput
-                                    placeholder="C:\Users\...\Saved Games"
-                                    value={newGamePath}
-                                    onValueChange={setNewGamePath}
-                                    isReadOnly
-                                    classNames={{
-                                        base: "flex-1",
-                                        inputWrapper: "bg-bg-elevated border-white/10 h-12 rounded-xl",
-                                        input: "text-gray-400 font-mono text-xs"
-                                    }}
-                                />
-                                <SaveButton
-                                    isIconOnly
-                                    variant="flat"
-                                    className="bg-primary-900/30 text-primary-400 border border-primary-500/20 h-12 w-12 min-w-12 rounded-xl hover:bg-primary-900/50 transition-colors flex flex-row items-center justify-center"
-                                    onPress={handleSelectFolder}
-                                >
-                                    <FolderOpen className="w-5 h-5" />
-                                </SaveButton>
-                            </div>
-                        </div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <Label className="text-sm text-gray-400 font-medium">Save Folder Location</Label>
+                                        <Tooltip>
+                                            <Tooltip.Trigger>
+                                                <Info className="w-3.5 h-3.5 text-gray-600 cursor-help" />
+                                            </Tooltip.Trigger>
+                                            <Tooltip.Content>
+                                                Select the directory where the game stores its .sl2, .sav or .dat files
+                                            </Tooltip.Content>
+                                        </Tooltip>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <SaveInput
+                                            placeholder="C:\Users\...\Saved Games"
+                                            value={newGamePath}
+                                            onChange={(e) => setNewGamePath(e.target.value)}
+                                            readOnly
+                                            className="flex-1"
+                                        />
+                                        <Button
+                                            onPress={handleSelectFolder}
+                                            className="bg-primary-900/30 text-primary-400 border border-primary-500/20 h-12 w-12 min-w-12 rounded-xl hover:bg-primary-900/50 transition-colors flex flex-row items-center justify-center"
+                                        >
+                                            <FolderOpen className="w-5 h-5" />
+                                        </Button>
+                                    </div>
+                                </div>
 
-                        <div className="p-4 rounded-xl bg-bg-elevated/30 border border-white/5 flex items-center justify-between">
-                            <div className="space-y-0.5">
-                                <p className="text-sm font-semibold text-white">Enable Auto-Sync</p>
-                                <p className="text-[11px] text-gray-500 font-medium">Automatically backup saves on change</p>
+                                <div className="p-4 rounded-xl bg-bg-elevated/30 border border-white/5 flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <p className="text-sm font-semibold text-white">Enable Auto-Sync</p>
+                                        <p className="text-[11px] text-gray-500 font-medium">Automatically backup saves on change</p>
+                                    </div>
+                                    <Switch
+                                        isSelected={autoSync}
+                                        onChange={setAutoSync}
+                                        size="sm"
+                                    >
+                                        <Switch.Control>
+                                            <Switch.Thumb />
+                                        </Switch.Control>
+                                    </Switch>
+                                </div>
                             </div>
-                            <Switch
-                                isSelected={autoSync}
-                                onValueChange={setAutoSync}
-                                color="primary"
-                                size="sm"
-                            />
-                        </div>
-                    </div>
-                </ModalBody>
-                <ModalFooter className="gap-3 px-6 pb-8">
-                    <SaveButton
-                        variant="flat"
-                        onPress={onClose}
-                        radius="lg"
-                        className="bg-transparent text-gray-400 hover:text-white font-medium"
-                    >
-                        Cancel
-                    </SaveButton>
-                    <SaveButton
-                        color="primary"
-                        radius="lg"
-                        className="bg-primary-500 text-white shadow-xl shadow-primary-500/30 font-bold px-8"
-                        onPress={handleAdd}
-                        isLoading={isAdding}
-                        isDisabled={!newGameName || !newGamePath || isAdding}
-                        startContent={!isAdding && <Plus size={18} className="mr-0.5" />}
-                    >
-                        Add Game
-                    </SaveButton>
-                </ModalFooter>
-            </ModalContent>
+                        </Modal.Body>
+                        <Modal.Footer className="gap-3 px-6 pb-8 border-t border-white/5">
+                            <Button
+                                variant="ghost"
+                                onPress={onClose}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="primary"
+                                onPress={handleAdd}
+                                isDisabled={!newGameName || !newGamePath || isAdding}
+                            >
+                                {isAdding ? 'Adding...' : <><Plus size={18} /> Add Game</>}
+                            </Button>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal.Backdrop>
         </Modal>
     )
 }

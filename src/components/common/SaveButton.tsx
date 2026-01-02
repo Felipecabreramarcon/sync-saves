@@ -1,28 +1,19 @@
-import { Button as HeroButton, ButtonProps, cn } from "@heroui/react";
+import { Button as HeroButton, ButtonProps } from "@heroui/react";
 
-interface SaveButtonProps extends ButtonProps {
-    variant?: "solid" | "bordered" | "light" | "flat" | "faded" | "shadow" | "ghost";
-    color?: "default" | "primary" | "secondary" | "success" | "warning" | "danger";
-}
-
+/**
+ * SaveButton - wrapper around HeroUI Button with consistent defaults
+ * Uses HeroUI's default styling
+ */
 export const SaveButton = ({
     children,
-    className,
-    variant = "solid",
-    color = "primary",
-    radius = "lg",
+    variant = "tertiary",
+    size = "md",
     ...props
-}: SaveButtonProps) => {
+}: ButtonProps) => {
     return (
         <HeroButton
-            className={cn(
-                "font-medium transition-transform active:scale-95",
-                "flex items-center justify-center gap-2",
-                className
-            )}
             variant={variant}
-            color={color}
-            radius={radius}
+            size={size}
             {...props}
         >
             {children}

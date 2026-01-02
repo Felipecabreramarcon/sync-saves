@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react'
-import { Select, SelectItem } from '@heroui/react'
+import { Select, Label, ListBox } from '@heroui/react'
 import PageHeader from '@/components/layout/PageHeader'
 import HistoryListItem from '@/components/features/HistoryListItem'
-import { Card, CardContent } from '@/components/common/Card'
 import { useGamesStore } from '@/stores/gamesStore'
 import { format, isToday, isYesterday } from 'date-fns'
 
@@ -42,22 +41,25 @@ export default function Logs() {
                 showSyncButton={false}
                 rightContent={
                     <Select
-                        label=""
                         placeholder="Filter by game"
-                        selectedKeys={[selectedGame]}
-                        onSelectionChange={(keys) => setSelectedGame(Array.from(keys)[0] as string)}
-                        classNames={{
-                            base: "w-48",
-                            trigger: "bg-bg-elevated border-white/10 h-10 min-h-unit-10 rounded-lg hover:border-primary-500/30 transition-colors",
-                            value: "text-gray-200",
-                            popoverContent: "bg-bg-elevated border-white/10"
-                        }}
+                        selectedKey={selectedGame}
+                        onSelectionChange={(key) => setSelectedGame(key as string)}
+                        className="w-48"
                     >
-                        {filterOptions.map((opt) => (
-                            <SelectItem key={opt.key} className="text-gray-300 data-[hover=true]:bg-white/5 data-[hover=true]:text-white">
-                                {opt.label}
-                            </SelectItem>
-                        ))}
+                        <Label className="sr-only">Filter by game</Label>
+                        <Select.Trigger className="rounded-lg border border-white/10 bg-bg-elevated/50 px-3 py-2 text-sm hover:border-white/20 transition-colors">
+                            <Select.Value />
+                            <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                            <ListBox>
+                                {filterOptions.map((opt) => (
+                                    <ListBox.Item key={opt.key} id={opt.key} textValue={opt.label}>
+                                        {opt.label}
+                                    </ListBox.Item>
+                                ))}
+                            </ListBox>
+                        </Select.Popover>
                     </Select>
                 }
             />

@@ -136,20 +136,22 @@ VITE_DEV_MODE=true
 ### Executar em Modo Dev
 1. Iniciar o dev server do Vite (porta 1420):
    ```bash
-   npm run dev
+   pnpm dev
    ```
 2. Iniciar o Tauri (em outro terminal):
    ```bash
-   npm run tauri dev
+   pnpm tauri dev
    ```
-Ou, se configurado corretamente no `tauri.conf.json`:
+Ou use o comando unificado:
 ```bash
-npm run tauri dev
+pnpm tauri dev
 ```
 Isso irá:
 1. Iniciar o Vite dev server (frontend) em `http://localhost:1420`
 2. Compilar o código Rust
 3. Abrir a janela do app
+
+**Nota:** O projeto usa Tailwind CSS v4 via `@tailwindcss/vite` plugin, então não há necessidade de PostCSS separado.
 
 ### Hot Reload
 

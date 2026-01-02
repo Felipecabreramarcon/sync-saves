@@ -1,6 +1,26 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@heroui/styles"; 
+
+
+@theme {
+  /* Custom colors from tailwind config */
+  --color-bg-primary: #09090b;
+  --color-bg-secondary: #121214;
+  --color-bg-elevated: #18181b;
+  --color-bg-card: #27272a;
+  --color-content-primary: #fafafa;
+  --color-content-secondary: #a1a1aa;
+  --color-content-tertiary: #71717a;
+  --color-border-primary: #27272a;
+  --color-border-secondary: #3f3f46;
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Backdrop blur */
+  --blur-xs: 2px;
+}
 
 /* CSS Variables from UI_DESIGN.md */
 :root {
@@ -96,6 +116,12 @@ body {
   50% {
     opacity: 0.5;
   }
+}
+
+
+button {
+  display: flex;
+
 }
 
 .animate-pulse-sync {

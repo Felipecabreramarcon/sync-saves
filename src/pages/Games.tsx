@@ -1,9 +1,8 @@
 
 import { useState } from 'react'
-import { useDisclosure } from '@heroui/react'
+import { useOverlayState, Button } from '@heroui/react'
 import {
     Plus,
-    Search,
     Filter,
 } from 'lucide-react'
 import PageHeader from '@/components/layout/PageHeader'
@@ -12,14 +11,13 @@ import GameCard from '@/components/features/GameCard'
 import { useEffect } from 'react'
 import AddGameCard from '@/components/features/AddGameCard'
 import AddGameModal from '@/components/features/AddGameModal'
-import { SaveButton } from '@/components/common/SaveButton'
 import { SaveInput } from '@/components/common/SaveInput'
 
 // Game page component
 
 export default function Games() {
     const [searchQuery, setSearchQuery] = useState('')
-    const { isOpen, onOpen, onClose } = useDisclosure()
+    const modalState = useOverlayState()
     const { games, loadGames, addGame, isLoading } = useGamesStore()
 
     useEffect(() => {
@@ -38,7 +36,7 @@ export default function Games() {
                 platform: 'other',
                 sync_enabled: gameData.autoSync
             })
-            onClose()
+            modalState.close()
         } catch (error) {
             console.error('Failed to add game:', error)
             // You could add a toast here
@@ -51,14 +49,14 @@ export default function Games() {
                 title="My Games"
                 subtitle="All systems operational"
                 rightContent={
-                    <SaveButton
-                        color="primary"
+                    <Button
+                        variant="primary"
                         className="shadow-xl shadow-primary-500/20"
-                        startContent={<Plus className="w-4 h-4" />}
-                        onPress={onOpen}
+                        onPress={modalState.open}
                     >
+                        <Plus className="w-4 h-4" />
                         Add Game
-                    </SaveButton>
+                    </Button>
                 }
             />
 
@@ -68,20 +66,16 @@ export default function Games() {
                     <SaveInput
                         placeholder="Search your library..."
                         value={searchQuery}
-                        onValueChange={setSearchQuery}
-                        startContent={<Search className="w-4 h-4 text-gray-400" />}
-                        classNames={{
-                            base: "flex-1 max-w-md",
-                            inputWrapper: "bg-bg-elevated border-white/5 h-12",
-                        }}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="flex-1 max-w-md"
                     />
-                    <SaveButton
+                    <Button
                         isIconOnly
-                        variant="bordered"
+                        variant="secondary"
                         className="border-white/10 text-gray-400 hover:text-white h-12 w-12"
                     >
                         <Filter className="w-4 h-4" />
-                    </SaveButton>
+                    </Button>
                 </div>
 
                 {/* Games Grid */}
@@ -98,7 +92,7 @@ export default function Games() {
                             {filteredGames.map(game => (
                                 <GameCard key={game.id} game={game} />
                             ))}
-                            <AddGameCard onPress={onOpen} />
+                            <AddGameCard onPress={modalState.open} />
                         </>
                     )}
                 </div>
@@ -106,8 +100,8 @@ export default function Games() {
 
             {/* Add Game Modal */}
             <AddGameModal
-                isOpen={isOpen}
-                onClose={onClose}
+                isOpen={modalState.isOpen}
+                onClose={modalState.close}
                 onAdd={handleAddGame}
             />
         </div>

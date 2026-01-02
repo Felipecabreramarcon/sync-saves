@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { Avatar, Progress, Tooltip, Button } from '@heroui/react'
+import { Avatar,  Tooltip, Button } from '@heroui/react'
 import {
     LayoutDashboard,
     Gamepad2,
@@ -81,10 +81,13 @@ export default function Sidebar() {
 
                     if (isSidebarCollapsed) {
                         return (
-                            <Tooltip key={item.path} content={item.label} placement="right" offset={10} classNames={{
-                                content: "bg-bg-elevated border border-white/10 text-white font-medium shadow-xl"
-                            }}>
-                                {linkContent}
+                            <Tooltip key={item.path}>
+                                <Tooltip.Trigger>
+                                    {linkContent}
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>
+                                    {item.label}
+                                </Tooltip.Content>
                             </Tooltip>
                         )
                     }
@@ -93,46 +96,18 @@ export default function Sidebar() {
                 })}
             </nav>
 
-            {/* Storage indicator */}
-            {!isSidebarCollapsed && (
-                <div className="p-4 mx-3 mb-2 rounded-2xl bg-bg-elevated/40 border border-white/5">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                            <Cloud className="w-4 h-4 text-primary-400" />
-                            <span className="text-xs font-medium text-gray-300">Storage</span>
-                        </div>
-                        <button className="text-[10px] text-primary-400 hover:text-primary-300 font-bold tracking-wide transition-colors">
-                            UPGRADE
-                        </button>
-                    </div>
-                    <Progress
-                        value={(storageUsed / storageTotal) * 100}
-                        size="sm"
-                        classNames={{
-                            base: "h-1.5",
-                            track: "bg-white/5",
-                            indicator: "bg-gradient-to-r from-primary-500 to-primary-400",
-                        }}
-                    />
-                    <div className="flex justify-between mt-2 text-[10px] font-medium text-gray-500">
-                        <span>{storageUsed} GB used</span>
-                        <span>{storageTotal} GB total</span>
-                    </div>
-                </div>
-            )}
-
+       
             {/* User Profile */}
             <div className="p-3 border-t border-white/5">
                 <div className={`flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group ${isSidebarCollapsed ? 'justify-center' : ''}`}>
                     <div className="relative">
-                        <Avatar
-                            src={user?.avatar_url}
-                            name={user?.name || 'User'}
-                            size="sm"
-                            classNames={{
-                                base: "ring-2 ring-white/5 group-hover:ring-primary-500/50 transition-all",
-                            }}
-                        />
+                        <Avatar size="sm">
+                            <Avatar.Image
+                                alt={user?.name || 'User'}
+                                src={user?.avatar_url}
+                            />
+                            <Avatar.Fallback>{user?.name?.charAt(0) || 'U'}</Avatar.Fallback>
+                        </Avatar>
                         <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-bg-secondary" />
                     </div>
                     {!isSidebarCollapsed && (
@@ -162,9 +137,9 @@ export default function Sidebar() {
             <Button
                 isIconOnly
                 size="sm"
-                radius="full"
-                onClick={toggleSidebar}
-                className="absolute -right-3 top-20 w-6 h-6 min-w-0 bg-bg-card border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-primary-600 hover:border-primary-500 transition-all z-[60] shadow-lg"
+                variant="secondary"
+                onPress={toggleSidebar}
+                className="absolute -right-3 top-20 w-6 h-6 min-w-0 rounded-full"
             >
                 {isSidebarCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
             </Button>

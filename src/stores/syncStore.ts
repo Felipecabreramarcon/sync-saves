@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { toast } from './toastStore'
 
 interface SyncState {
   status: 'idle' | 'syncing' | 'error' | 'success'
@@ -112,14 +113,17 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
         })
 
         set({ status: 'success' })
+        toast.success('Sync Complete', `${game?.name || 'Game'} has been backed up to the cloud`)
         setTimeout(() => set({ status: 'idle', progress: 0, message: '' }), 3000)
 
       } catch (error: any) {
         console.error('Sync failed:', error)
         set({ status: 'error', message: error.message || 'Sync failed' })
         
-        useGamesStore.getState().updateGame(gameId, { status: 'error' })
         const game = useGamesStore.getState().games.find(g => g.id === gameId)
+        toast.error('Sync Failed', error.message || `Failed to sync ${game?.name || 'game'}`)
+        
+        useGamesStore.getState().updateGame(gameId, { status: 'error' })
         useGamesStore.getState().addActivity({
           id: Math.random().toString(36).substr(2, 9),
           game_id: gameId,
@@ -215,6 +219,7 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
       })
 
       set({ status: 'success' })
+      toast.success('Restore Complete', `${game.name} has been restored from the cloud`)
       setTimeout(() => set({ status: 'idle', progress: 0, message: '' }), 3000)
 
     } catch (error: any) {
@@ -222,6 +227,8 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
       set({ status: 'error', message: error.message || 'Restore failed' })
       
       const game = useGamesStore.getState().games.find(g => g.id === gameId)
+      toast.error('Restore Failed', error.message || `Failed to restore ${game?.name || 'game'}`)
+      
       useGamesStore.getState().addActivity({
         id: Math.random().toString(36).substr(2, 9),
         game_id: gameId,

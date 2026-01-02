@@ -10,6 +10,8 @@ import { useAuthStore } from '@/stores/authStore'
 import { useSyncStore } from '@/stores/syncStore'
 import { getSystemInfo, getDeviceName } from '@/lib/tauri'
 import { useGamesStore } from '@/stores/gamesStore'
+import ToastContainer from '@/components/common/ToastContainer'
+import { toast } from '@/stores/toastStore'
 
 import { getSession, onAuthStateChange } from '@/lib/supabase'
 
@@ -66,8 +68,11 @@ function App() {
                             icon: 'cloud'
                         })
                     }
-                } catch (err) {
+                    
+                    toast.success('Auto-Sync Complete', 'Your save has been backed up to the cloud')
+                } catch (err: any) {
                     console.error("Auto sync failed:", err)
+                    toast.error('Auto-Sync Failed', err.message || 'Failed to backup save files')
                 }
             })
 
@@ -123,21 +128,24 @@ function App() {
     }
 
     return (
-        <Routes>
-            <Route path="/login" element={
-                !isAuthenticated ? <Login /> : <Navigate to="/" />
-            } />
+        <>
+            <Routes>
+                <Route path="/login" element={
+                    !isAuthenticated ? <Login /> : <Navigate to="/" />
+                } />
 
-            <Route path="/" element={
-                isAuthenticated ? <MainLayout /> : <Navigate to="/login" />
-            }>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="games" element={<Games />} />
-                <Route path="logs" element={<Logs />} />
-                <Route path="settings" element={<Settings />} />
-            </Route>
-        </Routes>
+                <Route path="/" element={
+                    isAuthenticated ? <MainLayout /> : <Navigate to="/login" />
+                }>
+                    <Route index element={<Navigate to="/dashboard" replace />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="games" element={<Games />} />
+                    <Route path="logs" element={<Logs />} />
+                    <Route path="settings" element={<Settings />} />
+                </Route>
+            </Routes>
+            <ToastContainer />
+        </>
     )
 }
 

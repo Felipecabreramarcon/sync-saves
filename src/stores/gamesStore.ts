@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { getAllGames, addGame as tauriAddGame } from '@/lib/tauri-games'
+import { getAllGames, addGame as tauriAddGame, deleteGame as tauriDeleteGame } from '@/lib/tauri-games'
 
 export type SyncStatus = 'synced' | 'syncing' | 'error' | 'pending' | 'idle'
 export type SyncAction = 'upload' | 'download' | 'skip' | 'conflict'
@@ -47,7 +47,7 @@ interface GamesState {
   // Actions
   setGames: (games: Game[]) => void
   updateGame: (id: string, updates: Partial<Game>) => void
-  removeGame: (id: string) => void
+  removeGame: (id: string) => Promise<void>
   setActivities: (activities: SyncActivity[]) => void
   addActivity: (activity: SyncActivity) => void
   setLoading: (loading: boolean) => void
@@ -82,10 +82,20 @@ export const useGamesStore = create<GamesState>()(
         games: state.games.map((g) => (g.id === id ? { ...g, ...updates } : g))
       })),
       
-      removeGame: (id) => set((state) => ({
-        games: state.games.filter((g) => g.id !== id),
-        totalGames: state.totalGames - 1
-      })),
+      removeGame: async (id) => {
+        const isTauri = window.__TAURI_INTERNALS__ !== undefined
+        if (isTauri) {
+          try {
+            await tauriDeleteGame(id)
+          } catch (e) {
+            console.error('Failed to delete game from DB:', e)
+          }
+        }
+        set((state) => ({
+          games: state.games.filter((g) => g.id !== id),
+          totalGames: state.totalGames - 1
+        }))
+      },
       
       setActivities: (activities) => set({ activities }),
       
