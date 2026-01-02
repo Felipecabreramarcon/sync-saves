@@ -52,8 +52,7 @@ export default function PageHeader({
                             <Button
                                 isIconOnly
                                 size="sm"
-                                variant="light"
-                                radius="full"
+                                variant="ghost"
                             >
                                 <RefreshCw className={`w-4 h-4 ${status === 'syncing' ? 'animate-spin' : ''}`} />
                             </Button>

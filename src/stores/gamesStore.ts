@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { getAllGames, addGame as tauriAddGame, deleteGame as tauriDeleteGame } from '@/lib/tauri-games'
+import { isTauriRuntime } from '@/lib/utils'
 
 export type SyncStatus = 'synced' | 'syncing' | 'error' | 'pending' | 'idle'
 export type SyncAction = 'upload' | 'download' | 'skip' | 'conflict'
@@ -50,6 +51,7 @@ interface GamesState {
   removeGame: (id: string) => Promise<void>
   setActivities: (activities: SyncActivity[]) => void
   addActivity: (activity: SyncActivity) => void
+  loadActivities: () => Promise<void>
   setLoading: (loading: boolean) => void
   setStats: (stats: { totalGames: number; totalSaves: number; activeDevices: number }) => void
   
@@ -83,8 +85,7 @@ export const useGamesStore = create<GamesState>()(
       })),
       
       removeGame: async (id) => {
-        const isTauri = window.__TAURI_INTERNALS__ !== undefined
-        if (isTauri) {
+        if (isTauriRuntime()) {
           try {
             await tauriDeleteGame(id)
           } catch (e) {
@@ -102,6 +103,21 @@ export const useGamesStore = create<GamesState>()(
       addActivity: (activity) => set((state) => ({
         activities: [activity, ...state.activities].slice(0, 50)
       })),
+
+      loadActivities: async () => {
+        const { useAuthStore } = await import('@/stores/authStore')
+        const user = useAuthStore.getState().user
+        if (!user) return
+
+        try {
+          const { fetchActivitiesFromCloud, sortAndDedupActivities } = await import('@/lib/cloudSync')
+          const cloud = await fetchActivitiesFromCloud({ userId: user.id, limit: 200 })
+          const merged = sortAndDedupActivities([...cloud, ...get().activities])
+          set({ activities: merged.slice(0, 200) })
+        } catch (e) {
+          console.warn('Failed to load cloud activities:', e)
+        }
+      },
       
       setLoading: (loading) => set({ isLoading: loading }),
       
@@ -112,9 +128,7 @@ export const useGamesStore = create<GamesState>()(
       loadGames: async () => {
         set({ isLoading: true })
         try {
-          const isTauri = window.__TAURI_INTERNALS__ !== undefined;
-          
-          if (isTauri) {
+          if (isTauriRuntime()) {
             const localGames = await getAllGames()
             const games: Game[] = localGames.map(g => ({
               id: g.id,
@@ -178,8 +192,7 @@ export const useGamesStore = create<GamesState>()(
 
       addGame: async (newGame) => {
         try {
-            const isTauri = window.__TAURI_INTERNALS__ !== undefined;
-            if (isTauri) {
+          if (isTauriRuntime()) {
                 const added = await tauriAddGame(newGame.name, newGame.local_path, newGame.platform)
                 const game: Game = {
                     id: added.id,

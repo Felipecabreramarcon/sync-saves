@@ -11,7 +11,7 @@ import {
 import { open } from "@tauri-apps/plugin-dialog";
 import { FolderOpen, Settings, Info, Save, AlertTriangle } from "lucide-react";
 import { SaveInput } from "@/components/common/SaveInput";
-import { isProtectedPath } from "@/lib/utils";
+import { isProtectedPath, isTauriRuntime } from "@/lib/utils";
 import {
   type Game,
   type GamePlatform,
@@ -81,9 +81,7 @@ export default function GameSettingsModal({
 
     setIsSaving(true);
     try {
-      const isTauri = window.__TAURI_INTERNALS__ !== undefined;
-
-      if (isTauri) {
+      if (isTauriRuntime()) {
         await tauriUpdateGame(game.id, {
           name,
           local_path: localPath,

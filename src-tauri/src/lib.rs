@@ -38,6 +38,7 @@ pub fn run() {
             crate::commands::games::add_game,
             crate::commands::games::delete_game,
             crate::commands::games::update_game,
+            crate::commands::games::get_game_save_stats,
             crate::commands::sync::sync_game,
             crate::commands::sync::restore_game,
         ])

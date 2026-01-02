@@ -27,8 +27,8 @@ export default function Sidebar() {
     return (
         <aside
             className={`
-        fixed left-0 top-0 h-screen bg-bg-secondary/50 backdrop-blur-xl border-r border-white/5
-        flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] z-50
+        fixed left-0 top-8 h-[calc(100vh-2rem)] bg-bg-secondary/50 backdrop-blur-xl border-r border-white/5
+        flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] z-40
         ${isSidebarCollapsed ? 'w-18' : 'w-60'}
       `}
         >

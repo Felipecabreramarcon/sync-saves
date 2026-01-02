@@ -4,6 +4,58 @@ Este documento detalha a integração com o Supabase e as APIs utilizadas.
 
 ---
 
+## Tauri Commands (Desktop)
+
+Quando rodando no app desktop (Tauri), o frontend usa `invoke(...)` para chamar comandos Rust.
+
+### Games
+
+#### `get_game_save_stats`
+
+Valida o `local_path` mapeado para o jogo e retorna estatísticas locais do diretório (sem upload), além de estatísticas específicas para Silksong **somente quando aplicável**.
+
+Entrada:
+
+- `gameId: string`
+
+Retorno (resumo):
+
+```ts
+type GameSaveStats = {
+  path: string
+  exists: boolean
+  is_dir: boolean
+  file_count: number
+  total_bytes: number
+  newest_mtime_ms?: number | null
+  silksong?: {
+    user_dat_files: number
+    restore_point_files: number
+    decoded_json_files: number
+    newest_save_mtime_ms?: number | null
+    progress?: {
+      save_date?: string | null
+      play_time_seconds?: number | null
+      respawn_scene?: string | null
+      map_zone?: number | null
+      health?: number | null
+      max_health?: number | null
+      geo?: number | null
+      silk?: number | null
+      silk_max?: number | null
+    } | null
+  } | null
+}
+```
+
+Notas:
+
+- `exists=false` / `is_dir=false` indica que o caminho está inválido (UI pode mostrar aviso).
+- O bloco `silksong` só aparece quando o jogo/caminho indica Silksong e existe a estrutura esperada (`default/`).
+- A leitura de “progress” depende do `*.dat.json` gerado pelo `hollow.py` (o app não decodifica o `.dat` diretamente).
+
+---
+
 ## Configuração do Supabase
 
 ### Variáveis de Ambiente

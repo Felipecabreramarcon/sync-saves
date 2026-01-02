@@ -39,6 +39,9 @@ function App() {
                         name: session.user.user_metadata.full_name || session.user.email,
                         avatar_url: session.user.user_metadata.avatar_url
                     })
+
+                    // Load cloud logs into local activity timeline
+                    await useGamesStore.getState().loadActivities()
                 }
             } catch (err) {
                 console.error("Auth init error:", err)
@@ -97,6 +100,9 @@ function App() {
                     name: session.user.user_metadata.full_name || session.user.email,
                     avatar_url: session.user.user_metadata.avatar_url
                 })
+
+                // Refresh cloud activity timeline on sign-in
+                useGamesStore.getState().loadActivities()
             } else if (event === 'SIGNED_OUT') {
                 logout()
             }

@@ -179,6 +179,21 @@ Consulte `docs/SETUP.md` para instruções detalhadas.
 
 ---
 
+## 🧰 hollow.py (Silksong save decode)
+
+Se você quiser usar o `hollow.py` para decodificar um save (formato com header + base64 + AES) para JSON:
+
+```bash
+pip install -r requirements.txt
+python hollow.py "C:\\Path\\To\\SaveFile"
+```
+
+Ele vai gerar um arquivo `*.json` ao lado do original (ex: `Save.dat.json`) e imprimir um resumo best-effort de “progresso” se encontrar campos óbvios no JSON.
+
+Quando você adiciona o Silksong como jogo no Sync Saves, o card do jogo pode exibir algumas estatísticas locais (ex: total de arquivos/tamanho, slots, restore points e playtime/scene) **se** existir um `*.dat.json` correspondente no diretório de saves.
+
+---
+
 ## 📚 Documentação
 
 | Documento | Descrição |

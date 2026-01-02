@@ -1,111 +1,156 @@
-import { useState, useMemo } from 'react'
-import { Select, Label, ListBox } from '@heroui/react'
+import { useEffect, useMemo, useState } from 'react'
+import { Button, Card } from '@heroui/react'
 import PageHeader from '@/components/layout/PageHeader'
-import HistoryListItem from '@/components/features/HistoryListItem'
 import { useGamesStore } from '@/stores/gamesStore'
-import { format, isToday, isYesterday } from 'date-fns'
+import { useAuthStore } from '@/stores/authStore'
+import { useSyncStore } from '@/stores/syncStore'
+import { fetchBackupsByGame, formatBytes, type CloudGameBackups } from '@/lib/cloudSync'
+import { format } from 'date-fns'
 
 export default function Logs() {
-    const { activities, games } = useGamesStore()
-    const [selectedGame, setSelectedGame] = useState<string>('all')
+    const { games } = useGamesStore()
+    const { user } = useAuthStore()
+    const performRestore = useSyncStore((s) => s.performRestore)
 
-    const filterOptions = useMemo(() => [
-        { key: 'all', label: 'All Games' },
-        ...games.map(g => ({ key: g.id, label: g.name }))
-    ], [games])
+    const [isLoading, setIsLoading] = useState(false)
+    const [cloudBackups, setCloudBackups] = useState<CloudGameBackups[]>([])
+    const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
-    const groupedActivities = useMemo(() => {
-        const filtered = selectedGame === 'all'
-            ? activities
-            : activities.filter(a => a.game_id === selectedGame)
+    useEffect(() => {
+        let cancelled = false
+        const run = async () => {
+            if (!user) return
+            setIsLoading(true)
+            try {
+                const data = await fetchBackupsByGame({ userId: user.id, versionsPerGame: 5 })
+                if (!cancelled) setCloudBackups(data)
+            } catch (e) {
+                console.warn('Failed to load backups:', e)
+                if (!cancelled) setCloudBackups([])
+            } finally {
+                if (!cancelled) setIsLoading(false)
+            }
+        }
+        run()
+        return () => {
+            cancelled = true
+        }
+    }, [user])
 
-        const groups: Record<string, typeof activities> = {}
+    const localGameBySlug = useMemo(() => {
+        const map = new Map<string, (typeof games)[number]>()
+        for (const g of games) map.set(g.slug, g)
+        return map
+    }, [games])
 
-        filtered.forEach(activity => {
-            const date = new Date(activity.created_at)
-            let dateStr = format(date, 'MMM dd, yyyy')
-            if (isToday(date)) dateStr = 'Today'
-            else if (isYesterday(date)) dateStr = 'Yesterday'
+    const handleRestore = async (slug: string, filePath?: string) => {
+        const localGame = localGameBySlug.get(slug)
+        if (!localGame) return
 
-            if (!groups[dateStr]) groups[dateStr] = []
-            groups[dateStr].push(activity)
-        })
+        const label = filePath ? 'this backup version' : 'the latest cloud backup'
+        const confirmed = window.confirm(
+            `Do you want to restore ${label} for ${localGame.name}? This will overwrite your current local saves.`
+        )
+        if (!confirmed) return
 
-        return Object.entries(groups).map(([date, entries]) => ({ date, entries }))
-    }, [activities, selectedGame])
+        await performRestore(localGame.id, filePath ? { filePath } : undefined)
+    }
 
     return (
         <div className="min-h-screen">
             <PageHeader
-                title="Activity Logs"
+                title="Backups"
+                subtitle="Restore points saved in the cloud"
                 showSyncButton={false}
-                rightContent={
-                    <Select
-                        placeholder="Filter by game"
-                        selectedKey={selectedGame}
-                        onSelectionChange={(key) => setSelectedGame(key as string)}
-                        className="w-48"
-                    >
-                        <Label className="sr-only">Filter by game</Label>
-                        <Select.Trigger className="rounded-lg border border-white/10 bg-bg-elevated/50 px-3 py-2 text-sm hover:border-white/20 transition-colors">
-                            <Select.Value />
-                            <Select.Indicator />
-                        </Select.Trigger>
-                        <Select.Popover>
-                            <ListBox>
-                                {filterOptions.map((opt) => (
-                                    <ListBox.Item key={opt.key} id={opt.key} textValue={opt.label}>
-                                        {opt.label}
-                                    </ListBox.Item>
-                                ))}
-                            </ListBox>
-                        </Select.Popover>
-                    </Select>
-                }
             />
 
-            <div className="p-8">
-                {/* History Timeline */}
-                <div className="space-y-8 relative">
-                    {/* Vertical Timeline Guide */}
-                    <div className="absolute left-8 top-0 bottom-0 w-px bg-white/5 hidden md:block" />
+            <div className="p-8 max-w-6xl mx-auto space-y-4">
+                {!user ? (
+                    <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                        <p className="text-gray-500">Sign in to view your cloud backups.</p>
+                    </div>
+                ) : isLoading ? (
+                    <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
+                        <p className="text-gray-500">Loading backups…</p>
+                    </div>
+                ) : cloudBackups.length === 0 ? (
+                    <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                        <p className="text-gray-500">No cloud backups found yet. Sync a game to create restore points.</p>
+                    </div>
+                ) : (
+                    cloudBackups.map((b) => {
+                        const localGame = localGameBySlug.get(b.slug)
+                        const isExpanded = !!expanded[b.cloud_game_id]
+                        const latest = b.latest
+                        return (
+                            <Card key={b.cloud_game_id} className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl">
+                                <Card.Content className="p-6 space-y-4">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="min-w-0">
+                                            <h3 className="text-lg font-bold text-white truncate">{b.name}</h3>
+                                            {latest ? (
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Latest: v{latest.version} • {format(new Date(latest.created_at), 'PPpp')} • {latest.device_name ?? 'Unknown device'} • {formatBytes(latest.file_size)}
+                                                </p>
+                                            ) : (
+                                                <p className="text-xs text-gray-500 mt-1">No versions found yet.</p>
+                                            )}
 
-                    {groupedActivities.length > 0 ? (
-                        groupedActivities.map((group) => (
-                            <div key={group.date} className="space-y-4 relative">
-                                <div className="flex items-center gap-4 bg-bg-primary/50 backdrop-blur-md sticky top-0 py-2 z-10 px-4 -mx-4 rounded-xl">
-                                    <div className="w-8 h-8 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center shrink-0">
-                                        {/* Assuming Clock is an imported icon component, e.g., from 'lucide-react' */}
-                                        {/* <Clock className="w-4 h-4 text-primary-400" /> */}
-                                    </div>
-                                    <h2 className="text-lg font-bold text-white tracking-tight">{group.date}</h2>
-                                    <div className="h-px bg-white/5 flex-1" />
-                                </div>
+                                            {b.last_error ? (
+                                                <p className="text-xs text-danger mt-2">
+                                                    Last error {format(new Date(b.last_error.created_at), 'PPpp')}{b.last_error.device_name ? ` • ${b.last_error.device_name}` : ''}{b.last_error.message ? ` • ${b.last_error.message}` : ''}
+                                                </p>
+                                            ) : null}
 
-                                <div className="space-y-2 relative">
-                                    {group.entries.map((entry) => (
-                                        <div key={entry.id} className="group relative">
-                                            {/* Dot on timeline */}
-                                            <div className="absolute left-7.75 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white/10 group-hover:bg-primary-500 transition-colors hidden md:block z-20" />
-
-                                            <div className="pl-0 md:pl-16">
-                                                <HistoryListItem entry={{
-                                                    ...entry,
-                                                    status: entry.status as any,
-                                                    created_at: format(new Date(entry.created_at), 'HH:mm')
-                                                }} />
-                                            </div>
+                                            {!localGame ? (
+                                                <p className="text-[11px] text-warning mt-2">This game is not configured locally on this device.</p>
+                                            ) : null}
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
-                            <p className="text-gray-500">No activity logs found.</p>
-                        </div>
-                    )}
-                </div>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <Button
+                                                variant="secondary"
+                                                isDisabled={!localGame || !latest}
+                                                onPress={() => handleRestore(b.slug)}
+                                            >
+                                                Restore latest
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                onPress={() => setExpanded((s) => ({ ...s, [b.cloud_game_id]: !isExpanded }))}
+                                                isDisabled={b.versions.length === 0}
+                                            >
+                                                {isExpanded ? 'Hide versions' : 'View versions'}
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {isExpanded ? (
+                                        <div className="border-t border-white/5 pt-4 space-y-2">
+                                            {b.versions.map((v) => (
+                                                <div key={`${b.cloud_game_id}:${v.version}`} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-bg-elevated/30 border border-white/5">
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm text-white font-semibold">v{v.version}</p>
+                                                        <p className="text-xs text-gray-500 truncate">
+                                                            {format(new Date(v.created_at), 'PPpp')} • {v.device_name ?? 'Unknown device'} • {formatBytes(v.file_size)}
+                                                        </p>
+                                                    </div>
+                                                    <Button
+                                                        variant="primary"
+                                                        isDisabled={!localGame}
+                                                        onPress={() => handleRestore(b.slug, v.file_path)}
+                                                    >
+                                                        Restore
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                </Card.Content>
+                            </Card>
+                        )
+                    })
+                )}
             </div>
         </div>
     )

@@ -49,6 +49,7 @@ export interface Database {
           last_synced_at: string | null
           last_synced_version: number | null
           created_at: string
+          updated_at?: string
         }
         Insert: Omit<Database['public']['Tables']['game_paths']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['game_paths']['Insert']>
@@ -77,6 +78,7 @@ export interface Database {
           version: number | null
           status: 'success' | 'error' | 'pending'
           message: string | null
+          file_size?: number | null
           duration_ms: number | null
           created_at: string
         }

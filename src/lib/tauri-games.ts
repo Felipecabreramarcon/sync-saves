@@ -79,3 +79,43 @@ export async function updateGame(gameId: string, updates: UpdateGameParams): Pro
     throw error
   }
 }
+
+export interface SilksongProgressDto {
+  save_date?: string | null
+  play_time_seconds?: number | null
+  respawn_scene?: string | null
+  map_zone?: number | null
+
+  health?: number | null
+  max_health?: number | null
+  geo?: number | null
+  silk?: number | null
+  silk_max?: number | null
+}
+
+export interface SilksongStatsDto {
+  user_dat_files: number
+  restore_point_files: number
+  decoded_json_files: number
+  newest_save_mtime_ms?: number | null
+  progress?: SilksongProgressDto | null
+}
+
+export interface GameSaveStatsDto {
+  path: string
+  exists: boolean
+  is_dir: boolean
+  file_count: number
+  total_bytes: number
+  newest_mtime_ms?: number | null
+  silksong?: SilksongStatsDto | null
+}
+
+export async function getGameSaveStats(gameId: string): Promise<GameSaveStatsDto> {
+  try {
+    return await invoke<GameSaveStatsDto>('get_game_save_stats', { gameId })
+  } catch (error) {
+    console.error('Failed to get game save stats:', error)
+    throw error
+  }
+}

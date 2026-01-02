@@ -1,17 +1,9 @@
 import { Avatar, AvatarImage, AvatarFallback, Chip } from '@heroui/react'
 import { ArrowUp, ArrowDown, RefreshCw, ChevronRight } from 'lucide-react'
 import { type SyncActivity } from '@/stores/gamesStore'
-import { cn } from '@/lib/utils'
+import { cn, timeAgo } from '@/lib/utils'
 
 export default function ActivityItem({ activity }: { activity: SyncActivity }) {
-    const getTimeAgo = (date: string) => {
-        const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
-        if (seconds < 60) return 'Now'
-        if (seconds < 3600) return `${Math.floor(seconds / 60)} mins ago`
-        if (seconds < 86400) return `${Math.floor(seconds / 3600)} hour ago`
-        return `${Math.floor(seconds / 86400)} days ago`
-    }
-
     const actionConfig = {
         upload: { icon: ArrowUp, text: 'Uploaded to Cloud', color: 'text-success' },
         download: { icon: ArrowDown, text: 'Downloaded from Cloud', color: 'text-info' },
@@ -51,7 +43,7 @@ export default function ActivityItem({ activity }: { activity: SyncActivity }) {
             <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-0.5">
                     <h4 className="font-semibold text-white truncate pr-2">{activity.game_name}</h4>
-                    <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">{getTimeAgo(activity.created_at)}</span>
+                    <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">{timeAgo(activity.created_at, { empty: 'Now' })}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className={cn("text-xs font-medium", action.color)}>{action.text}</span>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useOverlayState, Button } from "@heroui/react";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Filter } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import { useGamesStore } from "@/stores/gamesStore";
 import GameCard from "@/components/features/GameCard";

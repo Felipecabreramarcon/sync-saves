@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { Button, Tooltip, Dropdown, Card } from "@heroui/react";
 import {
   Folder,
@@ -17,6 +17,8 @@ import {
 import { useSyncStore } from "@/stores/syncStore";
 import { toast } from "@/stores/toastStore";
 import GameSettingsModal from "./GameSettingsModal";
+import { getGameSaveStats, type GameSaveStatsDto } from "@/lib/tauri-games";
+import { formatBytes, isTauriRuntime, timeAgo } from "@/lib/utils";
 
 const platformConfig: Record<GamePlatform, { label: string; color: string }> = {
   steam: { label: "STEAM", color: "bg-blue-600" },
@@ -33,14 +35,33 @@ const statusColorMap: Record<string, string> = {
   idle: "bg-gray-500",
 };
 
-function getTimeAgo(date?: string): string {
-  if (!date) return "Never";
-  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-  if (seconds < 0) return "Just now";
-  if (seconds < 60) return "Just now";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return `${Math.floor(seconds / 86400)}d ago`;
+function formatPlayTime(seconds?: number | null): string | null {
+  if (seconds == null || !Number.isFinite(seconds) || seconds <= 0) return null;
+  const totalMinutes = Math.floor(seconds / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours <= 0) return `${minutes}m`;
+  return `${hours}h ${minutes}m`;
+}
+
+function formatHp(health?: number | null, maxHealth?: number | null): string | null {
+  if (health == null || maxHealth == null) return null;
+  if (!Number.isFinite(health) || !Number.isFinite(maxHealth)) return null;
+  if (maxHealth <= 0) return null;
+  return `HP ${health}/${maxHealth}`;
+}
+
+function formatResource(
+  label: string,
+  current?: number | null,
+  max?: number | null
+): string | null {
+  if (current == null) return null;
+  if (!Number.isFinite(current)) return null;
+  if (max != null && Number.isFinite(max) && max > 0) {
+    return `${label} ${current}/${max}`;
+  }
+  return `${label} ${current}`;
 }
 
 async function openFolder(path: string): Promise<void> {
@@ -53,10 +74,36 @@ function GameCard({ game }: { game: Game }) {
   const performRestore = useSyncStore((state) => state.performRestore);
   const removeGame = useGamesStore((state) => state.removeGame);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [saveStats, setSaveStats] = useState<
+    GameSaveStatsDto | null | undefined
+  >(undefined);
+
+  const isTauri = isTauriRuntime();
 
   const isSyncing = game.status === "syncing";
   const platform = platformConfig[game.platform];
   const statusColor = statusColorMap[game.status] ?? "bg-gray-400";
+
+  useEffect(() => {
+    if (!isTauri) return;
+
+    let cancelled = false;
+
+    setSaveStats(undefined);
+
+    (async () => {
+      try {
+        const stats = await getGameSaveStats(game.id);
+        if (!cancelled) setSaveStats(stats);
+      } catch {
+        if (!cancelled) setSaveStats(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [game.id, game.local_path]);
 
   const handleSync = useCallback(async () => {
     try {
@@ -184,6 +231,77 @@ function GameCard({ game }: { game: Game }) {
             </span>
           </div>
 
+          {/* Local save stats (validated via Tauri) */}
+          {isTauri ? (
+            <div className="-mt-1 mb-4 min-w-0 rounded-xl border border-white/5 bg-white/5 px-3 py-2">
+              <p className="text-[10px] font-bold text-gray-500 tracking-wider whitespace-nowrap">
+                LOCAL
+              </p>
+
+              {saveStats === undefined ? (
+                <p className="text-xs text-gray-500 leading-snug">
+                  Checking save folder…
+                </p>
+              ) : saveStats === null ? (
+                <p className="text-xs text-gray-500 leading-snug">
+                  Save stats unavailable
+                </p>
+              ) : !saveStats.exists || !saveStats.is_dir ? (
+                <p className="text-xs text-gray-500 leading-snug">
+                  Path not found / not a folder
+                </p>
+              ) : (
+                <p className="text-xs text-gray-400 leading-snug wrap-break-word">
+                  <span>{saveStats.file_count} files</span>
+                  <span className="text-gray-600 mx-1">•</span>
+                  <span>{formatBytes(saveStats.total_bytes, { empty: "0 B" })}</span>
+                  {saveStats.newest_mtime_ms ? (
+                    <>
+                      <span className="text-gray-600 mx-1">•</span>
+                      <span>updated {timeAgo(saveStats.newest_mtime_ms, { empty: "Unknown" })}</span>
+                    </>
+                  ) : null}
+                </p>
+              )}
+
+              {saveStats && saveStats.silksong ? (
+                <>
+                  <p className="mt-2 text-[10px] font-bold text-gray-500 tracking-wider whitespace-nowrap">
+                    SILKSONG
+                  </p>
+                  <p className="text-xs text-gray-400 leading-snug wrap-break-word">
+                    <span>{saveStats.silksong.user_dat_files} slots</span>
+                    <span className="text-gray-600 mx-1">•</span>
+                    <span>{saveStats.silksong.restore_point_files} restore files</span>
+                    {saveStats.silksong.progress ? (
+                      (() => {
+                        const p = saveStats.silksong?.progress;
+                        const play = formatPlayTime(p?.play_time_seconds);
+                        const date = p?.save_date ?? null;
+                        const scene = p?.respawn_scene ?? null;
+                        const hp = formatHp(p?.health, p?.max_health);
+                        const silk = formatResource("Silk", p?.silk, p?.silk_max);
+                        const geo = formatResource("Geo", p?.geo, null);
+                        const bits = [play, date, scene, hp, silk, geo].filter(Boolean);
+                        return bits.length ? (
+                          <>
+                            <span className="text-gray-600 mx-1">•</span>
+                            <span>{bits.join(" • ")}</span>
+                          </>
+                        ) : null;
+                      })()
+                    ) : saveStats.silksong.decoded_json_files > 0 ? (
+                      <>
+                        <span className="text-gray-600 mx-1">•</span>
+                        <span>decoded JSON found</span>
+                      </>
+                    ) : null}
+                  </p>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+
           {/* Sync info and actions */}
           <div className="flex items-center justify-between border-t border-white/5 pt-3 gap-2">
             <div className="flex items-center gap-2 min-w-0 shrink">
@@ -195,7 +313,7 @@ function GameCard({ game }: { game: Game }) {
                   SYNC
                 </p>
                 <p className="text-xs text-gray-300 font-medium whitespace-nowrap">
-                  {getTimeAgo(game.last_synced_at)}
+                  {timeAgo(game.last_synced_at, { empty: "Never" })}
                   <span className="text-gray-600 mx-1">•</span>
                   <span className="bg-white/5 px-1.5 py-0.5 rounded text-[10px] text-gray-400">
                     v{game.last_synced_version}
