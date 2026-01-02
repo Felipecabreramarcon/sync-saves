@@ -1,3 +1,3 @@
 pub mod compression;
-pub mod watcher;
 pub mod extraction;
+pub mod watcher;

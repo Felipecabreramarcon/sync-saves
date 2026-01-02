@@ -1,4 +1,4 @@
 pub mod auth;
 pub mod games;
-pub mod system;
 pub mod sync;
+pub mod system;
