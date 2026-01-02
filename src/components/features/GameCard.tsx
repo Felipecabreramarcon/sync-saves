@@ -110,7 +110,7 @@ export default function GameCard({ game }: { game: Game }) {
     }, [handleOpenFolder, handleDelete])
 
     return (
-        <Card glass className="border-primary-600/20 hover:border-primary-500/50 transition-all duration-300 overflow-hidden group">
+        <Card glass className="border-primary-600/20 flex flex-col hover:border-primary-500/50 transition-all duration-300  group">
             {/* Cover Image */}
             <div className="relative h-36 overflow-hidden shrink-0">
                 {game.cover_url ? (
