@@ -88,12 +88,12 @@ export default function Games() {
               </div>
             </div>
           ) : (
-            <div>
+            <>
               {filteredGames.map((game) => (
                 <GameCard key={game.id} game={game} />
               ))}
               <AddGameCard onPress={modalState.open} />
-            </div>
+            </>
           )}
         </div>
       </div>
