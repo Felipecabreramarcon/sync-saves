@@ -25,20 +25,22 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
-      isLoading: false,
+      isLoading: true,
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       
-      login: (user) => set({ 
-        user, 
-        isAuthenticated: true,
-        isLoading: false 
-      }),
+      login: async (user) => {
+          set({ user, isAuthenticated: true, isLoading: false })
+      },
       
-      logout: () => set({ 
-        user: null, 
-        isAuthenticated: false 
-      }),
+      logout: async () => {
+        const { signOut } = await import('@/lib/supabase')
+        await signOut()
+        set({ 
+          user: null, 
+          isAuthenticated: false 
+        })
+      },
       
       setLoading: (loading) => set({ isLoading: loading }),
     }),

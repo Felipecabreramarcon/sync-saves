@@ -28,3 +28,28 @@ export async function addGame(name: string, localPath: string, platform: string)
      throw error
    }
 }
+
+export interface SyncResultDto {
+  success: boolean
+  file_name: string
+  base64_data: string
+  message: string
+}
+
+export async function syncGame(gameId: string): Promise<SyncResultDto> {
+  try {
+    return await invoke<SyncResultDto>('sync_game', { gameId })
+  } catch (error) {
+    console.error('Failed to sync game:', error)
+    throw error
+  }
+}
+
+export async function restoreGame(gameId: string, base64Data: string): Promise<boolean> {
+  try {
+    return await invoke<boolean>('restore_game', { gameId, base64Data })
+  } catch (error) {
+    console.error('Failed to restore game:', error)
+    throw error
+  }
+}

@@ -11,10 +11,15 @@ export default {
     extend: {
       colors: {
         // Custom colors from UI_DESIGN.md
-        'bg-primary': '#09090b',
-        'bg-secondary': '#18181b',
-        'bg-elevated': '#1f1f23',
-        'bg-card': '#27272a',
+        'bg-primary': '#09090b', // Zinc 950
+        'bg-secondary': '#121214', // Slightly lighter than primary
+        'bg-elevated': '#18181b', // Zinc 900
+        'bg-card': '#27272a', // Zinc 800
+        'content-primary': '#fafafa',
+        'content-secondary': '#a1a1aa',
+        'content-tertiary': '#71717a',
+        'border-primary': '#27272a',
+        'border-secondary': '#3f3f46',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

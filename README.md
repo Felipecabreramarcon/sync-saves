@@ -192,11 +192,11 @@ Consulte `docs/SETUP.md` para instruções detalhadas.
 ### Fase 1 - MVP ✅
 - [x] Definição da arquitetura
 - [x] Documentação do projeto
-- [ ] Setup do projeto Tauri + React
-- [ ] Integração com Supabase
-- [ ] UI básica
-- [ ] Lógica de sincronização
-- [ ] Testes
+- [x] Setup do projeto Tauri + React
+- [x] Integração com Supabase
+- [x] UI Fluida e Moderna (HeroUI)
+- [x] Lógica de sincronização e Watcher
+- [x] Persistência SQLite local
 
 ### Fase 2 - Catálogo
 - [ ] Base de dados de jogos conhecidos

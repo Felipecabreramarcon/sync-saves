@@ -1,6 +1,7 @@
 import { Avatar, Chip } from '@heroui/react'
 import { ArrowUp, ArrowDown, RefreshCw, ChevronRight } from 'lucide-react'
 import { type SyncActivity } from '@/stores/gamesStore'
+import { cn } from '@/lib/utils'
 
 export default function ActivityItem({ activity }: { activity: SyncActivity }) {
     const getTimeAgo = (date: string) => {
@@ -19,9 +20,9 @@ export default function ActivityItem({ activity }: { activity: SyncActivity }) {
     }
 
     const statusConfig = {
-        success: { label: 'SUCCESS', color: 'success' as const },
-        error: { label: 'ERROR', color: 'danger' as const },
-        pending: { label: 'IN PROGRESS', color: 'warning' as const },
+        success: { label: 'SUCCESS', color: 'success' as const, variant: 'flat' as const },
+        error: { label: 'ERROR', color: 'danger' as const, variant: 'flat' as const },
+        pending: { label: 'IN PROGRESS', color: 'warning' as const, variant: 'flat' as const },
     }
 
     const action = actionConfig[activity.action]
@@ -29,36 +30,44 @@ export default function ActivityItem({ activity }: { activity: SyncActivity }) {
     const ActionIcon = action.icon
 
     return (
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-bg-elevated/50 hover:bg-bg-elevated transition-colors group cursor-pointer">
+        <div className="flex items-center gap-4 p-4 rounded-xl bg-bg-elevated/30 border border-transparent hover:border-white/5 hover:bg-bg-elevated/50 transition-all duration-200 group cursor-pointer">
             {/* Game cover */}
-            <Avatar
-                src={activity.game_cover}
-                name={activity.game_name}
-                radius="lg"
-                className="w-14 h-14 shrink-0"
-                classNames={{
-                    base: "ring-2 ring-white/10",
-                }}
-            />
+            <div className="relative shrink-0">
+                <Avatar
+                    src={activity.game_cover}
+                    name={activity.game_name}
+                    radius="lg"
+                    className="w-12 h-12"
+                    classNames={{
+                        base: "ring-2 ring-white/5 group-hover:ring-white/10 transition-all",
+                    }}
+                />
+                <div className={cn(
+                    "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-bg-elevated",
+                    status.color === 'success' ? 'bg-success/20 text-success' :
+                        status.color === 'danger' ? 'bg-danger/20 text-danger' : 'bg-warning/20 text-warning'
+                )}>
+                    <ActionIcon className="w-3 h-3" />
+                </div>
+            </div>
 
             {/* Info */}
             <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-0.5">
+                    <h4 className="font-semibold text-white truncate pr-2">{activity.game_name}</h4>
+                    <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">{getTimeAgo(activity.created_at)}</span>
+                </div>
                 <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-white">{activity.game_name}</h4>
-                    <Chip size="sm" color={status.color} variant="flat" className="h-5 text-[10px] font-semibold">
+                    <span className={cn("text-xs font-medium", action.color)}>{action.text}</span>
+                    <span className="text-gray-700 mx-1">•</span>
+                    <Chip size="sm" color={status.color} variant="flat" className="h-4 text-[9px] font-bold px-1.5 min-w-0">
                         {status.label}
                     </Chip>
-                </div>
-                <div className="flex items-center gap-2 mt-1">
-                    <ActionIcon className={`w-3 h-3 ${action.color}`} />
-                    <span className="text-sm text-gray-400">{action.text}</span>
-                    <span className="text-gray-600">•</span>
-                    <span className="text-sm text-gray-400">{getTimeAgo(activity.created_at)}</span>
                 </div>
             </div>
 
             {/* Arrow */}
-            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-gray-400 transition-colors" />
+            <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-white transition-colors" />
         </div>
     )
 }

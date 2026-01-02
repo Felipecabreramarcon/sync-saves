@@ -42,6 +42,7 @@ interface GamesState {
   totalGames: number
   totalSaves: number
   activeDevices: number
+  storageUsage: number // In bytes
   
   // Actions
   setGames: (games: Game[]) => void
@@ -55,6 +56,9 @@ interface GamesState {
   setSearchQuery: (query: string) => void
   addGame: (game: Omit<Game, 'id' | 'slug' | 'last_synced_at' | 'last_synced_version' | 'status'>) => Promise<void>
   loadGames: () => Promise<void>
+  refreshMetrics: () => Promise<void>
+  deviceName: string
+  setDeviceName: (name: string) => void
 }
 
 export const useGamesStore = create<GamesState>()(
@@ -67,6 +71,10 @@ export const useGamesStore = create<GamesState>()(
       totalGames: 0,
       totalSaves: 0,
       activeDevices: 1,
+      storageUsage: 0,
+      deviceName: 'My Device',
+
+      setDeviceName: (name) => set({ deviceName: name }),
 
       setGames: (games) => set({ games, totalGames: games.length }),
       
@@ -94,24 +102,23 @@ export const useGamesStore = create<GamesState>()(
       loadGames: async () => {
         set({ isLoading: true })
         try {
-          // Check if running in Tauri environment
-          const isTauri = window.__TAURI_INTERNALS__ !== undefined || !!import.meta.env.VITE_TAURI_ENV;
+          const isTauri = window.__TAURI_INTERNALS__ !== undefined;
           
           if (isTauri) {
             const localGames = await getAllGames()
             const games: Game[] = localGames.map(g => ({
-              ...g,
-              platform: g.platform as any,
-              status: g.status as any,
-              last_synced_at: undefined, // Setup real date later
+              id: g.id,
+              name: g.name,
+              slug: g.slug,
+              cover_url: g.cover_url,
+              platform: g.platform as GamePlatform,
+              local_path: g.local_path,
+              sync_enabled: g.sync_enabled,
+              status: g.status as SyncStatus,
+              last_synced_at: undefined,
               last_synced_version: 0
             }))
             set({ games, totalGames: games.length })
-          } else {
-             // Mock data if web only & empty
-             if (get().games.length === 0) {
-                 // Keep existing or init specific mocks
-             }
           }
         } catch (e) {
           console.error("Failed to load games", e)
@@ -120,16 +127,59 @@ export const useGamesStore = create<GamesState>()(
         }
       },
 
+      refreshMetrics: async () => {
+        const { supabase } = await import('@/lib/supabase')
+        const { useAuthStore } = await import('@/stores/authStore')
+        const user = useAuthStore.getState().user
+        if (!user) return
+
+        try {
+          const { data: userFolders, error: foldersError } = await supabase.storage
+            .from('saves')
+            .list(user.id)
+
+          if (foldersError) throw foldersError
+          if (!userFolders) return
+
+          let totalSize = 0
+          let totalFiles = 0
+
+          for (const folder of userFolders) {
+            const { data: files, error: filesError } = await supabase.storage
+              .from('saves')
+              .list(`${user.id}/${folder.name}`)
+
+            if (filesError) continue
+            if (files) {
+              totalFiles += files.length
+              totalSize += files.reduce((acc, f) => acc + (f.metadata?.size || 0), 0)
+            }
+          }
+
+          set({ 
+            storageUsage: totalSize, 
+            totalSaves: totalFiles,
+            totalGames: get().games.length 
+          })
+        } catch (e) {
+          console.error("Failed to refresh metrics", e)
+        }
+      },
+
       addGame: async (newGame) => {
         try {
-            const isTauri = window.__TAURI_INTERNALS__ !== undefined || !!import.meta.env.VITE_TAURI_ENV;
-            
+            const isTauri = window.__TAURI_INTERNALS__ !== undefined;
             if (isTauri) {
                 const added = await tauriAddGame(newGame.name, newGame.local_path, newGame.platform)
                 const game: Game = {
-                    ...added,
-                    platform: added.platform as any,
-                    status: 'idle',
+                    id: added.id,
+                    name: added.name,
+                    slug: added.slug,
+                    cover_url: added.cover_url,
+                    platform: added.platform as GamePlatform,
+                    local_path: added.local_path,
+                    sync_enabled: added.sync_enabled,
+                    status: added.status as SyncStatus,
                     last_synced_version: 0
                 }
                 set(state => ({
@@ -152,6 +202,7 @@ export const useGamesStore = create<GamesState>()(
             }
         } catch (e) {
             console.error(e)
+            throw e
         }
       },
     }),

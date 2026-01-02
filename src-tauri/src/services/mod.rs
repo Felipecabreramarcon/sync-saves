@@ -1,1 +1,3 @@
-// Placeholder services module
+pub mod compression;
+pub mod watcher;
+pub mod extraction;

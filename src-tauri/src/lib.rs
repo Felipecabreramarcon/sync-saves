@@ -1,4 +1,4 @@
-use tauri::Manager;
+// No unnecessary manager import
 
 mod commands;
 mod db;
@@ -8,18 +8,29 @@ mod utils;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
-            // Initialize database
+            // Initialize Database
             db::init_db(app.handle())?;
+            
+            // Start File Watcher
+            services::watcher::start_watcher(app.handle().clone());
+            
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::system::get_system_info,
             commands::auth::set_current_user,
             commands::auth::get_current_user,
-            commands::games::get_all_games,
-            commands::games::add_game
+            crate::commands::games::get_all_games,
+            crate::commands::games::add_game,
+            crate::commands::sync::sync_game,
+            crate::commands::sync::restore_game,
+            commands::system::get_device_name,
+            commands::system::set_device_name,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

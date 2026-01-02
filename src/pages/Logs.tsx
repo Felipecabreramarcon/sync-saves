@@ -1,80 +1,39 @@
-import { useState } from 'react'
-import { Card, CardBody, Select, SelectItem } from '@heroui/react'
+import { useState, useMemo } from 'react'
+import { Select, SelectItem } from '@heroui/react'
 import PageHeader from '@/components/layout/PageHeader'
-import HistoryListItem, { type HistoryEntry } from '@/components/features/HistoryListItem'
-
-// Mock data grouped by date
-const mockHistory: { date: string; entries: HistoryEntry[] }[] = [
-    {
-        date: 'Today',
-        entries: [
-            {
-                id: '1',
-                game_name: 'Elden Ring',
-                game_cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.webp',
-                action: 'upload',
-                version: 15,
-                status: 'success',
-                device_name: 'PC Casa',
-                created_at: '14:30',
-            },
-            {
-                id: '2',
-                game_name: 'Elden Ring',
-                game_cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.webp',
-                action: 'download',
-                version: 14,
-                status: 'success',
-                device_name: 'PC Casa',
-                created_at: '14:25',
-            },
-            {
-                id: '3',
-                game_name: "Baldur's Gate 3",
-                game_cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co670h.webp',
-                action: 'upload',
-                version: 8,
-                status: 'success',
-                device_name: 'Notebook',
-                created_at: '10:00',
-            },
-        ],
-    },
-    {
-        date: 'Yesterday',
-        entries: [
-            {
-                id: '4',
-                game_name: 'Elden Ring',
-                game_cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.webp',
-                action: 'upload',
-                version: 14,
-                status: 'success',
-                device_name: 'Notebook',
-                created_at: '22:15',
-            },
-            {
-                id: '5',
-                game_name: 'Hollow Knight',
-                action: 'upload',
-                version: 3,
-                status: 'success',
-                device_name: 'PC Casa',
-                created_at: '18:30',
-            },
-        ],
-    },
-]
+import HistoryListItem from '@/components/features/HistoryListItem'
+import { Card, CardContent } from '@/components/common/Card'
+import { useGamesStore } from '@/stores/gamesStore'
+import { format, isToday, isYesterday } from 'date-fns'
 
 export default function Logs() {
+    const { activities, games } = useGamesStore()
     const [selectedGame, setSelectedGame] = useState<string>('all')
 
-    const games = [
+    const filterOptions = useMemo(() => [
         { key: 'all', label: 'All Games' },
-        { key: 'elden-ring', label: 'Elden Ring' },
-        { key: 'baldurs-gate-3', label: "Baldur's Gate 3" },
-        { key: 'hollow-knight', label: 'Hollow Knight' },
-    ]
+        ...games.map(g => ({ key: g.id, label: g.name }))
+    ], [games])
+
+    const groupedActivities = useMemo(() => {
+        const filtered = selectedGame === 'all'
+            ? activities
+            : activities.filter(a => a.game_id === selectedGame)
+
+        const groups: Record<string, typeof activities> = {}
+
+        filtered.forEach(activity => {
+            const date = new Date(activity.created_at)
+            let dateStr = format(date, 'MMM dd, yyyy')
+            if (isToday(date)) dateStr = 'Today'
+            else if (isYesterday(date)) dateStr = 'Yesterday'
+
+            if (!groups[dateStr]) groups[dateStr] = []
+            groups[dateStr].push(activity)
+        })
+
+        return Object.entries(groups).map(([date, entries]) => ({ date, entries }))
+    }, [activities, selectedGame])
 
     return (
         <div className="min-h-screen">
@@ -89,11 +48,15 @@ export default function Logs() {
                         onSelectionChange={(keys) => setSelectedGame(Array.from(keys)[0] as string)}
                         classNames={{
                             base: "w-48",
-                            trigger: "bg-bg-elevated border-white/10",
+                            trigger: "bg-bg-elevated border-white/10 h-10 min-h-unit-10 rounded-lg hover:border-primary-500/30 transition-colors",
+                            value: "text-gray-200",
+                            popoverContent: "bg-bg-elevated border-white/10"
                         }}
                     >
-                        {games.map((game) => (
-                            <SelectItem key={game.key}>{game.label}</SelectItem>
+                        {filterOptions.map((opt) => (
+                            <SelectItem key={opt.key} className="text-gray-300 data-[hover=true]:bg-white/5 data-[hover=true]:text-white">
+                                {opt.label}
+                            </SelectItem>
                         ))}
                     </Select>
                 }
@@ -101,33 +64,45 @@ export default function Logs() {
 
             <div className="p-8">
                 {/* History Timeline */}
-                <div className="space-y-8">
-                    {mockHistory.map((group) => (
-                        <div key={group.date}>
-                            {/* Date header */}
-                            <h3 className="text-sm font-semibold text-gray-400 mb-4 uppercase tracking-wide">
-                                {group.date}
-                            </h3>
+                <div className="space-y-8 relative">
+                    {/* Vertical Timeline Guide */}
+                    <div className="absolute left-8 top-0 bottom-0 w-px bg-white/5 hidden md:block" />
 
-                            {/* Entries */}
-                            <Card className="glass-card">
-                                <CardBody className="divide-y divide-white/5 p-0">
+                    {groupedActivities.length > 0 ? (
+                        groupedActivities.map((group) => (
+                            <div key={group.date} className="space-y-4 relative">
+                                <div className="flex items-center gap-4 bg-bg-primary/50 backdrop-blur-md sticky top-0 py-2 z-10 px-4 -mx-4 rounded-xl">
+                                    <div className="w-8 h-8 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center flex-shrink-0">
+                                        {/* Assuming Clock is an imported icon component, e.g., from 'lucide-react' */}
+                                        {/* <Clock className="w-4 h-4 text-primary-400" /> */}
+                                    </div>
+                                    <h2 className="text-lg font-bold text-white tracking-tight">{group.date}</h2>
+                                    <div className="h-px bg-white/5 flex-1" />
+                                </div>
+
+                                <div className="space-y-2 relative">
                                     {group.entries.map((entry) => (
-                                        <div key={entry.id} className="px-4">
-                                            <HistoryListItem entry={entry} />
+                                        <div key={entry.id} className="group relative">
+                                            {/* Dot on timeline */}
+                                            <div className="absolute left-[31px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white/10 group-hover:bg-primary-500 transition-colors hidden md:block z-20" />
+
+                                            <div className="pl-0 md:pl-16">
+                                                <HistoryListItem entry={{
+                                                    ...entry,
+                                                    status: entry.status as any,
+                                                    created_at: format(new Date(entry.created_at), 'HH:mm')
+                                                }} />
+                                            </div>
                                         </div>
                                     ))}
-                                </CardBody>
-                            </Card>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                            <p className="text-gray-500">No activity logs found.</p>
                         </div>
-                    ))}
-                </div>
-
-                {/* Load more */}
-                <div className="text-center mt-8">
-                    <button className="text-primary-400 hover:text-primary-300 text-sm font-medium transition-colors">
-                        Load more...
-                    </button>
+                    )}
                 </div>
             </div>
         </div>

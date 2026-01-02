@@ -21,3 +21,21 @@ export async function getSystemInfo(): Promise<SystemInfo> {
     }
   }
 }
+
+export async function getDeviceName(): Promise<string> {
+  try {
+    return await invoke<string>('get_device_name')
+  } catch (error) {
+    console.error('Failed to get device name:', error)
+    return 'Unknown Device'
+  }
+}
+
+export async function setDeviceName(name: string): Promise<boolean> {
+  try {
+    return await invoke<boolean>('set_device_name', { name })
+  } catch (error) {
+    console.error('Failed to set device name:', error)
+    return false
+  }
+}

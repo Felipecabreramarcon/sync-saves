@@ -4,8 +4,11 @@ use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
 pub fn init_db(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let app_dir = app.path().app_data_dir().expect("failed to get app data dir");
-    
+    let app_dir = app
+        .path()
+        .app_data_dir()
+        .expect("failed to get app data dir");
+
     // Create app dir if not exists
     if !app_dir.exists() {
         fs::create_dir_all(&app_dir)?;
@@ -71,7 +74,10 @@ fn create_tables(conn: &Connection) -> Result<()> {
 }
 
 pub fn get_db_path(app: &AppHandle) -> PathBuf {
-    let app_dir = app.path().app_data_dir().expect("failed to get app data dir");
+    let app_dir = app
+        .path()
+        .app_data_dir()
+        .expect("failed to get app data dir");
     app_dir.join("sync_saves.db")
 }
 

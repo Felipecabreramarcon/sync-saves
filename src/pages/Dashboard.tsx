@@ -1,52 +1,79 @@
-import { Gamepad2, Cloud, Monitor } from 'lucide-react'
-import { Button } from '@heroui/react'
+import { useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Gamepad2, Cloud, Monitor, Calendar } from 'lucide-react'
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip as ChartTooltip,
+    ResponsiveContainer
+} from 'recharts'
+import { format, subDays, startOfDay, isSameDay } from 'date-fns'
 import PageHeader from '@/components/layout/PageHeader'
-import { useGamesStore, type SyncActivity } from '@/stores/gamesStore'
+import { useGamesStore } from '@/stores/gamesStore'
+import { useAuthStore } from '@/stores/authStore'
 import StatCard from '@/components/features/StatCard'
 import ActivityItem from '@/components/features/ActivityItem'
-
-// Mock data for development
-const mockActivities: SyncActivity[] = [
-    {
-        id: '1',
-        game_id: 'elden-ring',
-        game_name: 'Elden Ring',
-        game_cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.webp',
-        action: 'upload',
-        status: 'success',
-        version: 42,
-        created_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(), // 2 mins ago
-    },
-    {
-        id: '2',
-        game_id: 'cyberpunk',
-        game_name: 'Cyberpunk 2077',
-        game_cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co4hku.webp',
-        action: 'download',
-        status: 'success',
-        version: 102,
-        created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(), // 1 hour ago
-    },
-    {
-        id: '3',
-        game_id: 'stardew',
-        game_name: 'Stardew Valley',
-        game_cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/xrpmydnu9rpxvxfjkiu7.webp',
-        action: 'upload',
-        status: 'pending',
-        version: 55,
-        created_at: new Date().toISOString(), // now
-    },
-]
+import { SaveButton } from '@/components/common/SaveButton'
+import { Card, CardContent } from '@/components/common/Card'
 
 export default function Dashboard() {
-    const { totalGames, totalSaves, activeDevices } = useGamesStore()
+    const {
+        games,
+        activities,
+        totalGames,
+        totalSaves,
+        activeDevices,
+        storageUsage,
+        deviceName,
+        refreshMetrics
+    } = useGamesStore()
+    const { user } = useAuthStore()
+    const navigate = useNavigate()
+
+    useEffect(() => {
+        refreshMetrics()
+    }, [refreshMetrics])
+
+    const formatSize = (bytes: number) => {
+        if (bytes === 0) return '0 B'
+        const k = 1024
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    }
+
+    const chartData = useMemo(() => {
+        // Generate last 7 days
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+            const date = subDays(new Date(), i)
+            return {
+                date: startOfDay(date),
+                label: format(date, 'MMM dd'),
+                uploads: 0,
+                downloads: 0
+            }
+        }).reverse()
+
+        activities.forEach(activity => {
+            const activityDate = new Date(activity.created_at)
+            const day = last7Days.find(d => isSameDay(d.date, activityDate))
+            if (day) {
+                if (activity.action === 'upload') day.uploads++
+                else if (activity.action === 'download') day.downloads++
+            }
+        })
+
+        return last7Days
+    }, [activities])
 
     return (
         <div className="min-h-screen">
             <PageHeader
                 title="Dashboard"
-                subtitle=""
+                subtitle={`Welcome back, ${user?.name || 'Gamer'}`}
             />
 
             <div className="p-8">
@@ -55,42 +82,109 @@ export default function Dashboard() {
                     <StatCard
                         icon={Gamepad2}
                         title="Total Games"
-                        value={totalGames || 3}
-                        subtitle="+1 this week"
+                        value={totalGames}
+                        subtitle={`${games.length} tracked locally`}
                         gradient="bg-gradient-to-br from-primary-600/20 to-primary-800/20"
                     />
                     <StatCard
                         icon={Cloud}
                         title="Cloud Saves"
-                        value={totalSaves || 47}
-                        subtitle="1.2 GB Used"
+                        value={totalSaves}
+                        subtitle={`${formatSize(storageUsage)} Used`}
                         gradient="bg-gradient-to-br from-secondary-500/20 to-secondary-600/20"
                     />
                     <StatCard
                         icon={Monitor}
                         title="Active Devices"
-                        value={activeDevices || 2}
-                        subtitle="Last active: Desktop PC"
+                        value={activeDevices}
+                        subtitle={`Primary Device: ${deviceName}`}
                         gradient="bg-gradient-to-br from-warning/20 to-orange-600/20"
                     />
                 </div>
 
-                {/* Recent Activity */}
-                <div>
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
-                        <Button
-                            variant="light"
-                            size="sm"
-                            className="text-primary-400 hover:text-primary-300 font-medium flex flex-row items-center gap-2"
-                        >
-                            View All
-                        </Button>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Activity Chart */}
+                    <div className="lg:col-span-2 space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Calendar className="w-5 h-5 text-primary-400" />
+                            <h2 className="text-lg font-semibold text-white">Sync Activity</h2>
+                        </div>
+                        <Card glass className="h-[350px] p-6">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={chartData}>
+                                    <defs>
+                                        <linearGradient id="colorUploads" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorDownloads" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                                    <XAxis
+                                        dataKey="label"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#9ca3af', fontSize: 12 }}
+                                        dy={10}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#9ca3af', fontSize: 12 }}
+                                    />
+                                    <ChartTooltip
+                                        contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #ffffff10', borderRadius: '8px' }}
+                                        itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="uploads"
+                                        stroke="#8b5cf6"
+                                        strokeWidth={3}
+                                        fillOpacity={1}
+                                        fill="url(#colorUploads)"
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="downloads"
+                                        stroke="#06b6d4"
+                                        strokeWidth={3}
+                                        fillOpacity={1}
+                                        fill="url(#colorDownloads)"
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </Card>
                     </div>
-                    <div className="space-y-3">
-                        {mockActivities.map((activity) => (
-                            <ActivityItem key={activity.id} activity={activity} />
-                        ))}
+
+                    {/* Recent Activity */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
+                            <SaveButton
+                                variant="light"
+                                size="sm"
+                                radius="lg"
+                                className="text-primary-400 hover:text-primary-300 font-bold tracking-wide"
+                                onPress={() => navigate('/logs')}
+                            >
+                                View All
+                            </SaveButton>
+                        </div>
+                        <div className="space-y-3">
+                            {activities.length > 0 ? (
+                                activities.slice(0, 5).map((activity) => (
+                                    <ActivityItem key={activity.id} activity={activity} />
+                                ))
+                            ) : (
+                                <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                                    <p className="text-gray-500">No activity yet. Sync a game to see it here!</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
