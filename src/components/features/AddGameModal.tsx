@@ -57,32 +57,28 @@ export default function AddGameModal({ isOpen, onClose, onAdd }: AddGameModalPro
                 </ModalHeader>
                 <ModalBody className="py-6">
                     <div className="space-y-4">
-                        <Input
-                            label="Game Name"
-                            placeholder="Enter game name..."
-                            value={newGameName}
-                            onValueChange={setNewGameName}
-                            classNames={{
-                                inputWrapper: "bg-bg-elevated border-white/10",
-                            }}
-                        />
+                        <div className="space-y-1">
+                            <label className="text-sm text-gray-400">Game Name</label>
+                            <Input
+                                placeholder="Enter game name..."
+                                value={newGameName}
+                                onValueChange={setNewGameName}
+                            />
+                        </div>
                         <div>
                             <label className="text-sm text-gray-400 mb-2 block">Save Folder Location</label>
-                            <div className="flex gap-2">
+                            <div className="flex items-center gap-2">
                                 <Input
                                     placeholder="Select folder..."
                                     value={newGamePath}
                                     onValueChange={setNewGamePath}
-                                    classNames={{
-                                        base: "flex-1",
-                                        inputWrapper: "bg-bg-elevated border-white/10",
-                                    }}
+                                    className="flex-1"
                                     readOnly
                                 />
                                 <Button
                                     isIconOnly
                                     variant="bordered"
-                                    className="border-white/10 flex flex-row items-center justify-center"
+                                    className="border-white/10"
                                     onPress={handleSelectFolder}
                                 >
                                     <FolderOpen className="w-4 h-4" />

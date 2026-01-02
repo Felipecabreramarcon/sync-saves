@@ -64,7 +64,7 @@ export default function Login() {
                     {/* Google Login Button */}
                     <Button
                         size="lg"
-                        className="w-full bg-white hover:bg-white/90 text-gray-900 font-bold mb-4 h-14 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] group active:scale-[0.98] flex flex-row items-center justify-center gap-3"
+                        className="w-full bg-white hover:bg-white/90 text-gray-900 font-bold mb-4 h-14 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] group active:scale-[0.98]"
                         startContent={
                             <div className="bg-gray-100 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -101,7 +101,7 @@ export default function Login() {
                     {/* Email Login Button */}
                     <Button
                         size="lg"
-                        className="w-full bg-gradient-to-br from-primary-600 to-primary-800 text-white font-bold h-14 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(147,51,234,0.4)] active:scale-[0.98] border border-primary-400/20 flex flex-row items-center justify-center gap-3"
+                        className="w-full bg-gradient-to-br from-primary-600 to-primary-800 text-white font-bold h-14 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(147,51,234,0.4)] active:scale-[0.98] border border-primary-400/20"
                         startContent={<Mail className="w-5 h-5 text-primary-200" />}
                         onPress={handleEmailLogin}
                     >

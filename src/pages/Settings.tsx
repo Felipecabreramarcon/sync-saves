@@ -46,14 +46,13 @@ export default function Settings() {
                             This Device
                         </h3>
                         <div className="space-y-4">
-                            <Input
-                                label="Device Name"
-                                placeholder="Enter device name..."
-                                defaultValue={sysInfo?.hostname || "Desktop PC"}
-                                classNames={{
-                                    inputWrapper: "bg-bg-elevated border-white/10",
-                                }}
-                            />
+                            <div className="space-y-1">
+                                <label className="text-sm text-gray-400">Device Name</label>
+                                <Input
+                                    placeholder="Enter device name..."
+                                    defaultValue={sysInfo?.hostname || "Desktop PC"}
+                                />
+                            </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-sm text-gray-400 mb-1 block">Machine Info</label>
@@ -82,18 +81,18 @@ export default function Settings() {
                             Sync Settings
                         </h3>
                         <div className="space-y-4">
-                            <Select
-                                label="Sync Interval"
-                                placeholder="Select interval"
-                                defaultSelectedKeys={['5']}
-                                classNames={{
-                                    trigger: "bg-bg-elevated border-white/10",
-                                }}
-                            >
-                                {syncIntervals.map((interval) => (
-                                    <SelectItem key={interval.key}>{interval.label}</SelectItem>
-                                ))}
-                            </Select>
+                            <div className="space-y-1">
+                                <label className="text-sm text-gray-400">Sync Interval</label>
+                                <Select
+                                    placeholder="Select interval"
+                                    defaultSelectedKeys={['5']}
+                                    variant="bordered"
+                                >
+                                    {syncIntervals.map((interval) => (
+                                        <SelectItem key={interval.key}>{interval.label}</SelectItem>
+                                    ))}
+                                </Select>
+                            </div>
 
                             <div className="flex items-center justify-between py-2">
                                 <div className="flex items-center gap-3">
@@ -190,7 +189,6 @@ export default function Settings() {
                                             size="sm"
                                             variant="light"
                                             color="danger"
-                                            className="flex flex-row items-center justify-center"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
