@@ -12,8 +12,9 @@ import {
 } from 'lucide-react'
 import PageHeader from '@/components/layout/PageHeader'
 import { type Game, useGamesStore } from '@/stores/gamesStore'
+import { useShallow } from 'zustand/react/shallow'
 import GameCard from '@/components/features/GameCard'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import AddGameCard from '@/components/features/AddGameCard'
 import AddGameModal from '@/components/features/AddGameModal'
 
@@ -96,7 +97,13 @@ const mockGames: Game[] = [
 export default function Games() {
     const [searchQuery, setSearchQuery] = useState('')
     const { isOpen, onOpen, onClose } = useDisclosure()
-    const { games, loadGames, addGame } = useGamesStore()
+    const { games, loadGames, addGame } = useGamesStore(
+        useShallow(state => ({
+            games: state.games,
+            loadGames: state.loadGames,
+            addGame: state.addGame
+        }))
+    )
 
     useEffect(() => {
         loadGames()
@@ -105,9 +112,9 @@ export default function Games() {
     // Use games from store instead of mockGames
     const displayGames = games.length > 0 ? games : mockGames
 
-    const filteredGames = displayGames.filter(game =>
+    const filteredGames = useMemo(() => displayGames.filter(game =>
         game.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    ), [displayGames, searchQuery])
 
     const handleAddGame = (gameData: { name: string; path: string; autoSync: boolean }) => {
         addGame({
