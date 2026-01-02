@@ -19,7 +19,7 @@ Este documento rastreia o progresso real para o lançamento do MVP (Minimum Viab
 - [x] Migração para Tailwind CSS v4 (nova sintaxe @import/@theme)
 - [x] Atualização para React 19
 
-### 🦀 Backend Rust & Tauri (95%)
+### 🦀 Backend Rust & Tauri (100%)
 - [x] Core Setup (Tauri v2)
 - [x] SQLite: Inicialização e Schema
 - [x] SQLite: Persistência de Jogos (CRUD Real)
@@ -30,14 +30,15 @@ Este documento rastreia o progresso real para o lançamento do MVP (Minimum Viab
 - [x] Serviço de Extração (Restore de saves)
 - [x] Monitoramento em Tempo Real (File Watcher funcional)
 - [x] Comando delete_game para remoção de jogos
+- [x] Implementação de Launch on Startup (autostart)
 
-### ☁️ Infraestrutura Supabase (90%)
+### ☁️ Infraestrutura Supabase (100%)
 - [x] Schema do PostgreSQL
 - [x] Autenticação Real (Google OAuth 2.0 Integration)
 - [x] Sincronização de Metadados (Cloud DB via Supabase)
 - [x] Gestão de Arquivos (Storage Upload/Download integrados)
 - [x] Gestão de Dispositivos (Registro automático, listagem, remoção)
-- [ ] Políticas de RLS (Row Level Security) refinadas
+- [x] Políticas de RLS (Row Level Security) refinadas
 
 ---
 
@@ -88,7 +89,12 @@ Este documento rastreia o progresso real para o lançamento do MVP (Minimum Viab
 
 ---
 
-## ⚠️ Dívida Técnica (Placeholders Atuais)
-- [ ] Implementar Launch on Startup real (autostart).
-- [ ] Validação real de paths de sistema protegidos.
-- [ ] Políticas RLS completas no Supabase.
+## ⚠️ Dívida Técnica (Resolvida)
+- [x] Implementar Launch on Startup real (autostart).
+- [x] Validação real de paths de sistema protegidos.
+- [x] Políticas RLS completas no Supabase.
+
+## 🚀 Próximos Passos (Pós-MVP)
+- [ ] Suporte a múltiplos perfis de save por jogo.
+- [ ] Integração com Steam API para buscar nomes e capas automaticamente.
+- [ ] Versão Mobile (React Native ou Tauri Mobile).

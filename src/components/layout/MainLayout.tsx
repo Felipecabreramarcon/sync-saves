@@ -16,7 +16,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <main
                 className={`
                     min-h-screen transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]
-                    ${isSidebarCollapsed ? 'ml-[72px]' : 'ml-[240px]'}
+                    ${isSidebarCollapsed ? 'ml-18' : 'ml-60'}
                 `}
             >
                 {children || <Outlet />}

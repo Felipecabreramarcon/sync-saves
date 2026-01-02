@@ -109,7 +109,7 @@ export default function Dashboard() {
                             <Calendar className="w-5 h-5 text-primary-400" />
                             <h2 className="text-lg font-semibold text-white">Sync Activity</h2>
                         </div>
-                        <Card glass className="h-[350px] p-6">
+                        <Card glass className="h-87.5 p-6">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={chartData}>
                                     <defs>

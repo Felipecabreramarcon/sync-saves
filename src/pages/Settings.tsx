@@ -330,7 +330,7 @@ export default function Settings() {
                                 {/* Custom Progress Bar */}
                                 <div className="h-2 bg-gray-800/50 rounded-full overflow-hidden">
                                     <div 
-                                        className="h-full bg-gradient-to-r from-primary-500 to-primary-400 shadow-lg shadow-primary-500/50 transition-all duration-300"
+                                        className="h-full bg-linear-to-r from-primary-500 to-primary-400 shadow-lg shadow-primary-500/50 transition-all duration-300"
                                         style={{ width: `${storagePercentage}%` }}
                                     />
                                 </div>
@@ -371,7 +371,7 @@ export default function Settings() {
                                     <div className="text-center py-8 text-gray-500">No devices registered yet</div>
                                 ) : (
                                     devices.map((device) => {
-                                        const DeviceIcon = osIcons[device.os] || Monitor
+                                        const DeviceIcon = (device.os && osIcons[device.os]) || Monitor
                                         const isOnline = device.is_current || (Date.now() - new Date(device.last_seen_at).getTime() < 300000) // 5 min
                                         return (
                                             <div
@@ -405,7 +405,7 @@ export default function Settings() {
                                                             </Chip>
                                                         </div>
                                                         <p className="text-[11px] text-gray-500 font-medium mt-0.5">
-                                                            {device.os.charAt(0).toUpperCase() + device.os.slice(1)} • Last seen {getRelativeTime(device.last_seen_at)}
+                                                            {device.os ? (device.os.charAt(0).toUpperCase() + device.os.slice(1)) : 'Unknown OS'} • Last seen {getRelativeTime(device.last_seen_at)}
                                                         </p>
                                                     </div>
                                                 </div>

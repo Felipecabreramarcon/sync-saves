@@ -32,7 +32,7 @@ export default function Login() {
                         opacity: [0.3, 0.5, 0.3]
                     }}
                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary-600/20 rounded-full blur-[120px]"
+                    className="absolute top-[-20%] left-[-10%] w-150 h-150 bg-primary-600/20 rounded-full blur-[120px]"
                 />
                 <motion.div
                     animate={{
@@ -41,7 +41,7 @@ export default function Login() {
                         opacity: [0.2, 0.4, 0.2]
                     }}
                     transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                    className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-secondary-600/10 rounded-full blur-[100px]"
+                    className="absolute bottom-[-10%] right-[-5%] w-125 h-125 bg-secondary-600/10 rounded-full blur-[100px]"
                 />
             </div>
 
@@ -55,7 +55,7 @@ export default function Login() {
                         transition={{ delay: 0.1 }}
                         className="flex flex-col items-center mb-10"
                     >
-                        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mb-6 shadow-xl shadow-primary-500/30 relative group">
+                        <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-primary-500 to-primary-700 flex items-center justify-center mb-6 shadow-xl shadow-primary-500/30 relative group">
                             <Cloud className="w-10 h-10 text-white group-hover:scale-110 transition-transform duration-300" />
                             <motion.span
                                 initial={{ scale: 0 }}

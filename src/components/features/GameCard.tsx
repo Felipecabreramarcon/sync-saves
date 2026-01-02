@@ -70,7 +70,7 @@ export default function GameCard({ game }: { game: Game }) {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary-600/20 to-primary-800/20 flex items-center justify-center p-4">
+                    <div className="w-full h-full bg-linear-to-br from-primary-600/20 to-primary-800/20 flex items-center justify-center p-4">
                         <span className="text-white/20 font-bold text-xl uppercase tracking-widest">{game.name.slice(0, 3)}</span>
                     </div>
                 )}
@@ -81,18 +81,18 @@ export default function GameCard({ game }: { game: Game }) {
                 </span>
 
                 {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-bg-card via-transparent to-transparent opacity-80" />
+                <div className="absolute inset-0 bg-linear-to-t from-bg-card via-transparent to-transparent opacity-80" />
             </div>
 
             <CardContent className="p-4 pt-2">
                 {/* Title and status */}
-                <div className="flex items-start justify-between mb-2 translate-y-[-1rem]">
+                <div className="flex items-start justify-between mb-2 -translate-y-4">
                     <div className="w-full">
                         <h3 className="font-bold text-white text-lg leading-tight truncate pr-2 drop-shadow-md">{game.name}</h3>
                     </div>
                 </div>
 
-                <div className="mt-[-0.5rem]">
+                <div className="-mt-2">
                     {/* Path */}
                     <div className="flex items-center gap-2 mb-4 group/path">
                         <Folder className="w-3 h-3 text-gray-500 shrink-0 group-hover/path:text-primary-400 transition-colors" />
@@ -113,34 +113,37 @@ export default function GameCard({ game }: { game: Game }) {
                             </div>
                         </div>
                         <div className="flex items-center gap-1">
-                            <Tooltip content="Sync Now" closeDelay={0}>
-                                <Button
-                                    isIconOnly
-                                    size="sm"
-                                    variant="light"
-                                    onPress={handleSync}
-                                    isDisabled={game.status === 'syncing'}
-                                >
-                                    <RefreshCw className={`w-4 h-4 ${game.status === 'syncing' ? 'animate-spin text-primary-400' : ''}`} />
-                                </Button>
+                            <Tooltip closeDelay={0}>
+                                <Tooltip.Trigger>
+                                    <Button
+                                        isIconOnly
+                                        size="sm"
+                                        onPress={handleSync}
+                                        isDisabled={game.status === 'syncing'}
+                                    >
+                                        <RefreshCw className={`w-4 h-4 ${game.status === 'syncing' ? 'animate-spin text-primary-400' : ''}`} />
+                                    </Button>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>Sync Now</Tooltip.Content>
                             </Tooltip>
-                            <Tooltip content="Restore from Cloud" closeDelay={0}>
-                                <Button
-                                    isIconOnly
-                                    size="sm"
-                                    variant="light"
-                                    onPress={handleRestore}
-                                    isDisabled={game.status === 'syncing'}
-                                >
-                                    <CloudDownload className="w-4 h-4" />
-                                </Button>
+                            <Tooltip closeDelay={0}>
+                                <Tooltip.Trigger>
+                                    <Button
+                                        isIconOnly
+                                        size="sm"
+                                        onPress={handleRestore}
+                                        isDisabled={game.status === 'syncing'}
+                                    >
+                                        <CloudDownload className="w-4 h-4" />
+                                    </Button>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>Restore from Cloud</Tooltip.Content>
                             </Tooltip>
                             <Dropdown>
                                 <DropdownTrigger>
                                     <Button
                                         isIconOnly
                                         size="sm"
-                                        variant="light"
                                     >
                                         <MoreVertical className="w-4 h-4" />
                                     </Button>
@@ -148,24 +151,30 @@ export default function GameCard({ game }: { game: Game }) {
                                 <DropdownMenu aria-label="Game actions">
                                     <DropdownItem
                                         key="open"
-                                        startContent={<FolderOpen className="w-4 h-4" />}
                                         onPress={handleOpenFolder}
                                     >
-                                        Open Folder
+                                        <div className="flex items-center gap-2">
+                                            <FolderOpen className="w-4 h-4" />
+                                            <span>Open Folder</span>
+                                        </div>
                                     </DropdownItem>
                                     <DropdownItem
                                         key="settings"
-                                        startContent={<Settings className="w-4 h-4" />}
                                     >
-                                        Settings
+                                        <div className="flex items-center gap-2">
+                                            <Settings className="w-4 h-4" />
+                                            <span>Settings</span>
+                                        </div>
                                     </DropdownItem>
                                     <DropdownItem
                                         key="delete"
-                                        startContent={<Trash2 className="w-4 h-4" />}
-                                        color="danger"
+                                        className="text-danger"
                                         onPress={handleDelete}
                                     >
-                                        Remove Game
+                                        <div className="flex items-center gap-2">
+                                            <Trash2 className="w-4 h-4" />
+                                            <span>Remove Game</span>
+                                        </div>
                                     </DropdownItem>
                                 </DropdownMenu>
                             </Dropdown>

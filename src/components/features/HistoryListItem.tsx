@@ -25,19 +25,19 @@ export default function HistoryListItem({ entry }: { entry: HistoryEntry }) {
     const ActionIcon = action.icon
 
     return (
-        <div className="flex items-center gap-4 py-3 group hover:bg-white/5 mx-[-1rem] px-[1rem] transition-colors rounded-lg">
+        <div className="flex items-center gap-4 py-3 group hover:bg-white/5 -mx-4 px-4 transition-colors rounded-lg">
             {/* Time */}
             <span className="text-xs font-bold text-gray-500 w-12 shrink-0 font-mono tracking-wide">{entry.created_at}</span>
 
             {/* Game */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
                 <Avatar
-                    src={entry.game_cover}
-                    name={entry.game_name}
                     size="sm"
-                    radius="md"
-                    className="border border-white/10 group-hover:border-white/30 transition-colors"
-                />
+                    className="border border-white/10 group-hover:border-white/30 transition-colors rounded-md"
+                >
+                    <Avatar.Image src={entry.game_cover} alt={entry.game_name} />
+                    <Avatar.Fallback>{entry.game_name.charAt(0)}</Avatar.Fallback>
+                </Avatar>
                 <span className="text-white font-semibold truncate text-sm group-hover:text-primary-300 transition-colors">{entry.game_name}</span>
             </div>
 
@@ -63,10 +63,10 @@ export default function HistoryListItem({ entry }: { entry: HistoryEntry }) {
                 <div className={cn(
                     "w-6 h-6 rounded-full flex items-center justify-center border",
                     entry.status === 'success'
-                        ? "bg-success/20 border-success/30 text-success"
+                        ? "bg-success-soft-hover border-success/30 text-success"
                         : entry.status === 'pending'
-                            ? "bg-warning/20 border-warning/30 text-warning animate-pulse"
-                            : "bg-danger/20 border-danger/30 text-danger"
+                            ? "bg-warning-soft-hover border-warning/30 text-warning animate-pulse"
+                            : "bg-danger-soft-hover border-danger/30 text-danger"
                 )}>
                     {entry.status === 'success'
                         ? <div className="w-2 h-2 bg-current rounded-full" />

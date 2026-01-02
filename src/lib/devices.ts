@@ -1,21 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from './supabase'
 import { getSystemInfo, getDeviceId } from './tauri'
+import type { Device as DbDevice } from '@/types/database'
 
-export interface Device {
-  id: string
-  user_id: string
-  name: string
-  os: 'windows' | 'linux' | 'macos'
-  machine_id: string
-  last_seen_at: string
-  created_at: string
+export interface Device extends DbDevice {
   is_current?: boolean
 }
-
-// Create a generic supabase client for devices table (without strict typing)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-const devicesClient = createClient(supabaseUrl, supabaseAnonKey)
 
 /**
  * Register or update current device in Supabase
@@ -32,7 +21,7 @@ export async function registerCurrentDevice(userId: string): Promise<Device | nu
     else if (osName.includes('mac') || osName.includes('darwin')) os = 'macos'
     
     // Check if device already exists
-    const { data: existing, error: fetchError } = await devicesClient
+    const { data: existing, error: fetchError } = await (supabase as any)
       .from('devices')
       .select('*')
       .eq('user_id', userId)
@@ -46,7 +35,7 @@ export async function registerCurrentDevice(userId: string): Promise<Device | nu
     
     if (existing) {
       // Update last_seen_at
-      const { data: updated, error: updateError } = await devicesClient
+      const { data: updated, error: updateError } = await (supabase as any)
         .from('devices')
         .update({ 
           last_seen_at: new Date().toISOString(),
@@ -64,7 +53,7 @@ export async function registerCurrentDevice(userId: string): Promise<Device | nu
     }
     
     // Insert new device
-    const { data: newDevice, error: insertError } = await devicesClient
+    const { data: newDevice, error: insertError } = await (supabase as any)
       .from('devices')
       .insert({
         user_id: userId,
@@ -95,7 +84,7 @@ export async function getUserDevices(userId: string): Promise<Device[]> {
   try {
     const currentDeviceId = await getDeviceId()
     
-    const { data, error } = await devicesClient
+    const { data, error } = await (supabase as any)
       .from('devices')
       .select('*')
       .eq('user_id', userId)
@@ -107,10 +96,10 @@ export async function getUserDevices(userId: string): Promise<Device[]> {
     }
     
     // Mark current device
-    return ((data as Device[]) || []).map(device => ({
+    return ((data as any[]) || []).map(device => ({
       ...device,
       is_current: device.machine_id === currentDeviceId
-    }))
+    })) as Device[]
   } catch (error) {
     console.error('Failed to get devices:', error)
     return []
@@ -122,7 +111,7 @@ export async function getUserDevices(userId: string): Promise<Device[]> {
  */
 export async function renameDevice(deviceId: string, newName: string): Promise<boolean> {
   try {
-    const { error } = await devicesClient
+    const { error } = await (supabase as any)
       .from('devices')
       .update({ name: newName })
       .eq('id', deviceId)
@@ -144,7 +133,7 @@ export async function renameDevice(deviceId: string, newName: string): Promise<b
  */
 export async function removeDevice(deviceId: string): Promise<boolean> {
   try {
-    const { error } = await devicesClient
+    const { error } = await (supabase as any)
       .from('devices')
       .delete()
       .eq('id', deviceId)

@@ -24,21 +24,17 @@ export default function Sidebar() {
     const { user } = useAuthStore()
     const { isSidebarCollapsed, toggleSidebar } = useUIStore()
 
-    // Mock storage data - will come from API
-    const storageUsed = 13.5
-    const storageTotal = 20
-
     return (
         <aside
             className={`
         fixed left-0 top-0 h-screen bg-bg-secondary/50 backdrop-blur-xl border-r border-white/5
         flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] z-50
-        ${isSidebarCollapsed ? 'w-[72px]' : 'w-[240px]'}
+        ${isSidebarCollapsed ? 'w-18' : 'w-60'}
       `}
         >
             {/* Logo */}
-            <div className="p-4 flex items-center gap-3 border-b border-white/5 h-[72px]">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shrink-0 shadow-lg shadow-primary-500/20">
+            <div className="p-4 flex items-center gap-3 border-b border-white/5 h-18">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary-500 to-primary-700 flex items-center justify-center shrink-0 shadow-lg shadow-primary-500/20">
                     <Cloud className="w-5 h-5 text-white" />
                 </div>
                 {!isSidebarCollapsed && (

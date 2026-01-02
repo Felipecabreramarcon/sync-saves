@@ -74,7 +74,7 @@ export default function Logs() {
                         groupedActivities.map((group) => (
                             <div key={group.date} className="space-y-4 relative">
                                 <div className="flex items-center gap-4 bg-bg-primary/50 backdrop-blur-md sticky top-0 py-2 z-10 px-4 -mx-4 rounded-xl">
-                                    <div className="w-8 h-8 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center flex-shrink-0">
+                                    <div className="w-8 h-8 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center shrink-0">
                                         {/* Assuming Clock is an imported icon component, e.g., from 'lucide-react' */}
                                         {/* <Clock className="w-4 h-4 text-primary-400" /> */}
                                     </div>
@@ -86,7 +86,7 @@ export default function Logs() {
                                     {group.entries.map((entry) => (
                                         <div key={entry.id} className="group relative">
                                             {/* Dot on timeline */}
-                                            <div className="absolute left-[31px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white/10 group-hover:bg-primary-500 transition-colors hidden md:block z-20" />
+                                            <div className="absolute left-7.75 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white/10 group-hover:bg-primary-500 transition-colors hidden md:block z-20" />
 
                                             <div className="pl-0 md:pl-16">
                                                 <HistoryListItem entry={{

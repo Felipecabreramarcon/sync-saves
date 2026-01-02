@@ -7,8 +7,9 @@ import {
     Button
 } from '@heroui/react'
 import { open } from '@tauri-apps/plugin-dialog'
-import { FolderOpen, Gamepad2, Info, Plus } from 'lucide-react'
+import { FolderOpen, Gamepad2, Info, Plus, AlertTriangle } from 'lucide-react'
 import { SaveInput } from '@/components/common/SaveInput'
+import { isProtectedPath } from '@/lib/utils'
 
 interface AddGameModalProps {
     isOpen: boolean
@@ -111,6 +112,14 @@ export default function AddGameModal({ isOpen, onClose, onAdd }: AddGameModalPro
                                             <FolderOpen className="w-5 h-5" />
                                         </Button>
                                     </div>
+                                    {newGamePath && isProtectedPath(newGamePath) && (
+                                        <div className="mt-2 p-3 rounded-lg bg-warning-500/10 border border-warning-500/20 flex items-start gap-3">
+                                            <AlertTriangle className="w-4 h-4 text-warning-500 shrink-0 mt-0.5" />
+                                            <p className="text-[11px] text-warning-200 leading-relaxed">
+                                                This path appears to be a protected system folder. Syncing might fail due to permission restrictions.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="p-4 rounded-xl bg-bg-elevated/30 border border-white/5 flex items-center justify-between">
