@@ -111,7 +111,7 @@ export default function GameCard({ game }: { game: Game }) {
     
 
     return (
-        <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl border-primary-600/20 flex flex-col hover:border-primary-500/50 transition-all duration-300 overflow-hidden group">
+        <Card className="bg-bg-elevated/40 backdrop-blur-xl pt-0 px-0 border border-white/5 rounded-2xl border-primary-600/20 flex flex-col hover:border-primary-500/50 transition-all duration-300 overflow-hidden group">
             {/* Cover Image */}
             <div className="relative h-36 overflow-hidden shrink-0">
                 {game.cover_url ? (
@@ -137,11 +137,11 @@ export default function GameCard({ game }: { game: Game }) {
 
             <Card.Content className="p-4 pt-2 overflow-hidden">
                 {/* Title and status */}
-                <div className="mb-2 -translate-y-4 min-w-0">
+                <div className="mb-1 min-w-0">
                     <h3 className="font-bold text-white text-lg leading-tight truncate drop-shadow-md">{game.name}</h3>
                 </div>
 
-                <div className="-mt-2 min-w-0">
+                <div className=" min-w-0">
                     {/* Path */}
                     <div className="flex items-center gap-2 mb-4 group/path min-w-0">
                         <Folder className="w-3 h-3 text-gray-500 shrink-0 group-hover/path:text-primary-400 transition-colors" />
