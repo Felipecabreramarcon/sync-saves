@@ -1,6 +1,11 @@
-import { supabase } from '@/lib/supabase'
+import { supabase as supabaseClient } from '@/lib/supabase'
+import type { Database } from '@/types/database'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Game as LocalGame, SyncActivity } from '@/stores/gamesStore'
 import { formatBytes as formatBytesUtil, timeAgo } from '@/lib/utils'
+
+// Force type inference
+const supabase = supabaseClient as SupabaseClient<Database>
 
 export async function sha256Base64(data: ArrayBuffer): Promise<string> {
   const hash = await crypto.subtle.digest('SHA-256', data)
@@ -11,8 +16,8 @@ export async function sha256Base64(data: ArrayBuffer): Promise<string> {
 }
 
 export async function ensureCloudGameId(userId: string, game: Pick<LocalGame, 'name' | 'slug' | 'cover_url'>): Promise<string> {
-  const existingRes = await (supabase as any)
-    .from('games')
+  const existingRes = await (supabase
+    .from('games') as any)
     .select('id')
     .eq('user_id', userId)
     .eq('slug', game.slug)
@@ -22,10 +27,10 @@ export async function ensureCloudGameId(userId: string, game: Pick<LocalGame, 'n
     throw existingRes.error
   }
 
-  if (existingRes.data?.id) return existingRes.data.id as string
+  if (existingRes.data?.id) return existingRes.data.id
 
-  const insertRes = await (supabase as any)
-    .from('games')
+  const insertRes = await (supabase
+    .from('games') as any)
     .insert({
       user_id: userId,
       name: game.name,
@@ -36,7 +41,7 @@ export async function ensureCloudGameId(userId: string, game: Pick<LocalGame, 'n
     .single()
 
   if (insertRes.error) throw insertRes.error
-  return insertRes.data.id as string
+  return insertRes.data.id
 }
 
 export async function upsertGamePath(params: {
@@ -45,8 +50,8 @@ export async function upsertGamePath(params: {
   localPath: string
   syncEnabled: boolean
 }) {
-  const res = await (supabase as any)
-    .from('game_paths')
+  const res = await (supabase
+    .from('game_paths') as any)
     .upsert(
       {
         game_id: params.cloudGameId,
@@ -64,8 +69,8 @@ export async function upsertGamePath(params: {
 }
 
 export async function getNextVersion(cloudGameId: string): Promise<number> {
-  const res = await (supabase as any)
-    .from('save_versions')
+  const res = await (supabase
+    .from('save_versions') as any)
     .select('version')
     .eq('game_id', cloudGameId)
     .order('version', { ascending: false })
@@ -86,14 +91,14 @@ export async function createSaveVersion(params: {
   checksum: string
 }) {
   // unset previous latest
-  await (supabase as any)
-    .from('save_versions')
+  await (supabase
+    .from('save_versions') as any)
     .update({ is_latest: false })
     .eq('game_id', params.cloudGameId)
     .eq('is_latest', true)
 
-  const res = await (supabase as any)
-    .from('save_versions')
+  const res = await (supabase
+    .from('save_versions') as any)
     .insert({
       game_id: params.cloudGameId,
       device_id: params.deviceId,
@@ -120,8 +125,8 @@ export async function createSyncLog(params: {
   durationMs: number | null
   fileSize: number | null
 }) {
-  const res = await (supabase as any)
-    .from('sync_logs')
+  const res = await (supabase
+    .from('sync_logs') as any)
     .insert({
       game_id: params.cloudGameId,
       device_id: params.deviceId,
@@ -136,7 +141,7 @@ export async function createSyncLog(params: {
     .single()
 
   if (res.error) throw res.error
-  return res.data
+  return res.data as { id: string, created_at: string }
 }
 
 export async function fetchActivitiesFromCloud(params: {
@@ -146,9 +151,25 @@ export async function fetchActivitiesFromCloud(params: {
 }): Promise<SyncActivity[]> {
   const limit = params.limit ?? 200
 
-  let query = (supabase as any)
-    .from('sync_logs')
-    .select('id, game_id, device_id, action, version, status, message, created_at, games(name, cover_url), devices(name)')
+  let query = (supabase
+    .from('sync_logs') as any)
+    .select(`
+        id, 
+        game_id, 
+        device_id, 
+        action, 
+        version, 
+        status, 
+        message, 
+        created_at, 
+        games (
+            name, 
+            cover_url
+        ), 
+        devices (
+            name
+        )
+    `)
     .order('created_at', { ascending: false })
     .limit(limit)
 
@@ -159,18 +180,31 @@ export async function fetchActivitiesFromCloud(params: {
   const res = await query
   if (res.error) throw res.error
 
-  return ((res.data as any[]) || []).map((row) => ({
-    id: row.id,
-    game_id: row.game_id,
-    game_name: row.games?.name ?? 'Unknown Game',
-    game_cover: row.games?.cover_url ?? undefined,
-    action: row.action,
-    status: row.status,
-    version: row.version ?? undefined,
-    message: row.message ?? undefined,
-    created_at: row.created_at,
-    device_name: row.devices?.name ?? undefined,
-  }))
+  // The type of res.data returned by supabase-js when using complex joins can be tricky.
+  // We'll cast carefully or rely on inference if Database types are perfect.
+  // With generic Supabase client, res.data should be inferred correctly if the query string matches strictly.
+  // However, manual mapping is often safer with 'as unknown as ...' if the join types are deep.
+  
+  const rows = res.data as any[]
+  return rows.map((row) => {
+    // Supabase join results are objects or arrays depending on relationship type (one-to-one or one-to-many).
+    // Assuming configured as Many-to-One (log belongs to game), it returns an object.
+    const game = row.games as { name: string; cover_url: string | null } | null
+    const device = row.devices as { name: string } | null
+    
+    return {
+        id: row.id,
+        game_id: row.game_id,
+        game_name: game?.name ?? 'Unknown Game',
+        game_cover: game?.cover_url ?? undefined,
+        action: row.action,
+        status: row.status,
+        version: row.version ?? undefined,
+        message: row.message ?? undefined,
+        created_at: row.created_at,
+        device_name: device?.name ?? undefined,
+    }
+  })
 }
 
 export function mapLocalActivityForUi(activity: SyncActivity): SyncActivity {
@@ -270,13 +304,33 @@ export async function fetchBackupsByGame(params: {
   const versionsPerGame = params.versionsPerGame ?? 5
 
   // NOTE: relies on FK relationships + RLS.
-  const res = await (supabase as any)
-    .from('games')
-    .select(
-      'id, name, slug, cover_url, ' +
-        'save_versions(version, created_at, file_path, file_size, is_latest, devices(name)), ' +
-        'sync_logs(status, created_at, message, action, devices(name))'
-    )
+  const res = await (supabase
+    .from('games') as any)
+    .select(`
+      id, 
+      name, 
+      slug, 
+      cover_url, 
+      save_versions (
+        version, 
+        created_at, 
+        file_path, 
+        file_size, 
+        is_latest, 
+        devices (
+            name
+        )
+      ),
+      sync_logs (
+        status, 
+        created_at, 
+        message, 
+        action, 
+        devices (
+            name
+        )
+      )
+    `)
     .eq('user_id', params.userId)
     .order('updated_at', { ascending: false })
     .order('created_at', { foreignTable: 'save_versions', ascending: false })
@@ -286,17 +340,34 @@ export async function fetchBackupsByGame(params: {
 
   if (res.error) throw res.error
 
-  const rows = (res.data as any[]) || []
-  return rows.map((g) => {
-    const versionsRaw = ((g.save_versions as any[]) || [])
-      .filter((v) => v && typeof v.version === 'number')
+  const rows = res.data
+  return rows.map((g: any) => {
+    // Explicit casting for joined relations which is safe here as Supabase returns arrays/objects based on schema
+    const versionsRawData = g.save_versions as {
+        version: number
+        created_at: string
+        file_path: string
+        file_size: number
+        is_latest: boolean
+        devices: { name: string } | null
+    }[]
+
+    const syncLogsRawData = g.sync_logs as {
+        status: 'success' | 'error' | 'pending'
+        created_at: string
+        message: string | null
+        action: 'upload' | 'download' | 'conflict' | 'skip'
+        devices: { name: string } | null
+    }[]
+
+    const versionsRaw = (versionsRawData || [])
       .map((v) => ({
         version: v.version,
         created_at: v.created_at,
         file_path: v.file_path,
         file_size: v.file_size,
         device_name: v.devices?.name ?? undefined,
-        is_latest: !!v.is_latest,
+        is_latest: v.is_latest,
       }))
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
@@ -312,7 +383,7 @@ export async function fetchBackupsByGame(params: {
         }
       : undefined
 
-    const lastErrorRow = ((g.sync_logs as any[]) || []).find((l) => l.status === 'error')
+    const lastErrorRow = (syncLogsRawData || []).find((l) => l.status === 'error')
     const last_error = lastErrorRow
       ? {
           created_at: lastErrorRow.created_at,

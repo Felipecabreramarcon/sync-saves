@@ -38,6 +38,7 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
       delete syncDebounceTimers[gameId]
     }
 
+
     // Wrap the actual sync logic to be called after debounce
     const executeSync = async () => {
       const { syncGame } = await import('@/lib/tauri-games')
@@ -49,7 +50,6 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
         upsertGamePath,
         getNextVersion,
         createSaveVersion,
-        createSyncLog,
         sha256Base64,
       } = await import('@/lib/cloudSync')
       const { registerCurrentDevice } = await import('@/lib/devices')
@@ -138,16 +138,6 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
         })
 
         const durationMs = Math.round(performance.now() - startedAt)
-        const insertedLog = await createSyncLog({
-          cloudGameId,
-          deviceId: cloudDeviceId,
-          action: 'upload',
-          version,
-          status: 'success',
-          message: 'Sync successful',
-          durationMs,
-          fileSize: blob.size,
-        })
 
         // 5. Update Game State
         const now = new Date().toISOString()
@@ -156,18 +146,17 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
           last_synced_at: now
         })
 
-        // 6. Add Activity (local cache)
-        useGamesStore.getState().addActivity({
-          id: insertedLog?.id ?? Math.random().toString(36).substr(2, 9),
-          game_id: cloudGameId,
-          game_name: game.name,
-          game_cover: game.cover_url,
-          action: 'upload',
-          status: 'success',
-          version,
-          created_at: insertedLog?.created_at ?? now,
-          device_name: device?.name ?? useGamesStore.getState().deviceName,
-          message: 'Sync successful'
+        // 6. Centralized Logging
+        await useGamesStore.getState().logActivity({
+            gameId,
+            cloudGameId,
+            deviceId: cloudDeviceId,
+            action: 'upload',
+            status: 'success',
+            version,
+            message: 'Sync successful',
+            durationMs,
+            fileSize: blob.size
         })
 
         set({ status: 'success' })
@@ -181,51 +170,36 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
         const game = useGamesStore.getState().games.find(g => g.id === gameId)
         toast.error('Sync Failed', error.message || `Failed to sync ${game?.name || 'game'}`)
 
-        let cloudGameIdForUi: string | null = null
-        let deviceNameForUi: string | undefined
-        
-        try {
-          const user = useAuthStore.getState().user
-          if (user && game) {
-            const { registerCurrentDevice } = await import('@/lib/devices')
-            const device = await registerCurrentDevice(user.id)
-            const cloudDeviceId = device?.id ?? null
-            const cloudGameId = await ensureCloudGameId(user.id, {
-              name: game.name,
-              slug: game.slug,
-              cover_url: game.cover_url,
-            })
-
-            cloudGameIdForUi = cloudGameId
-            deviceNameForUi = device?.name
-            await createSyncLog({
-              cloudGameId,
-              deviceId: cloudDeviceId,
-              action: 'upload',
-              version: null,
-              status: 'error',
-              message: error.message || 'Sync failed',
-              durationMs: null,
-              fileSize: null,
-            })
-          }
-        } catch (e) {
-          // Best-effort logging
-          console.warn('Failed to write sync log to cloud:', e)
-        }
-
         useGamesStore.getState().updateGame(gameId, { status: 'error' })
-        useGamesStore.getState().addActivity({
-          id: Math.random().toString(36).substr(2, 9),
-          game_id: cloudGameIdForUi ?? game?.id ?? gameId,
-          game_name: game?.name || 'Unknown Game',
-          game_cover: game?.cover_url,
-          action: 'upload',
-          status: 'error',
-          created_at: new Date().toISOString(),
-          device_name: deviceNameForUi ?? useGamesStore.getState().deviceName,
-          message: error.message || 'Sync failed'
-        })
+
+        // Always try to log error
+        const user = useAuthStore.getState().user
+        if (user && game) {
+             const { ensureCloudGameId } = await import('@/lib/cloudSync')
+             // Make best effort to resolve cloudGameId if possible, else skip or rely on optimistic
+             try {
+                const cloudGameId = await ensureCloudGameId(user.id, {
+                    name: game.name,
+                    slug: game.slug,
+                    cover_url: game.cover_url,
+                })
+                await useGamesStore.getState().logActivity({
+                    gameId,
+                    cloudGameId,
+                    action: 'upload',
+                    status: 'error',
+                    message: error.message || 'Sync failed',
+                })
+             } catch (ignored) {
+                 // Fallback local only log if we can't get cloud ID
+                 useGamesStore.getState().logActivity({
+                    gameId,
+                    action: 'upload',
+                    status: 'error',
+                    message: error.message || 'Sync failed',
+                })
+             }
+        }
       }
     }
 
@@ -243,7 +217,7 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
     const { supabase } = await import('@/lib/supabase')
     const { useGamesStore } = await import('@/stores/gamesStore')
     const { useAuthStore } = await import('@/stores/authStore')
-    const { ensureCloudGameId, createSyncLog } = await import('@/lib/cloudSync')
+    const { ensureCloudGameId } = await import('@/lib/cloudSync')
     const { registerCurrentDevice } = await import('@/lib/devices')
 
     set({ status: 'syncing', progress: 10, message: 'Downloading from cloud...' })
@@ -322,34 +296,23 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
 
       set({ progress: 100, message: 'Restore complete!' })
 
+      const durationMs = Math.round(performance.now() - startedAt)
+
       // 4. Update Game State
       useGamesStore.getState().updateGame(gameId, {
         status: 'synced'
       })
 
-      // 5. Add Activity
-      useGamesStore.getState().addActivity({
-        id: Math.random().toString(36).substr(2, 9),
-        game_id: cloudGameId,
-        game_name: game.name,
-        game_cover: game.cover_url,
-        action: 'download',
-        status: 'success',
-        created_at: new Date().toISOString(),
-        device_name: device?.name ?? useGamesStore.getState().deviceName,
-        message: 'Successfully restored from cloud'
-      })
-
-      const durationMs = Math.round(performance.now() - startedAt)
-      await createSyncLog({
-        cloudGameId,
-        deviceId: cloudDeviceId,
-        action: 'download',
-        version: null,
-        status: 'success',
-        message: 'Successfully restored from cloud',
-        durationMs,
-        fileSize: blob.size,
+      // 5. Centralized Logging
+      await useGamesStore.getState().logActivity({
+            gameId,
+            cloudGameId,
+            deviceId: cloudDeviceId,
+            action: 'download',
+            status: 'success',
+            message: 'Successfully restored from cloud',
+            durationMs,
+            fileSize: blob.size
       })
 
       set({ status: 'success' })
@@ -363,48 +326,32 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
       const game = useGamesStore.getState().games.find(g => g.id === gameId)
       toast.error('Restore Failed', error.message || `Failed to restore ${game?.name || 'game'}`)
 
-      let cloudGameIdForUi: string | null = null
-      let deviceNameForUi: string | undefined
-
-      try {
-        const user = useAuthStore.getState().user
-        if (user && game) {
-          const device = await registerCurrentDevice(user.id)
-          const cloudDeviceId = device?.id ?? null
-          const cloudGameId = await ensureCloudGameId(user.id, {
-            name: game.name,
-            slug: game.slug,
-            cover_url: game.cover_url,
-          })
-
-          cloudGameIdForUi = cloudGameId
-          deviceNameForUi = device?.name
-          await createSyncLog({
-            cloudGameId,
-            deviceId: cloudDeviceId,
-            action: 'download',
-            version: null,
-            status: 'error',
-            message: error.message || 'Restore failed',
-            durationMs: null,
-            fileSize: null,
-          })
-        }
-      } catch (e) {
-        console.warn('Failed to write restore log to cloud:', e)
+      // Error logging
+      const user = useAuthStore.getState().user
+      if (user && game) {
+         try {
+            const { ensureCloudGameId } = await import('@/lib/cloudSync')
+            const cloudGameId = await ensureCloudGameId(user.id, {
+                name: game.name,
+                slug: game.slug,
+                cover_url: game.cover_url,
+            })
+            await useGamesStore.getState().logActivity({
+                    gameId,
+                    cloudGameId,
+                    action: 'download',
+                    status: 'error',
+                    message: error.message || 'Restore failed',
+            })
+         } catch (ignored) {
+            useGamesStore.getState().logActivity({
+                gameId,
+                action: 'download',
+                status: 'error',
+                message: error.message || 'Restore failed',
+            })
+         }
       }
-
-      useGamesStore.getState().addActivity({
-        id: Math.random().toString(36).substr(2, 9),
-        game_id: cloudGameIdForUi ?? gameId,
-        game_name: game?.name || 'Unknown Game',
-        game_cover: game?.cover_url,
-        action: 'download',
-        status: 'error',
-        created_at: new Date().toISOString(),
-        device_name: deviceNameForUi ?? useGamesStore.getState().deviceName,
-        message: error.message || 'Restore failed'
-      })
     }
   }
 }))

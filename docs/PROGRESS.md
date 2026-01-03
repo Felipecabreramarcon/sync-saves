@@ -46,7 +46,7 @@ Este documento rastreia o progresso real para o lançamento do MVP (Minimum Viab
 - [x] Gestão de Arquivos (Storage Upload/Download integrados)
 - [x] Gestão de Dispositivos (Registro automático, listagem, remoção)
 - [x] Políticas de RLS (Row Level Security) refinadas
-- [ ] ⚠️ Tabela `sync_logs` nunca é escrita (logs só em Zustand local)
+- [x] Tabela `sync_logs` é escrita e lida corretamente pela UI
 - [ ] ⚠️ Tabela `game_paths` (paths por dispositivo) não utilizada
 
 ---
@@ -101,10 +101,8 @@ Este documento rastreia o progresso real para o lançamento do MVP (Minimum Viab
 ## ⚠️ Dívida Técnica (Pendente)
 
 ### Alta Prioridade
-- [ ] **Persistir Logs no Supabase**: Atividades são armazenadas apenas em Zustand (localStorage), não na tabela `sync_logs`.
-
-### Média Prioridade
-- [ ] **Tipagem do Supabase**: Muitos `as any` no código. Tipar corretamente o cliente Supabase.
+- [x] **Persistir Logs no Supabase**: Atividades são agora persistidas na tabela `sync_logs`.
+- [x] **Tipagem do Supabase**: Tipagem melhorada com interfaces explícitas e casting seguro.
 - [ ] **sync_queue não utilizado**: Tabela SQLite para fila offline nunca é populada.
 - [ ] **Base64 para arquivos grandes**: Sync usa Base64 que dobra uso de memória. Considerar streaming.
 
@@ -140,7 +138,7 @@ Este documento rastreia o progresso real para o lançamento do MVP (Minimum Viab
 - [ ] Adicionar Vitest para testes de frontend.
 - [ ] Adicionar testes Rust para comandos Tauri.
 - [ ] Implementar React Error Boundary.
-- [ ] Refatorar tipos do Supabase (remover `as any`).
+- [x] Refatorar tipos do Supabase (remover `as any` inseguros).
 
 ### Passo 14: Funcionalidades Extras ✨
 - [ ] Suporte a múltiplos perfis de save por jogo.
@@ -154,8 +152,8 @@ Este documento rastreia o progresso real para o lançamento do MVP (Minimum Viab
 
 | Área | Progresso | Notas |
 |------|-----------|-------|
-| Frontend UI | 98% | Falta apenas Email Login |
+| Frontend UI | 99% | Falta apenas Email Login |
 | Backend Rust | 100% | Completo e funcional |
-| Supabase | 90% | Falta usar sync_logs e game_paths |
+| Supabase | 95% | Falta usar game_paths |
 | MVP Core | ✅ | Auth, Sync, Restore, Watcher funcionais |
 | Refinamentos | ✅ | Notifications e Game Settings completos |

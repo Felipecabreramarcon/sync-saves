@@ -61,6 +61,19 @@ interface GamesState {
   refreshMetrics: () => Promise<void>
   deviceName: string
   setDeviceName: (name: string) => void
+
+  // Centralized Logging
+  logActivity: (params: {
+    gameId: string
+    action: SyncAction
+    status: 'success' | 'error' | 'pending'
+    message?: string
+    version?: number
+    fileSize?: number
+    durationMs?: number
+    cloudGameId?: string
+    deviceId?: string
+  }) => Promise<void>
 }
 
 export const useGamesStore = create<GamesState>()(
@@ -193,41 +206,104 @@ export const useGamesStore = create<GamesState>()(
       addGame: async (newGame) => {
         try {
           if (isTauriRuntime()) {
-                const added = await tauriAddGame(newGame.name, newGame.local_path, newGame.platform)
-                const game: Game = {
-                    id: added.id,
-                    name: added.name,
-                    slug: added.slug,
-                    cover_url: added.cover_url,
-                    platform: added.platform as GamePlatform,
-                    local_path: added.local_path,
-                    sync_enabled: added.sync_enabled,
-                    status: added.status as SyncStatus,
-                    last_synced_version: 0
-                }
-                set(state => ({
-                    games: [...state.games, game],
-                    totalGames: state.totalGames + 1
-                }))
-            } else {
-                const game: Game = {
-                    ...newGame,
-                    id: Math.random().toString(36).substr(2, 9),
-                    slug: newGame.name.toLowerCase().replace(/\s+/g, '-'),
-                    status: 'idle',
-                    last_synced_version: 0,
-                    sync_enabled: true
-                }
-                set((state) => ({
-                    games: [...state.games, game],
-                    totalGames: state.totalGames + 1,
-                }))
+            const added = await tauriAddGame(newGame.name, newGame.local_path, newGame.platform)
+            const game: Game = {
+              id: added.id,
+              name: added.name,
+              slug: added.slug,
+              cover_url: added.cover_url,
+              platform: added.platform as GamePlatform,
+              local_path: added.local_path,
+              sync_enabled: added.sync_enabled,
+              status: added.status as SyncStatus,
+              last_synced_version: 0
             }
+            set(state => ({
+              games: [...state.games, game],
+              totalGames: state.totalGames + 1
+            }))
+          } else {
+            const game: Game = {
+              ...newGame,
+              id: Math.random().toString(36).substr(2, 9),
+              slug: newGame.name.toLowerCase().replace(/\s+/g, '-'),
+              status: 'idle',
+              last_synced_version: 0,
+              sync_enabled: true
+            }
+            set((state) => ({
+              games: [...state.games, game],
+              totalGames: state.totalGames + 1,
+            }))
+          }
         } catch (e) {
-            console.error(e)
-            throw e
+          console.error(e)
+          throw e
         }
       },
+
+      logActivity: async (params) => {
+        const { createSyncLog } = await import('@/lib/cloudSync')
+        const { registerCurrentDevice } = await import('@/lib/devices')
+        const { useAuthStore } = await import('@/stores/authStore')
+        
+        const user = useAuthStore.getState().user
+        const game = get().games.find(g => g.id === params.gameId)
+        
+        // Optimistic / Local activity entry
+        const localId = Math.random().toString(36).substr(2, 9)
+        const now = new Date().toISOString()
+        
+        get().addActivity({
+            id: localId,
+            game_id: params.cloudGameId || params.gameId,
+            game_name: game?.name || 'Unknown Game',
+            game_cover: game?.cover_url,
+            action: params.action,
+            status: params.status,
+            version: params.version,
+            message: params.message,
+            created_at: now,
+            device_name: get().deviceName
+        })
+
+        // Cloud persistence (if user is logged in)
+        if (user && params.cloudGameId) {
+            try {
+                // If deviceId not passed, try to resolve it
+                let deviceId = params.deviceId
+                if (!deviceId) {
+                    const device = await registerCurrentDevice(user.id)
+                    deviceId = device?.id
+                }
+
+                if (deviceId) {
+                    const insertedLog = await createSyncLog({
+                        cloudGameId: params.cloudGameId,
+                        deviceId: deviceId,
+                        action: params.action,
+                        version: params.version ?? null,
+                        status: params.status,
+                        message: params.message ?? null,
+                        durationMs: params.durationMs ?? null,
+                        fileSize: params.fileSize ?? null
+                    })
+                    
+                    // Replace local optimistic log with authoritative one if successful
+                     if (insertedLog) {
+                        set(state => ({
+                            activities: state.activities.map(a => 
+                                a.id === localId ? { ...a, id: insertedLog.id, created_at: insertedLog.created_at } : a
+                            )
+                        }))
+                     }
+                }
+            } catch (e) {
+                console.warn('Failed to persist sync log to cloud:', e)
+                // We keep the local one, but it won't have a real UUID.
+            }
+        }
+      }
     }),
     {
       name: 'games-storage',

@@ -8,7 +8,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase credentials not found. Using development mode.')
 }
 
-export const supabase = createClient<Database>(
+export const supabase = createClient<Database, 'public'>(
   supabaseUrl || '',
   supabaseAnonKey || ''
 )
