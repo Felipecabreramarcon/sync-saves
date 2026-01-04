@@ -58,6 +58,16 @@ fn create_tables(conn: &Connection) -> Result<()> {
         )",
         [],
     )?;
++
++    // Version analysis results table
++    conn.execute(
++        "CREATE TABLE IF NOT EXISTS version_analysis (
++            version_id TEXT PRIMARY KEY,
++            analysis_data TEXT NOT NULL,
++            created_at TEXT DEFAULT CURRENT_TIMESTAMP
++        )",
++        [],
++    )?;
 
     // Add new columns if they don't exist (migration for existing DBs)
     let _ = conn.execute(

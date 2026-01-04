@@ -22,6 +22,7 @@ import {
 import { toast } from '@/stores/toastStore';
 import { formatDistanceToNow } from 'date-fns';
 import { isTauriRuntime } from '@/lib/utils';
+import { getVersionAnalysis, saveVersionAnalysis } from '@/lib/tauri-games';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -88,6 +89,17 @@ export default function VersionHistory({
     fetchGameVersions(cloudGameId)
       .then((fetchedVersions) => {
         setVersions(fetchedVersions);
+
+        // Initial load of analysis data from Cloud results
+        const cloudResults: Record<string, any> = {};
+        for (const v of fetchedVersions) {
+          if (v.analysis_data) {
+            cloudResults[v.id] = v.analysis_data;
+          }
+        }
+        if (Object.keys(cloudResults).length > 0) {
+          setAnalysisData((prev) => ({ ...prev, ...cloudResults }));
+        }
       })
       .catch((err) => {
         console.error('Failed to fetch versions:', err);
@@ -95,6 +107,29 @@ export default function VersionHistory({
       })
       .finally(() => setLoading(false));
   }, [cloudGameId, user]);
+
+  // Load cached analysis results from Local Database (overwrites cloud if local exists)
+  useEffect(() => {
+    if (versions.length === 0 || !isTauriRuntime()) return;
+
+    const loadLocalCache = async () => {
+      const results: Record<string, any> = {};
+      let hasUpdates = false;
+      for (const v of versions) {
+        // Only load from local if not already present or to ensure latest local data
+        const cached = await getVersionAnalysis(v.id);
+        if (cached) {
+          results[v.id] = cached;
+          hasUpdates = true;
+        }
+      }
+      if (hasUpdates) {
+        setAnalysisData((prev) => ({ ...prev, ...results }));
+      }
+    };
+
+    loadLocalCache();
+  }, [versions]);
 
   const analyzeVersion = async (version: CloudSaveVersion) => {
     if (!game?.custom_script_path || !game?.analysis_config) {
@@ -304,6 +339,20 @@ Get-ChildItem -Recurse $Dest | Select-Object FullName
           [version.id]: extractedData,
         }));
         setAnalyzedCount((prev) => prev + 1);
+
+        // Save to Local Database for persistence
+        if (isTauriRuntime()) {
+          await saveVersionAnalysis(version.id, extractedData);
+        }
+
+        // Save to Cloud for cross-device sharing
+        try {
+          const { updateSaveVersionAnalysis } = await import('@/lib/cloudSync');
+          await updateSaveVersionAnalysis(version.id, extractedData);
+        } catch (cloudErr) {
+          console.warn('[Analysis] Failed to sync to cloud:', cloudErr);
+          // Don't toast error here, local save is enough for this session
+        }
       }
       return extractedData;
     } catch (err) {

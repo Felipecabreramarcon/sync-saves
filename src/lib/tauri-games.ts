@@ -125,3 +125,23 @@ export async function getGameSaveStats(gameId: string): Promise<GameSaveStatsDto
     throw error
   }
 }
+
+export async function getVersionAnalysis(versionId: string): Promise<any | null> {
+  try {
+    const raw = await invoke<string | null>('get_version_analysis', { versionId })
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch (error) {
+    console.error('Failed to get version analysis:', error)
+    return null
+  }
+}
+
+export async function saveVersionAnalysis(versionId: string, data: any): Promise<void> {
+  try {
+    const analysisData = JSON.stringify(data)
+    await invoke('save_version_analysis', { versionId, analysisData })
+  } catch (error) {
+    console.error('Failed to save version analysis:', error)
+  }
+}

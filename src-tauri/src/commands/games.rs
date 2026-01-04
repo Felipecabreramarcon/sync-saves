@@ -291,3 +291,36 @@ pub fn update_game(
         analysis_config: new_analysis_config,
     })
 }
+
+#[command]
+pub fn get_version_analysis(app: AppHandle, version_id: String) -> Result<Option<String>, String> {
+    let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
+
+    let mut stmt = conn
+        .prepare("SELECT analysis_data FROM version_analysis WHERE version_id = ?1")
+        .map_err(|e| e.to_string())?;
+
+    let analysis_data: Option<String> = stmt
+        .query_row([&version_id], |row| row.get(0))
+        .optional()
+        .map_err(|e| e.to_string())?;
+
+    Ok(analysis_data)
+}
+
+#[command]
+pub fn save_version_analysis(
+    app: AppHandle,
+    version_id: String,
+    analysis_data: String,
+) -> Result<(), String> {
+    let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
+
+    conn.execute(
+        "INSERT OR REPLACE INTO version_analysis (version_id, analysis_data) VALUES (?1, ?2)",
+        [&version_id, &analysis_data],
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
+}

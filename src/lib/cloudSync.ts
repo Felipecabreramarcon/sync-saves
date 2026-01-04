@@ -311,6 +311,7 @@ export type CloudSaveVersion = {
   device_name?: string
   is_latest: boolean
   file_modified_at?: string
+  analysis_data?: any | null
 }
 
 export type CloudGameBackups = {
@@ -342,6 +343,7 @@ export async function fetchGameVersions(cloudGameId: string): Promise<CloudSaveV
       file_size, 
       is_latest, 
       file_modified_at,
+      analysis_data,
       devices (
           name
       )
@@ -359,8 +361,21 @@ export async function fetchGameVersions(cloudGameId: string): Promise<CloudSaveV
     file_size: v.file_size,
     device_name: v.devices?.name ?? undefined,
     is_latest: v.is_latest,
-    file_modified_at: v.file_modified_at
+    file_modified_at: v.file_modified_at,
+    analysis_data: v.analysis_data
   }))
+}
+
+export async function updateSaveVersionAnalysis(versionId: string, analysisData: any): Promise<void> {
+  const { error } = await supabase
+    .from('save_versions')
+    .update({ analysis_data: analysisData })
+    .eq('id', versionId)
+
+  if (error) {
+    console.error('Failed to update save version analysis in cloud:', error)
+    throw error
+  }
 }
 
 export async function fetchBackupsByGame(params: {

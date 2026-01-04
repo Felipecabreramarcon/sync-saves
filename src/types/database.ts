@@ -82,6 +82,7 @@ export interface SaveVersionRow {
   checksum: string
   is_latest: boolean
   file_modified_at?: string
+  analysis_data?: any | null
   created_at: string
 }
 export interface SaveVersionInsert {
@@ -93,9 +94,11 @@ export interface SaveVersionInsert {
   checksum: string
   is_latest: boolean
   file_modified_at?: string
+  analysis_data?: any | null
 }
 export interface SaveVersionUpdate {
   is_latest?: boolean
+  analysis_data?: any | null
 }
 
 export interface SyncLogRow {
