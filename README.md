@@ -2,7 +2,7 @@
 
 > Sistema multiplataforma para sincronização automática de saves de jogos na nuvem
 
-[![Tauri](https://img.shields.io/badge/Tauri-2.2-blue?logo=tauri)](https://tauri.app/)
+[![Tauri](https://img.shields.io/badge/Tauri-2.5-blue?logo=tauri)](https://tauri.app/)
 [![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://reactjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-green?logo=supabase)](https://supabase.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
@@ -47,22 +47,25 @@ O Sync Saves monitora as pastas de saves dos seus jogos e sincroniza automaticam
 
 | Funcionalidade | Descrição |
 |----------------|-----------|
-| 🔐 **Login com Google** | Autenticação segura via Google OAuth |
+| 🔐 **Login com Google** | Autenticação segura via Google OAuth + Deep Linking (`sync-saves://`) |
 | 📁 **Configurar Jogos** | Adicione jogos definindo nome, pasta e plataforma |
-| ⚙️ **Settings por Jogo** | Configure cada jogo individualmente |
-| 💾 **Sync Automático** | File Watcher detecta mudanças e sincroniza |
-| 📱 **Multi-dispositivo** | Cada dispositivo registrado automaticamente |
+| 🎮 **PCGamingWiki** | Sugestões automáticas de caminhos de save via API |
+| ⚙️ **Settings por Jogo** | Configure cada jogo individualmente (sync, notificações) |
+| 💾 **Sync Automático** | File Watcher em tempo real com debounce (5s) e cooldown (30s) |
+| 📊 **Análise de Progresso** | Sistema flexível de análise com configuração customizável |
+| 📱 **Multi-dispositivo** | Registro automático com identificação única (UUID) |
 | ☁️ **Restore** | Baixe saves da nuvem para qualquer dispositivo |
-| 🔔 **Notificações** | Alertas desktop configuráveis |
+| 🔔 **Notificações** | Alertas desktop nativos configuráveis |
+| 🚀 **Autostart** | Iniciar automaticamente com o sistema operacional |
 | 🖥️ **Multiplataforma** | Windows, Linux e macOS |
 
 ### Futuro
 
-- [ ] Catálogo de jogos com caminhos pré-configurados
-- [ ] Detecção automática de jogos instalados
-- [ ] Histórico de versões de saves
+- [ ] Catálogo comunitário de jogos
+- [ ] Detecção automática de jogos instalados (Steam, Epic, etc)
+- [ ] Histórico visual de versões com comparação
 - [ ] Resolução manual de conflitos
-- [ ] Login por email
+- [ ] Criptografia end-to-end
 
 ---
 
@@ -78,13 +81,32 @@ O Sync Saves monitora as pastas de saves dos seus jogos e sincroniza automaticam
 
 | Tecnologia | Uso |
 |------------|-----|
-| [Tauri 2.2](https://tauri.app/) | Framework desktop (Rust) |
+| [Tauri 2.5](https://tauri.app/) | Framework desktop (Rust) |
 | [React 19](https://reactjs.org/) | UI Library |
-| [TypeScript](https://www.typescriptlang.org/) | Tipagem estática |
-| [HeroUI v3](https://heroui.com/) | Componentes UI |
-| [Tailwind CSS v4](https://tailwindcss.com/) | Estilização |
+| [TypeScript 5.7](https://www.typescriptlang.org/) | Tipagem estática |
+| [HeroUI v3 Beta](https://heroui.com/) | Componentes UI |
+| [Tailwind CSS v4](https://tailwindcss.com/) | Estilização via @tailwindcss/vite |
+| [React Router v7](https://reactrouter.com/) | Roteamento |
 | [Zustand](https://zustand-demo.pmnd.rs/) | Gerenciamento de estado |
+| [Framer Motion](https://www.framer.com/motion/) | Animações |
+| [Recharts](https://recharts.org/) | Visualização de dados |
 | [SQLite](https://sqlite.org/) | Cache local |
+
+**Tauri Plugins:**
+- `tauri-plugin-deep-link` - Protocolo customizado `sync-saves://`
+- `tauri-plugin-autostart` - Inicialização com o sistema
+- `tauri-plugin-notification` - Notificações nativas
+- `tauri-plugin-dialog` - Seleção de arquivos/pastas
+- `tauri-plugin-fs` - Operações de sistema de arquivos
+- `tauri-plugin-single-instance` - Garantir única instância
+
+**Rust Crates:**
+- `notify` - File watcher em tempo real
+- `zip` - Compressão/descompressão
+- `sha2` - Hashing para integridade
+- `rusqlite` - Interface SQLite
+- `reqwest` - Cliente HTTP (PCGamingWiki API)
+- `tokio` - Runtime assíncrono
 
 ### Backend
 
@@ -111,15 +133,18 @@ O Sync Saves monitora as pastas de saves dos seus jogos e sincroniza automaticam
 git clone https://github.com/seu-usuario/sync-saves.git
 cd sync-saves
 
-# Instale as dependências
+# Instale as dependências (pnpm recomendado)
 pnpm install
+# ou use npm
+npm install
 
 # Configure as variáveis de ambiente
-cp .env.example .env.local
-# Edite .env.local com suas credenciais do Supabase
+cp .env.example .env
+# Edite .env com suas credenciais do Supabase
 
 # Execute em modo desenvolvimento
 pnpm tauri dev
+# Nota: Deep linking (sync-saves://) só funciona em builds de produção
 ```
 
 ### Build para Produção
@@ -199,12 +224,13 @@ Quando você adiciona o Silksong como jogo no Sync Saves, o card do jogo pode ex
 
 | Documento | Descrição |
 |-----------|-----------|
+| [requirements.md](docs/requirements.md) | Especificação completa de requisitos (SRS) |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arquitetura técnica do projeto |
-| [DATABASE.md](docs/DATABASE.md) | Schema do banco de dados |
+| [DATABASE.md](docs/DATABASE.md) | Schema do banco de dados (PostgreSQL + SQLite) |
 | [API.md](docs/API.md) | Integração com Supabase |
-| [UI_DESIGN.md](docs/UI_DESIGN.md) | Design da interface |
-| [SETUP.md](docs/SETUP.md) | Guia de configuração |
 | [SYNC_LOGIC.md](docs/SYNC_LOGIC.md) | Lógica de sincronização |
+| [PROGRESS.md](docs/PROGRESS.md) | Status atual e dívida técnica |
+| [IMPROVEMENTS.md](docs/IMPROVEMENTS.md) | Melhorias sugeridas e roadmap futuro |
 
 ---
 
@@ -213,24 +239,52 @@ Quando você adiciona o Silksong como jogo no Sync Saves, o card do jogo pode ex
 ### Fase 1 - MVP ✅
 - [x] Definição da arquitetura
 - [x] Documentação do projeto
-- [x] Setup do projeto Tauri 2.2 + React 19
+- [x] Setup do projeto Tauri 2.5 + React 19
 - [x] Integração com Supabase (Auth, DB, Storage)
 - [x] UI Fluida e Moderna (HeroUI v3 + Glassmorphism)
-- [x] Lógica de sincronização e File Watcher
-- [x] Persistência SQLite local
-- [x] Gestão de dispositivos
+- [x] Lógica de sincronização e File Watcher em tempo real
+- [x] Persistência SQLite local (4 tabelas)
+- [x] Gestão de dispositivos com UUID único
 - [x] Notificações desktop configuráveis
 - [x] Modal de configurações por jogo
+- [x] Deep linking para autenticação (`sync-saves://`)
+- [x] PCGamingWiki API integration (sugestões de paths)
+- [x] Sistema de análise de progresso flexível
+- [x] Autostart com o sistema operacional
+- [x] Timeline de atividades (Logs)
 
-### Fase 2 - Catálogo
-- [ ] Base de dados de jogos conhecidos
-- [ ] Detecção automática de jogos
-- [ ] Contribuição da comunidade
+### Fase 2 - Estabilização 🚧
+- [ ] Migrar lógica de sync para backend Rust
+- [ ] Ativar sync queue para retry automático
+- [ ] Event-driven file watcher (eliminar polling)
+- [ ] Parâmetros configuráveis (debounce, cooldown)
+- [ ] Testes de integração
 
-### Fase 3 - Avançado
-- [ ] Resolução manual de conflitos
+### Fase 3 - UX Avançado
+- [ ] Resolução visual de conflitos
+- [ ] Histórico visual de versões com comparação
+- [ ] Detecção automática de jogos instalados
+- [ ] Catálogo comunitário de jogos
+
+### Fase 4 - Futuro
 - [ ] Criptografia end-to-end
-- [ ] Suporte a profiles de jogos
+- [ ] Suporte a múltiplos perfis por jogo
+- [ ] Compressão incremental (delta sync)
+
+---
+
+## ⚠️ Limitações Conhecidas
+
+### Arquitetura Atual
+
+- **Sync Frontend-Dependent**: A orquestração do sync acontece no frontend. Se o app for fechado imediatamente após fechar o jogo, o backup pode não ser realizado. ([PROGRESS.md](docs/PROGRESS.md) detalha isso)
+- **File Watcher Polling**: O sistema leva até 10 segundos para começar a monitorar jogos recém-adicionados
+- **Conflitos**: Lógica atual é "Last Write Wins". Dispositivos offline podem sobrescrever progresso sem aviso
+- **Deep Linking Dev Mode**: O protocolo `sync-saves://` requer build de produção no Windows (não funciona em `tauri dev`)
+
+### Melhorias Planejadas
+
+Consulte [IMPROVEMENTS.md](docs/IMPROVEMENTS.md) para lista completa de melhorias sugeridas com priorização.
 
 ---
 
