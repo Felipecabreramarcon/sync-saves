@@ -1,7 +1,7 @@
 # 📋 Especificação de Requisitos do Sistema (SRS) - Sync Saves
 
-**Versão:** 1.1.0
-**Data:** 03/01/2026
+**Versão:** 1.2.0
+**Data:** 04/01/2026
 
 ---
 
@@ -17,7 +17,7 @@ Resolver o problema de fragmentação de progresso em jogos piratas e jogos que 
 ## 2. Tecnologias e Stack
 
 ### 2.1 Backend Local (Desktop)
-- **Framework**: [Tauri v2.0](https://tauri.app/) (Rust)
+- **Framework**: [Tauri v2.5](https://tauri.app/) (Rust)
 - **Linguagem**: Rust 1.70+
 - **Bibliotecas Principais (Crates)**:
     - `rusqlite`: Persistência local (SQLite).
@@ -29,6 +29,11 @@ Resolver o problema de fragmentação de progresso em jogos piratas e jogos que 
     - `serde`: Serialização/Deserialização de dados.
     - `tauri-plugin-deep-link`: Gerenciamento de protocolo customizado (`sync-saves://`).
     - `tauri-plugin-autostart`: Inicialização com o sistema.
+    - `tauri-plugin-notification`: Notificações nativas do sistema operacional.
+    - `tauri-plugin-os`: Informações do sistema operacional.
+    - `tauri-plugin-dialog`: Diálogos nativos (seleção de arquivos/pastas).
+    - `tauri-plugin-fs`: Operações de sistema de arquivos.
+    - `tauri-plugin-shell`: Execução de comandos shell.
 
 ### 2.2 Frontend (Interface)
 - **Framework**: [React 19](https://react.dev/)
@@ -44,6 +49,9 @@ Resolver o problema de fragmentação de progresso em jogos piratas e jogos que 
 - **Utilitários**:
     - `framer-motion`: Animações de interface.
     - `lucide-react`: Ícones vetoriais.
+    - `recharts`: Visualização de dados e gráficos.
+    - `date-fns`: Manipulação e formatação de datas.
+    - `lodash-es`: Utilitários JavaScript.
 
 ### 2.3 Infraestrutura de Nuvem (Serverless)
 - **Provedor**: [Supabase](https://supabase.com/)
@@ -64,7 +72,8 @@ Resolver o problema de fragmentação de progresso em jogos piratas e jogos que 
   - Cálculo de integridade (SHA-256 Hashing).
   - Persistência e cache local (SQLite).
   - Execução de comandos do sistema (Deep Links, Autostart).
-- **Banco de Dados Local**: SQLite (`games_cache`, `device_config`, `sync_queue`).
+  - Análise de estatísticas de save games.
+- **Banco de Dados Local**: SQLite (`games_cache`, `device_config`, `sync_queue`, `version_analysis`).
 
 ### 3.2 Frontend (React)
 - **Responsabilidades**:
@@ -80,7 +89,8 @@ Resolver o problema de fragmentação de progresso em jogos piratas e jogos que 
 - **RF001 - Login Social**: O sistema deve permitir autenticação via Google OAuth.
 - **RF002 - Persistência de Sessão**: O token de sessão deve ser persistido localmente para manter o usuário logado entre reinicializações.
 - **RF003 - Logout**: O sistema deve permitir o encerramento da sessão, limpando dados sensíveis da memória.
-- **RF004 - Deep Linking**: O sistema deve capturar o retorno da autenticação via protocolo customizado (`sync-saves://`) para finalizar o login no app desktop.
+- **RF004 - Deep Linking**: ✅ O sistema deve capturar o retorno da autenticação via protocolo customizado (`sync-saves://`) para finalizar o login no app desktop.
+  - **Status**: Implementado. Funciona em produção, mas requer instalador no Windows (não funciona em modo dev).
 
 ### 4.2 Gerenciamento de Dispositivos
 - **RF005 - Identificação Única**: Cada instalação deve gerar e persistir um ID de dispositivo único (UUID v4).
@@ -92,36 +102,48 @@ Resolver o problema de fragmentação de progresso em jogos piratas e jogos que 
 - **RF009 - Adicionar Jogo**: O usuário deve poder adicionar um jogo especificando:
   - Nome do Jogo.
   - Caminho local da pasta de saves (via Seleção Nativa de Diretório).
-- **RF010 - Sugestão de Caminhos (PCGamingWiki)**: O sistema deve consultar a API do PCGamingWiki para sugerir caminhos de instalação padrão para o jogo digitado.
+- **RF010 - Sugestão de Caminhos (PCGamingWiki)**: ✅ O sistema deve consultar a API do PCGamingWiki para sugerir caminhos de instalação padrão para o jogo digitado.
+  - **Status**: Implementado via comandos `pcgw_search_games` e `pcgw_get_save_locations`.
 - **RF011 - Edição de Jogo**: O usuário deve poder alterar o caminho local de um jogo já cadastrado.
 - **RF012 - Remoção de Jogo**: O usuário deve poder remover um jogo do monitoramento, optando por excluir ou manter os dados na nuvem.
-- **RF013 - Configuração Individual**: Cada jogo deve ter configurações sobrescrevíveis de:
+- **RF013 - Configuração Individual**: ✅ Cada jogo deve ter configurações sobrescrevíveis de:
   - Habilitar/Desabilitar Sync Automático.
   - Ignorar arquivos específicos (futuro).
+- **RF014 - Análise de Progresso**: O sistema deve permitir análise de progresso do jogo com suporte a:
+  - **Configuração flexível** (`analysis_config` em `games_cache`): Usuário define quais campos devem ser analisados
+  - **Armazenamento de resultados** (`analysis_data` em `version_analysis`): Dados extraídos conforme a configuração
+  - **Scripts customizados** (`custom_script_path` em `games_cache`): Lógica de extração personalizada por jogo
+  - **Timestamp de análise** (`last_analyzed_at` em `games_cache`): Rastreamento da última execução
+  - **Exemplos de campos comuns**: `completion_percentage`, `play_time_seconds`, achievements, etc (definidos pelo usuário)
 
 ### 4.4 Sincronização (Core)
-- **RF014 - Monitoramento em Tempo Real**: O sistema deve monitorar as pastas configuradas e detectar eventos de criação ou modificação de arquivos.
-- **RF015 - Debounce de Eventos**: O sistema deve aguardar um período de inatividade (ex: 5s) após uma detecção de mudança antes de iniciar o sync, para evitar uploads parciais.
-- **RF016 - Upload (Backup)**:
+- **RF015 - Monitoramento em Tempo Real**: O sistema deve monitorar as pastas configuradas e detectar eventos de criação ou modificação de arquivos.
+- **RF016 - Debounce de Eventos**: O sistema deve aguardar um período de inatividade (ex: 5s) após uma detecção de mudança antes de iniciar o sync, para evitar uploads parciais.
+- **RF017 - Upload (Backup)**:
   1. Comprimir a pasta alvo em formato `.zip`.
   2. Gerar hash SHA-256 do arquivo comprimido.
   3. Enviar para o Supabase Storage.
   4. Registrar metadados da versão no PostgreSQL.
-- **RF017 - Download (Restore)**:
+- **RF018 - Download (Restore)**:
   1. Baixar a versão mais recente (ou selecionada) da nuvem.
   2. Backup de segurança da pasta local atual.
   3. Descomprimir e substituir os arquivos locais.
-- **RF018 - Detecção de Alterações**: O sistema não deve fazer upload se o hash local for idêntico à última versão sincronizada.
-- **RF019 - Feedback de Progresso**: O sistema deve exibir o estado atual (Compressing, Uploading, Synced, Error) na UI.
+- **RF019 - Detecção de Alterações**: O sistema não deve fazer upload se o hash local for idêntico à última versão sincronizada.
+- **RF020 - Feedback de Progresso**: O sistema deve exibir o estado atual (Compressing, Uploading, Synced, Error) na UI.
 
 ### 4.5 Logs e Histórico
-- **RF020 - Timeline de Atividades**: O sistema deve exibir um histórico cronológico de todas as operações de sync (Uploads e Downloads) de todos os dispositivos.
-- **RF021 - Detalhes do Log**: Cada registro deve conter: Jogo, Dispositivo, Ação, Status, Tamanho, Duração e Timestamp.
+- **RF021 - Timeline de Atividades**: O sistema deve exibir um histórico cronológico de todas as operações de sync (Uploads e Downloads) de todos os dispositivos.
+- **RF022 - Detalhes do Log**: Cada registro deve conter: Jogo, Dispositivo, Ação, Status, Tamanho, Duração e Timestamp.
+- **RF023 - Análise de Versões**: O sistema deve permitir visualizar análises detalhadas de versões de save, incluindo progresso, estatísticas e dados customizados armazenados na tabela `version_analysis`.
 
-### 4.6 Configurações do Sistema
-- **RF022 - Notificações Desktop**: O usuário deve poder habilitar/desabilitar notificações nativas do SO para eventos de sync.
-- **RF023 - Iniciar com o Sistema**: O usuário deve poder configurar o app para iniciar minimizado junto com o SO.
-- **RF024 - Responsividade e Layout**:
+### 4.6 Visualização de Dados
+- **RF024 - Dashboards**: O sistema deve exibir gráficos e visualizações de dados de progresso usando a biblioteca Recharts.
+- **RF025 - Estatísticas de Jogo**: Exibir cards com estatísticas agregadas (total de jogos, dispositivos, última sincronização, espaço usado).
+
+### 4.7 Configurações do Sistema
+- **RF026 - Notificações Desktop**: ✅ O usuário deve poder habilitar/desabilitar notificações nativas do SO para eventos de sync.
+- **RF027 - Iniciar com o Sistema**: ✅ O usuário deve poder configurar o app para iniciar minimizado junto com o SO (via `tauri-plugin-autostart`).
+- **RF028 - Responsividade e Layout**:
   - Todos os textos gerados pelo usuário (caminhos, nomes de jogos, mensagens de erro) devem ser truncados ou quebrados (`word-wrap`) para nunca estourar o container visual.
   - O layout deve se adaptar a redimensionamentos da janela sem sobreposição de elementos (MinWidth ~800px).
 
@@ -170,9 +192,23 @@ Resolver o problema de fragmentação de progresso em jogos piratas e jogos que 
 ## 7. Limitações e Dívida Técnica (Current State)
 
 1. **Dependência do Frontend**: O processo de upload depende da janela do app estar aberta (mesmo que minimizada). Se o app for encerrado imediatamente após fechar o jogo, o upload pode não iniciar.
-2. **Conflitos**: A lógica atual é "Last Write Wins". Se dois dispositivos jogarem offline e depois conectarem, o último a sincronizar sobrescreverá o estado "latest".
-3. **Sync Queue Incompleto**: A tabela `sync_queue` existe mas a lógica de processamento offline/retry automático ainda não está ativa.
-4. **Parâmetros Fixos (Magic Numbers)**:
+   - **Recomendação**: Migrar lógica de sync para backend Rust para desacoplar do frontend.
+
+2. **File Watcher Polling**: O watcher verifica a lista de jogos a cada 10 segundos via polling do SQLite.
+   - **Impacto**: Delay de até 10s para começar a monitorar jogos recém-adicionados.
+   - **Recomendação**: Migrar para arquitetura event-driven usando Tauri Events ou Rust Channels.
+
+3. **Conflitos**: A lógica atual é "Last Write Wins". Se dois dispositivos jogarem offline e depois conectarem, o último a sincronizar sobrescreverá o estado "latest".
+   - **Recomendação**: Implementar UI para resolução manual de conflitos.
+
+4. **Sync Queue Incompleto**: A tabela `sync_queue` existe mas a lógica de processamento offline/retry automático ainda não está ativa.
+   - **Recomendação**: Implementar processamento de fila ou remover código morto.
+
+5. **Versioning sem ACID Completo**: Frontend gerencia a lógica de versionamento sem garantias transacionais completas.
+   - **Recomendação**: Mover para Postgres Functions (RPC) para atomicidade.
+
+6. **Parâmetros Fixos (Magic Numbers)**:
     - Intervalo de verificação de novos jogos no Watcher: **10s** (Rust).
     - Sync Debounce: **5s** (Frontend).
     - Sync Cooldown: **30s** (Frontend).
+    - **Recomendação**: Tornar configuráveis via Settings.
