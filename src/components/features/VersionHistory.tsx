@@ -46,6 +46,7 @@ export default function VersionHistory({
   // Timeline Analysis State
   const [analysisData, setAnalysisData] = useState<Record<string, any>>({});
   const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(new Set());
+  const [isBulkAnalyzing, setIsBulkAnalyzing] = useState(false);
 
   const { user } = useAuthStore();
   const { performRestore } = useSyncStore();
@@ -174,117 +175,120 @@ Get-ChildItem -Recurse $Dest | Select-Object FullName
             ]);
             const unzipOutput = await unzipCmd.execute();
             console.log('[Analysis] Unzip Output:', unzipOutput.stdout);
-            if (unzipOutput.code !== 0) {
-              console.error('[Analysis] Unzip failed:', unzipOutput.stderr);
-              throw new Error('Failed to extract save file');
-            }
 
-            // Update path to point to the inner file
+            if (unzipOutput.code !== 0) throw new Error('Extraction failed');
+
+            // Find full path to the target file recursively
             const extractedDir = `${tempFilePath}_extracted`;
-            tempFilePath = await join(extractedDir, config.target_path);
-
-            if (!(await exists(tempFilePath))) {
-              console.warn(
-                '[Analysis] Exact target path not found, searching recursively...'
-              );
-              // Helper to find file recursively
-              const findFile = async (
-                dir: string,
-                filename: string
-              ): Promise<string | null> => {
-                try {
-                  const entries = await readDir(dir);
-                  for (const entry of entries) {
-                    if (entry.isFile && entry.name === filename) {
-                      return await join(dir, entry.name);
-                    }
-                    if (entry.isDirectory) {
-                      const found = await findFile(
-                        await join(dir, entry.name),
-                        filename
-                      );
-                      if (found) return found;
-                    }
-                  }
-                } catch (err) {
-                  console.warn('Scan ignore', err);
+            const findFile = async (
+              dir: string,
+              filename: string
+            ): Promise<string | null> => {
+              const entries = await readDir(dir);
+              for (const entry of entries) {
+                const fullEntryPath = await join(dir, entry.name);
+                if (
+                  entry.isFile &&
+                  entry.name.toLowerCase().includes(filename.toLowerCase())
+                ) {
+                  return fullEntryPath;
                 }
-                return null;
-              };
-
-              const targetBasename =
-                config.target_path.split(/[/\\]/).pop() || config.target_path;
-              const foundPath = await findFile(extractedDir, targetBasename);
-
-              if (foundPath) {
-                console.log(`[Analysis] Found file at: ${foundPath}`);
-                tempFilePath = foundPath;
-              } else {
-                console.error(
-                  `[Analysis] Could not find ${targetBasename} in extracted archive.`
-                );
+                if (entry.isDirectory) {
+                  const found = await findFile(fullEntryPath, filename);
+                  if (found) return found;
+                }
               }
-            }
-          }
+              return null;
+            };
 
-          const command = Command.create('run-powershell', [
-            '-ExecutionPolicy',
-            'Bypass',
-            '-File',
-            wrapperPath,
-            tempFilePath,
-          ]);
+            const targetBasename =
+              config.target_path.split(/[/\\]/).pop() || config.target_path;
+            const absoluteTargetPath = await findFile(
+              extractedDir,
+              targetBasename
+            );
 
-          const output = await command.execute();
+            if (!absoluteTargetPath)
+              throw new Error('Target file not found in ZIP');
 
-          if (output.code === 0) {
+            const scriptArgs = [
+              '-ExecutionPolicy',
+              'Bypass',
+              '-File',
+              wrapperPath,
+              absoluteTargetPath,
+            ];
+            const cmd = Command.create('run-powershell', scriptArgs);
+            const output = await cmd.execute();
+
+            if (output.code !== 0)
+              throw new Error(output.stderr || 'Script failed');
+
             const match = output.stdout.match(
               /Decoded JSON written to:\s*(.+?)\s*$/m
             );
             if (match && match[1]) {
               const jsonPath = match[1].trim();
               const fileContent = await readFile(jsonPath);
-              const textDecoder = new TextDecoder();
-              const jsonData = JSON.parse(textDecoder.decode(fileContent));
-
-              // Flatten and extract only tracked keys
+              const jsonData = JSON.parse(
+                new TextDecoder().decode(fileContent)
+              );
               const flattened = flattenObject(jsonData);
-              const extracted: any = {};
+              extractedData = {};
               config.tracked_keys.forEach((key) => {
-                if (flattened[key] !== undefined) {
-                  extracted[key] = flattened[key];
-                }
+                if (flattened[key] !== undefined)
+                  extractedData[key] = flattened[key];
               });
-              extractedData = extracted;
               await remove(jsonPath);
             }
+
+            // Cleanup
+            await remove(tempDir, { recursive: true });
           } else {
-            console.warn(
-              `Analysis failed with code ${output.code}`,
-              output.stderr
+            // Direct file analysis
+            const scriptArgs = [
+              '-ExecutionPolicy',
+              'Bypass',
+              '-File',
+              wrapperPath,
+              tempFilePath,
+            ];
+            const cmd = Command.create('run-powershell', scriptArgs);
+            const output = await cmd.execute();
+
+            if (output.code !== 0)
+              throw new Error(output.stderr || 'Script failed');
+
+            const match = output.stdout.match(
+              /Decoded JSON written to:\s*(.+?)\s*$/m
             );
-            toast.error(
-              'Analysis Failed',
-              `Script exited with code ${output.code}`
-            );
-          }
-          try {
+            if (match && match[1]) {
+              const jsonPath = match[1].trim();
+              const fileContent = await readFile(jsonPath);
+              const jsonData = JSON.parse(
+                new TextDecoder().decode(fileContent)
+              );
+              const flattened = flattenObject(jsonData);
+              extractedData = {};
+              config.tracked_keys.forEach((key) => {
+                if (flattened[key] !== undefined)
+                  extractedData[key] = flattened[key];
+              });
+              await remove(jsonPath);
+            }
             await remove(tempFilePath);
-          } catch (cleanupErr) {
-            console.warn('[Analysis] Failed to cleanup temp file:', cleanupErr);
           }
-        } catch (e) {
-          console.error(`Analysis exception for v${version.id}`, e);
-          throw e;
+        } catch (err) {
+          console.error('[Analysis] Error:', err);
+          throw err;
         }
       } else {
         // Web Mock
-        await new Promise((r) => setTimeout(r, 1500));
-        const mock: any = {};
+        await new Promise((r) => setTimeout(r, 1000));
+        extractedData = {};
         config.tracked_keys.forEach(
-          (k) => (mock[k] = Math.floor(Math.random() * 100))
+          (k) => (extractedData[k] = Math.floor(Math.random() * 100))
         );
-        extractedData = mock;
       }
 
       if (extractedData) {
@@ -293,9 +297,10 @@ Get-ChildItem -Recurse $Dest | Select-Object FullName
           [version.id]: extractedData,
         }));
       }
+      return extractedData;
     } catch (err) {
-      console.error('Timeline Analysis Failed', err);
-      toast.error('Analysis Error', 'Failed to analyze save version');
+      toast.error('Analysis Failed', `Could not analyze version ${version.id}`);
+      return null;
     } finally {
       setAnalyzingIds((prev) => {
         const next = new Set(prev);
@@ -304,10 +309,39 @@ Get-ChildItem -Recurse $Dest | Select-Object FullName
       });
     }
   };
+
+  const handleBulkAnalyze = async () => {
+    if (isBulkAnalyzing) return;
+
+    const toAnalyze = versions.filter((v) => !analysisData[v.id]);
+
+    if (toAnalyze.length === 0) {
+      toast.info('Info', 'All versions are already analyzed');
+      return;
+    }
+
+    setIsBulkAnalyzing(true);
+    toast.info(
+      'Bulk Analysis',
+      `Starting analysis of ${toAnalyze.length} snapshots...`
+    );
+
+    try {
+      for (const version of toAnalyze) {
+        await analyzeVersion(version);
+      }
+      toast.success('Complete', 'Bulk analysis finished');
+    } catch (err) {
+      console.error('Bulk analysis failed:', err);
+      toast.error('Partial Failure', 'Some analyses failed');
+    } finally {
+      setIsBulkAnalyzing(false);
+    }
+  };
+
   const handleRestore = async (version: CloudSaveVersion) => {
     if (!cloudGameId) return;
 
-    // Confirm restore
     if (
       !confirm(
         `Are you sure you want to restore the save from ${new Date(
@@ -391,6 +425,28 @@ Get-ChildItem -Recurse $Dest | Select-Object FullName
           </div>
 
           <div className='flex items-center gap-2'>
+            {game?.analysis_config && versions.length > 0 && (
+              <Button
+                size='sm'
+                variant='ghost'
+                className='h-7 px-3 bg-primary-500/5 hover:bg-primary-500/20 text-primary-400 border border-primary-500/20 text-[10px] font-black uppercase tracking-widest transition-all'
+                onPress={handleBulkAnalyze}
+                isDisabled={isBulkAnalyzing || loading}
+              >
+                {isBulkAnalyzing ? (
+                  <div className='flex items-center gap-2'>
+                    <Loader2 className='w-3 h-3 animate-spin' />
+                    <span>Analyzing...</span>
+                  </div>
+                ) : (
+                  <div className='flex items-center gap-2'>
+                    <FileCode className='w-3 h-3' />
+                    <span>Analyze All</span>
+                  </div>
+                )}
+              </Button>
+            )}
+
             <Select
               aria-label='Sort'
               selectedKey={sortOrder}
@@ -465,9 +521,6 @@ const formatAnalysisValue = (key: string, value: any) => {
 
   const lowerKey = key.toLowerCase();
 
-  // Detect playtime/duration keys (assumed to be in seconds or minutes)
-  // If the value is large like 253415, it's likely seconds.
-  // 253415s / 3600 = ~70h
   if (
     lowerKey.includes('playtime') ||
     lowerKey.includes('time_played') ||
@@ -475,15 +528,11 @@ const formatAnalysisValue = (key: string, value: any) => {
   ) {
     const numValue = parseFloat(value);
     if (!isNaN(numValue)) {
-      // If it's a huge number, assume seconds. If it's very small relative to play hours, maybe minutes?
-      // Standardizing to: value / 3600 if > 1000 (likely seconds), or value / 60 if smaller.
-      // But user example 253415 is clearly seconds.
       const hours = numValue / 3600;
       return `${hours.toFixed(1)}h`;
     }
   }
 
-  // Fallback for general strings/numbers
   return String(value);
 };
 
