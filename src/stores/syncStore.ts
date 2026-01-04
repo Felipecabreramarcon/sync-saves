@@ -50,6 +50,7 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
         upsertGamePath,
         createSaveVersion,
         sha256Base64,
+        getLatestCloudChecksum,
       } = await import('@/lib/cloudSync')
       const { registerCurrentDevice } = await import('@/lib/devices')
 
@@ -106,6 +107,29 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
           syncEnabled: game.sync_enabled,
         })
 
+        // Compute checksum BEFORE upload to compare with cloud
+        const checksum = await sha256Base64(await blob.arrayBuffer())
+        
+        // RF018: Skip upload if content is unchanged
+        const latestCloudChecksum = await getLatestCloudChecksum(cloudGameId)
+        if (latestCloudChecksum && latestCloudChecksum === checksum) {
+          console.log(`Sync for ${game.name} skipped: content unchanged`)
+          set({ status: 'idle', progress: 0, message: 'Content unchanged, skipping sync' })
+          
+          // Log as 'skip' action
+          const durationMs = Math.round(performance.now() - startedAt)
+          useGamesStore.getState().logActivity({
+            gameId,
+            action: 'skip',
+            status: 'success',
+            message: 'Content unchanged, sync skipped',
+            durationMs,
+            cloudGameId,
+            deviceId: cloudDeviceId,
+          })
+          return
+        }
+
         const versionId = crypto.randomUUID()
         // file path now uses versionId
         const filePath = `${user.id}/${game.slug}/${versionId}.zip`
@@ -125,8 +149,7 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
 
         set({ progress: 100, message: 'Sync complete!' })
 
-        // 4. Persist cloud metadata
-        const checksum = await sha256Base64(await blob.arrayBuffer())
+        // 4. Persist cloud metadata (checksum already computed above)
         await createSaveVersion({
           id: versionId,
           cloudGameId,

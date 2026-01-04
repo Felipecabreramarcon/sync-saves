@@ -179,3 +179,8 @@ pub fn save_app_settings(app: AppHandle, settings: AppSettings) -> Result<bool, 
 
     Ok(true)
 }
+
+#[command]
+pub fn write_file(path: String, content: Vec<u8>) -> Result<(), String> {
+    std::fs::write(path, content).map_err(|e| e.to_string())
+}

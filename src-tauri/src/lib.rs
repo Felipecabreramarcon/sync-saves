@@ -70,6 +70,7 @@ pub fn run() {
             commands::system::set_device_name,
             commands::system::get_app_settings,
             commands::system::save_app_settings,
+            commands::system::write_file,
             commands::auth::set_current_user,
             commands::auth::get_current_user,
             crate::commands::games::get_all_games,

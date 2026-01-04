@@ -1,6 +1,6 @@
 # 🚀 Status Real do Projeto (Sync Saves)
 
-**Data da Auditoria:** 03/01/2026
+**Data da Auditoria:** 04/01/2026
 
 ---
 
@@ -53,6 +53,7 @@ Existem intervalos fixos no código que podem afetar a experiência do usuário:
 - [x] **Feedback Visual**: Toasts para sucesso/erro e timeline de atividades (Logs).
 - [x] **Settings**: Configuração de auto-sync e notificações por jogo.
 - [x] **Estabilização UI**: Correção de layout overflows em Cards, Timeline e Dashboard.
+- [x] **Hotfix Timeline**: Correção de erro de compilação `statusColor` e duplicação de componente.
 
 ### Dados
 - [x] **Integridade**: Validação de arquivos via SHA-256 Hash.

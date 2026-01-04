@@ -1,5 +1,5 @@
-import { Avatar, AvatarImage, AvatarFallback, Chip } from "@heroui/react";
-import { ArrowUp, ArrowDown, RefreshCw, ChevronRight } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback, Chip, Button, Tooltip } from "@heroui/react";
+import { ArrowUp, ArrowDown, RefreshCw, ChevronRight, Download } from "lucide-react";
 import { type SyncActivity } from "@/stores/gamesStore";
 import { cn, timeAgo } from "@/lib/utils";
 
@@ -86,6 +86,54 @@ export default function ActivityItem({ activity }: { activity: SyncActivity }) {
           </Chip>
         </div>
       </div>
+
+      {/* Download button (for upload activities with version) */}
+      {activity.action === 'upload' && activity.save_version_id && activity.status === 'success' && (
+        <Tooltip closeDelay={0}>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              className="text-gray-500 hover:text-primary-400"
+              onPress={async () => {
+                try {
+                  const { getVersionFilePath } = await import('@/lib/cloudSync')
+                  const { useSyncStore } = await import('@/stores/syncStore')
+                  const { useGamesStore } = await import('@/stores/gamesStore')
+                  const { toast } = await import('@/stores/toastStore')
+
+                  const versionInfo = await getVersionFilePath(activity.save_version_id!)
+                  if (!versionInfo) {
+                    toast.error('Download Failed', 'Could not find save version')
+                    return
+                  }
+
+                  // Find the game by matching game_id
+                  const games = useGamesStore.getState().games
+                  const game = games.find(g => g.slug === versionInfo.gameSlug || g.cloud_game_id === activity.game_id || g.id === activity.game_id)
+
+                  if (!game) {
+                    toast.error('Download Failed', 'Game not configured on this device')
+                    return
+                  }
+
+                  // Call restore with the specific file path
+                  await useSyncStore.getState().performRestore(game.id, { filePath: versionInfo.filePath })
+                  toast.success('Save Restored', `Downloaded save from ${new Date(activity.created_at).toLocaleString()}`)
+                } catch (error) {
+                  console.error('Download failed:', error)
+                  const { toast } = await import('@/stores/toastStore')
+                  toast.error('Download Failed', error instanceof Error ? error.message : 'Unknown error')
+                }
+              }}
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content>Restore this save</Tooltip.Content>
+        </Tooltip>
+      )}
 
       {/* Arrow */}
       <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-white transition-colors" />

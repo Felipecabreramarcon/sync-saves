@@ -71,7 +71,9 @@ function formatResource(
 
 async function openFolder(path: string): Promise<void> {
   const { open } = await import("@tauri-apps/plugin-shell");
-  await open(path);
+  // shell:open can handle directories on Windows when path is valid
+  // The path needs to exist - if it doesn't, this will throw
+  await open(`file:///${path.replace(/\\/g, '/')}`);
 }
 
 function GameCard({ game }: { game: Game }) {

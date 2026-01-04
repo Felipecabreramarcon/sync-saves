@@ -70,6 +70,25 @@ export async function upsertGamePath(params: {
 
 // getNextVersion removed in favor of UUIDs
 
+/**
+ * Get the checksum of the latest cloud save version for a game.
+ * Used to skip upload if local hash matches cloud hash (RF018).
+ */
+export async function getLatestCloudChecksum(cloudGameId: string): Promise<string | null> {
+  const res = await (supabase
+    .from('save_versions') as any)
+    .select('checksum')
+    .eq('game_id', cloudGameId)
+    .eq('is_latest', true)
+    .maybeSingle()
+
+  if (res.error) {
+    console.warn('Failed to fetch latest checksum:', res.error)
+    return null
+  }
+  return res.data?.checksum ?? null
+}
+
 export async function createSaveVersion(params: {
   id: string
   cloudGameId: string
@@ -247,6 +266,28 @@ export function dedupeConsecutiveActivities(items: SyncActivity[], windowMs = 2 
     out.push(item)
   }
   return out
+}
+
+/**
+ * Get the file path for a specific save version by its ID.
+ * Used for downloading a specific version from activity logs.
+ */
+export async function getVersionFilePath(versionId: string): Promise<{ filePath: string; gameSlug: string } | null> {
+  const res = await (supabase
+    .from('save_versions') as any)
+    .select('file_path, games(slug)')
+    .eq('id', versionId)
+    .maybeSingle()
+
+  if (res.error || !res.data) {
+    console.warn('Failed to get version file path:', res.error)
+    return null
+  }
+
+  return {
+    filePath: res.data.file_path,
+    gameSlug: res.data.games?.slug ?? '',
+  }
 }
 
 export function sortErrorsFirst(items: SyncActivity[]): SyncActivity[] {
