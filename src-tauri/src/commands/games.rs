@@ -1,4 +1,5 @@
 use crate::db;
+use rusqlite::OptionalExtension;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -117,13 +118,11 @@ pub fn get_game_save_stats(app: AppHandle, game_id: String) -> Result<GameSaveSt
     let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
 
     let mut stmt = conn
-        .prepare("SELECT name, slug, local_path FROM games_cache WHERE id = ?1")
+        .prepare("SELECT local_path FROM games_cache WHERE id = ?1")
         .map_err(|e| e.to_string())?;
 
-    let (name, slug, local_path): (String, String, String) = stmt
-        .query_row([&game_id], |row| {
-            Ok((row.get(0)?, row.get(1)?, row.get(2)?))
-        })
+    let local_path: String = stmt
+        .query_row([&game_id], |row| row.get(0))
         .map_err(|e| e.to_string())?;
 
     let path = Path::new(&local_path);

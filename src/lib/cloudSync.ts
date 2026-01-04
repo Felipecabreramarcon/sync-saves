@@ -367,8 +367,8 @@ export async function fetchGameVersions(cloudGameId: string): Promise<CloudSaveV
 }
 
 export async function updateSaveVersionAnalysis(versionId: string, analysisData: any): Promise<void> {
-  const { error } = await supabase
-    .from('save_versions')
+  const { error } = await (supabase
+    .from('save_versions') as any)
     .update({ analysis_data: analysisData })
     .eq('id', versionId)
 
