@@ -15,7 +15,7 @@ export function VersionsTab({
   onRestore,
 }: VersionsTabProps) {
   return (
-    <div className='p-0 overflow-hidden h-[60vh]'>
+    <div className='p-0 overflow-hidden h-[50vh]'>
       <VersionHistory
         cloudGameId={cloudGameId}
         gameId={gameId}

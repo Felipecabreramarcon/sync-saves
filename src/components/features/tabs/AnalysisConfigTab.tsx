@@ -234,7 +234,7 @@ export function AnalysisConfigTab({
   });
 
   return (
-    <div className='p-6 overflow-y-auto h-[60vh]'>
+    <div className='p-6 overflow-y-auto h-[50vh]'>
       <div className='space-y-6'>
         {/* Custom Script Input */}
         <div className='space-y-3'>

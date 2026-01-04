@@ -654,15 +654,14 @@ const VersionCard = ({
               <div className='flex items-center gap-1 text-[9px] text-gray-500'>
                 <Clock className='w-2.5 h-2.5 text-primary-500/40' />
                 <span>
-                  Sync: {new Date(version.created_at).toLocaleDateString()}
+                  Sync: {new Date(version.created_at).toLocaleString()}
                 </span>
               </div>
               {version.file_modified_at && (
                 <div className='flex items-center gap-1 text-[9px] text-gray-500'>
                   <HardDrive className='w-2.5 h-2.5 text-emerald-500/40' />
                   <span>
-                    File:{' '}
-                    {new Date(version.file_modified_at).toLocaleDateString()}
+                    File: {new Date(version.file_modified_at).toLocaleString()}
                   </span>
                 </div>
               )}
