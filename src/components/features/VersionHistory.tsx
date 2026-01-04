@@ -47,6 +47,7 @@ export default function VersionHistory({
   const [analysisData, setAnalysisData] = useState<Record<string, any>>({});
   const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(new Set());
   const [isBulkAnalyzing, setIsBulkAnalyzing] = useState(false);
+  const [analyzedCount, setAnalyzedCount] = useState(0);
 
   const { user } = useAuthStore();
   const { performRestore } = useSyncStore();
@@ -110,13 +111,14 @@ export default function VersionHistory({
       let extractedData: any = null;
 
       if (isTauriRuntime()) {
-        const { writeFile, remove, mkdir, readFile, readDir, exists } =
-          await import('@tauri-apps/plugin-fs');
+        const { writeFile, remove, mkdir, readFile, readDir } = await import(
+          '@tauri-apps/plugin-fs'
+        );
         const { appDataDir, join } = await import('@tauri-apps/api/path');
         const { Command } = await import('@tauri-apps/plugin-shell');
 
         const appData = await appDataDir();
-        const tempDir = await join(appData, 'temp_timeline');
+        const tempDir = await join(appData, 'temp_timeline', version.id); // Unique folder per version
         await mkdir(tempDir, { recursive: true });
 
         // Ensure wrapper exists
@@ -148,8 +150,13 @@ export default function VersionHistory({
             u8Header[3] === 0x04;
 
           if (isZip) {
-            console.log('[Analysis] ZIP header detected. Extracting...');
-            const unzipScriptPath = await join(tempDir, 'unzip.ps1');
+            console.log(
+              `[Analysis] ZIP header detected for ${version.id}. Extracting...`
+            );
+            const unzipScriptPath = await join(
+              tempDir,
+              `unzip_${version.id}.ps1`
+            );
             const unzipScript = `
 param($ZipPath)
 $OutputEncoding = [System.Text.Encoding]::UTF8
@@ -296,6 +303,7 @@ Get-ChildItem -Recurse $Dest | Select-Object FullName
           ...prev,
           [version.id]: extractedData,
         }));
+        setAnalyzedCount((prev) => prev + 1);
       }
       return extractedData;
     } catch (err) {
@@ -321,21 +329,22 @@ Get-ChildItem -Recurse $Dest | Select-Object FullName
     }
 
     setIsBulkAnalyzing(true);
+    setAnalyzedCount(0);
     toast.info(
       'Bulk Analysis',
-      `Starting analysis of ${toAnalyze.length} snapshots...`
+      `Starting parallel analysis of ${toAnalyze.length} snapshots...`
     );
 
     try {
-      for (const version of toAnalyze) {
-        await analyzeVersion(version);
-      }
+      // Execute in parallel
+      await Promise.all(toAnalyze.map((v) => analyzeVersion(v)));
       toast.success('Complete', 'Bulk analysis finished');
     } catch (err) {
       console.error('Bulk analysis failed:', err);
       toast.error('Partial Failure', 'Some analyses failed');
     } finally {
       setIsBulkAnalyzing(false);
+      setAnalyzedCount(0);
     }
   };
 
@@ -436,7 +445,12 @@ Get-ChildItem -Recurse $Dest | Select-Object FullName
                 {isBulkAnalyzing ? (
                   <div className='flex items-center gap-2'>
                     <Loader2 className='w-3 h-3 animate-spin' />
-                    <span>Analyzing...</span>
+                    <span>
+                      Analyzing {analyzedCount}/
+                      {versions.filter((v) => !analysisData[v.id]).length +
+                        analyzedCount}
+                      ...
+                    </span>
                   </div>
                 ) : (
                   <div className='flex items-center gap-2'>
