@@ -94,6 +94,8 @@ src/
 │   ├── useAuthSession.ts      # Sessão auth + deep links
 │   ├── useAutoSync.ts         # Auto-sync + notificações
 │   └── useBackendConnection.ts # Monitor conexão Tauri
+├── services/           # Serviços de negócio (desacoplados das stores)
+│   └── syncService.ts         # Lógica de sync/restore extraída
 ├── pages/              # Páginas da aplicação
 │   ├── Login.tsx
 │   ├── Dashboard.tsx
