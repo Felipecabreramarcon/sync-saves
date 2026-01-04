@@ -29,12 +29,7 @@ export function UserProfileCard({
         <div className='flex items-center gap-4 mb-8'>
           <div className='relative'>
             <Avatar className='w-16 h-16 text-large border-2 border-white/10'>
-              <Avatar.Image
-                src={
-                  avatarUrl || 'https://i.pravatar.cc/150?u=a042581f4e29026704d'
-                }
-                alt={email || 'User'}
-              />
+              <Avatar.Image src={avatarUrl} alt={email || 'User'} />
               <Avatar.Fallback>
                 {email?.charAt(0).toUpperCase() || 'U'}
               </Avatar.Fallback>
@@ -43,10 +38,7 @@ export function UserProfileCard({
           </div>
           <div className='min-w-0 flex-1'>
             <p className='text-lg font-bold text-white truncate'>
-              {email || 'gamer@example.com'}
-            </p>
-            <p className='text-xs font-bold text-primary-400 uppercase tracking-widest mt-0.5'>
-              Pro Plan
+              {email || 'Not signed in'}
             </p>
           </div>
         </div>
