@@ -2,7 +2,7 @@ use crate::db;
 use rusqlite::OptionalExtension;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{command, AppHandle};
 use uuid::Uuid;
