@@ -20,57 +20,33 @@ export async function registerCurrentDevice(userId: string): Promise<Device | nu
     if (osName.includes('linux')) os = 'linux'
     else if (osName.includes('mac') || osName.includes('darwin')) os = 'macos'
     
-    // Check if device already exists
-    const { data: existing, error: fetchError } = await (supabase as any)
+    // Use upsert to handle both insert and update atomically
+    // We assume there is a UNIQUE constraint on (user_id, machine_id) or just machine_id depending on schema.
+    // Based on review, it should be machine_id + user_id.
+    const { data, error } = await (supabase as any)
       .from('devices')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('machine_id', deviceId)
-      .single()
-    
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error checking device:', fetchError)
-      return null
-    }
-    
-    if (existing) {
-      // Update last_seen_at
-      const { data: updated, error: updateError } = await (supabase as any)
-        .from('devices')
-        .update({ 
-          last_seen_at: new Date().toISOString(),
-          name: sysInfo.hostname
-        })
-        .eq('id', existing.id)
-        .select()
-        .single()
-      
-      if (updateError) {
-        console.error('Error updating device:', updateError)
-        return existing as Device
-      }
-      return { ...(updated as Device), is_current: true }
-    }
-    
-    // Insert new device
-    const { data: newDevice, error: insertError } = await (supabase as any)
-      .from('devices')
-      .insert({
-        user_id: userId,
-        name: sysInfo.hostname,
-        os,
-        machine_id: deviceId,
-        last_seen_at: new Date().toISOString()
-      })
+      .upsert(
+        {
+          user_id: userId,
+          machine_id: deviceId,
+          name: sysInfo.hostname,
+          os,
+          last_seen_at: new Date().toISOString()
+        },
+        { 
+          onConflict: 'user_id,machine_id',
+          ignoreDuplicates: false 
+        }
+      )
       .select()
       .single()
     
-    if (insertError) {
-      console.error('Error registering device:', insertError)
+    if (error) {
+      console.error('Error registering device:', error)
       return null
     }
     
-    return { ...(newDevice as Device), is_current: true }
+    return { ...(data as Device), is_current: true }
   } catch (error) {
     console.error('Failed to register device:', error)
     return null

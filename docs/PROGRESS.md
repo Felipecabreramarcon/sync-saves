@@ -1,159 +1,67 @@
-# 🚀 Progresso em Direção ao MVP
+# 🚀 Status Real do Projeto (Sync Saves)
 
-Este documento rastreia o progresso real para o lançamento do MVP (Minimum Viable Product), removendo a distorção dos dados mockados e focando em implementações funcionais.
-
-**Última Auditoria:** 02/01/2026
+**Data da Auditoria:** 03/01/2026
 
 ---
 
-## 📊 Estado Real da Implementação (Sem Mocks)
+## 🚦 Visão Geral
 
-### 🎨 Frontend & Interface (98%)
-- [x] Estrutura de Rotas e Navegação (React Router v7)
-- [x] Design System (HeroUI v3 + Glassmorphism)
-- [x] Páginas Visuais (Dashboard, Games, Settings, Logs)
-- [x] Padronização de Componentes (SaveButton, SaveInput)
-- [x] Diálogos Nativos (Folder Picker implementado)
-- [x] Integração de Lógica Real (Zustand Stores conectadas ao Tauri/Supabase)
-- [x] Sistema de Toast Notifications (feedback visual para ações)
-- [x] Dropdown Menu para GameCards (Sync, Restore, Delete, Open Folder)
-- [x] Migração completa para HeroUI v3 (novo padrão de componentes)
-- [x] Migração para Tailwind CSS v4 (nova sintaxe @import/@theme)
-- [x] Atualização para React 19
-- [x] Gráfico de atividades no Dashboard (Recharts AreaChart)
-- [x] Modal de configurações por jogo (GameSettingsModal)
-- [x] Cards usando HeroUI v3 Card (substituindo custom Card.tsx)
-- [ ] ⚠️ Login por Email não funcional (apenas Google OAuth ativo)
+O projeto atingiu o status de **MVP Funcional**, mas com pontos de atenção na robustez arquitetural. As funcionalidades principais (Login, Adicionar Jogo, Monitoramento, Backup e Restore) estão operacionais e integradas à nuvem.
 
-### 🦀 Backend Rust & Tauri (100%)
-- [x] Core Setup (Tauri v2)
-- [x] SQLite: Inicialização e Schema (3 tabelas: games, app_settings, sync_queue)
-- [x] SQLite: Persistência de Jogos (CRUD Real)
-- [x] SQLite: Persistência de Settings (Notifications, Auto-sync, Launch on Startup)
-- [x] Device ID Único (UUID v4 persistido por dispositivo)
-- [x] Serviço de Hashing (SHA256 para integridade)
-- [x] Serviço de Compressão (ZIP via crate `zip`)
-- [x] Serviço de Extração (Restore de saves)
-- [x] Monitoramento em Tempo Real (File Watcher via crate `notify`)
-- [x] Comando delete_game para remoção de jogos
-- [x] Implementação de Launch on Startup (autostart)
-- [x] System Info (OS, hostname, memória, device ID)
-
-### ☁️ Infraestrutura Supabase (90%)
-- [x] Schema do PostgreSQL (5 tabelas + RLS)
-- [x] Autenticação Real (Google OAuth 2.0 Integration)
-- [x] Sincronização de Metadados (Cloud DB via Supabase)
-- [x] Gestão de Arquivos (Storage Upload/Download integrados)
-- [x] Gestão de Dispositivos (Registro automático, listagem, remoção)
-- [x] Políticas de RLS (Row Level Security) refinadas
-- [x] Tabela `sync_logs` é escrita e lida corretamente pela UI
-- [ ] ⚠️ Tabela `game_paths` (paths por dispositivo) não utilizada
+| Módulo | Status | Observação |
+|:-------|:-------|:-----------|
+| **Frontend** | ✅ Estável | UI moderna (HeroUI v3), Estado reativo (Zustand). |
+| **Backend (Rust)** | ✅ Estável | Operações de arquivo, Watcher e SQLite funcionais. |
+| **Nuvem (Supabase)** | ✅ Estável | Auth, DB e Storage integrados e seguros (RLS). |
+| **Arquitetura Sync** | ⚠️ Atenção | Dependência do Frontend para execução (risco de interrupção). |
+| **Offline First** | 🚧 Parcial | Cache local funciona, mas fila de sync (`sync_queue`) está inativa. |
 
 ---
 
-## 🛠️ Roteiro para o Lançamento (MVP)
+## ⚠️ Dívida Técnica e Pontos de Atenção
 
-### Passo 1: Fundação de Identidade (Auth) ✅
-- [x] Substituir o mock de login pelo fluxo real do Supabase.
-- [x] Vincular o dispositivo ao usuário autenticado no primeiro acesso.
+### 1. Robustez da Sincronização (Risco Alto)
+*   **Problema**: A orquestração do sync é feita no Frontend (`syncStore.ts`).
+*   **Risco**: Se o usuário fechar o jogo e imediatamente fechar o app Sync Saves (antes do debounce de 5s), **o backup não será feito**.
+*   **Ideal**: O Backend (Rust) deveria gerenciar a fila de upload e garantir o envio em background, independente da UI estar renderizada.
 
-### Passo 2: Persistência Real e Seletor de Pastas ✅
-- [x] Implementar o seletor de pastas nativo do Windows/Linux/macOS.
-- [x] Garantir que ao "Adicionar Jogo", os dados sejam salvos no SQLite e reflitam no Grid sem mocks.
+### 2. Parâmetros "Hardcoded" (Magic Numbers)
+Existem intervalos fixos no código que podem afetar a experiência do usuário:
+*   **Watcher Lag (10s)**: O sistema leva até 10 segundos para começar a monitorar um jogo recém-adicionado (`watcher.rs`).
+*   **Sync Debounce (5s)**: O sistema espera 5 segundos de inatividade no arquivo antes de iniciar o upload.
+*   **Cooldown (30s)**: Bloqueia novos syncs automáticos por 30 segundos após um sucesso.
 
-### Passo 3: Motor de Sincronização (Core) ✅
-- [x] Implementar compressão ZIP da pasta de save.
-- [x] Implementar upload para o bucket `saves` do Supabase.
-- [x] Registrar log de "Sucesso" na timeline real.
+### 3. Fila Desconectada (Sync Queue)
+*   A tabela `sync_queue` existe no SQLite local, mas **não há lógica implementada** para popular ou processar essa fila.
+*   Se a internet cair, o sync falha e não é retentado automaticamente quando a conexão voltar.
 
-### Passo 4: Automação (Watcher) ✅
-- [x] Iniciar o watcher em Rust ao abrir o app para detectar mudanças e triggar sync.
-
-### Passo 5: Gestão de Dispositivos ✅
-- [x] Gerar Device ID único (UUID v4) persistido no SQLite.
-- [x] Registrar dispositivo automaticamente no Supabase ao iniciar.
-- [x] Listar todos os dispositivos do usuário na página Settings.
-- [x] Permitir remoção de dispositivos (exceto o atual).
-
-### Passo 6: Configurações Persistentes ✅
-- [x] Persistir preferências de sync no SQLite (frequência, notificações, auto-sync).
-- [x] Carregar configurações ao iniciar o app.
-- [x] Botões Save/Discard funcionais na página Settings.
-
-### Passo 7: Feedback Visual ✅
-- [x] Sistema de Toast Notifications para sucesso/erro.
-- [x] Feedback visual em operações de sync/restore.
-- [x] Dropdown com ações no GameCard (Open Folder, Settings, Remove).
-
-### Passo 8: Migração para HeroUI v3 ✅
-- [x] Atualizar padrões de Select (Label, ListBox, Select.Trigger/Value/Popover)
-- [x] Atualizar padrões de Modal (Modal.Backdrop, Modal.Container, Modal.Dialog)
-- [x] Atualizar padrões de Switch (Switch.Control, Switch.Thumb)
-- [x] Atualizar padrões de Tooltip (Tooltip.Trigger, Tooltip.Content)
-- [x] Atualizar padrões de Avatar (Avatar.Image, Avatar.Fallback)
-- [x] Atualizar padrões de Button (variant="primary/secondary/tertiary/ghost")
-- [x] Migrar useDisclosure para useOverlayState
-- [x] Remover HeroUIProvider (não necessário na v3)
-- [x] Atualizar para Tailwind CSS v4 com @tailwindcss/vite
+### 4. Deep Link em Desenvolvimento
+*   O redirecionamento pós-login (`sync-saves://`) funciona em produção, mas falha no ambiente de desenvolvimento Windows (`npm run tauri:dev`) devido à ausência de registro no Windows Registry sem o instalador.
 
 ---
 
-## ⚠️ Dívida Técnica (Pendente)
+## ✅ Funcionalidades Entregues
 
-### Alta Prioridade
-- [x] **Persistir Logs no Supabase**: Atividades são agora persistidas na tabela `sync_logs`.
-- [x] **Tipagem do Supabase**: Tipagem melhorada com interfaces explícitas e casting seguro.
-- [ ] **sync_queue não utilizado**: Tabela SQLite para fila offline nunca é populada.
-- [ ] **Base64 para arquivos grandes**: Sync usa Base64 que dobra uso de memória. Considerar streaming.
+### Core
+- [x] **Autenticação Google**: Login via navegador e captura de sessão.
+- [x] **Gestão de Dispositivos**: Registro automático de hardware e identificação única (UUID).
+- [x] **File Watcher**: Monitoramento recursivo de pastas de save.
+- [x] **Compressão**: ZIP de pastas inteiras antes do envio.
 
-### Baixa Prioridade
-- [ ] **Email Login não implementado**: Apenas log no console, sem magic link ou senha.
-- [ ] **Sem Error Boundary**: Falta tratamento de erros React para crash recovery.
-- [ ] **Sem Testes**: Nenhum teste unitário ou de integração implementado.
+### Interface (UI/UX)
+- [x] **Glassmorphism**: Design premium com HeroUI v3.
+- [x] **Feedback Visual**: Toasts para sucesso/erro e timeline de atividades (Logs).
+- [x] **Settings**: Configuração de auto-sync e notificações por jogo.
+- [x] **Estabilização UI**: Correção de layout overflows em Cards, Timeline e Dashboard.
 
----
-
-## 🚀 Próximos Passos (Pós-MVP)
-
-### Passo 9: Refinamento de Configurações 🔧 ✅
-- [x] Verificar configuração `desktop_notifications` antes de enviar notificações.
-- [x] Implementar modal de configurações por jogo (via botão Settings do GameCard).
-
-### Passo 10: Histórico e Versionamento de Saves 📚
-- [ ] Nomear arquivos com timestamp (ex: `game_20260102_143022.zip`).
-- [ ] Manter últimas N versões de cada save.
-- [ ] UI para visualizar e restaurar versões anteriores.
-
-### Passo 11: Sincronização Avançada 🔄
-- [ ] Detecção de conflitos (comparar checksums local vs cloud).
-- [ ] Modal de resolução de conflito (Keep Local / Keep Cloud / Keep Both).
-- [ ] Implementar fila offline (`sync_queue`) com retry automático.
-
-### Passo 12: Logs Sincronizados ☁️
-- [ ] Persistir atividades na tabela `sync_logs` do Supabase.
-- [ ] Carregar histórico de atividades de todos os dispositivos.
-- [ ] Filtrar logs por dispositivo/jogo na página Logs.
-
-### Passo 13: Qualidade de Código 🧪
-- [ ] Adicionar Vitest para testes de frontend.
-- [ ] Adicionar testes Rust para comandos Tauri.
-- [ ] Implementar React Error Boundary.
-- [x] Refatorar tipos do Supabase (remover `as any` inseguros).
-
-### Passo 14: Funcionalidades Extras ✨
-- [ ] Suporte a múltiplos perfis de save por jogo.
-- [ ] Integração com Steam API para buscar nomes e capas automaticamente.
-- [ ] Login por Email (magic link ou senha).
-- [ ] Versão Mobile (React Native ou Tauri Mobile).
+### Dados
+- [x] **Integridade**: Validação de arquivos via SHA-256 Hash.
+- [x] **Segurança**: Dados isolados por usuário via RLS (PostgreSQL).
 
 ---
 
-## 📈 Resumo de Status
+## 📅 Próximos Passos Recomendados
 
-| Área | Progresso | Notas |
-|------|-----------|-------|
-| Frontend UI | 99% | Falta apenas Email Login |
-| Backend Rust | 100% | Completo e funcional |
-| Supabase | 95% | Falta usar game_paths |
-| MVP Core | ✅ | Auth, Sync, Restore, Watcher funcionais |
-| Refinamentos | ✅ | Notifications e Game Settings completos |
+1.  **Mover Lógica de Sync para Rust**: Migrar a lógica de `sha256 -> zip -> upload` para o backend Rust para desacoplar da UI.
+2.  **Ativar Sync Queue**: Implementar retry automático para falhas de rede.
+3.  **Configuração Dinâmica**: Permitir que o usuário configure os tempos de debounce e cooldown nas configurações globais.

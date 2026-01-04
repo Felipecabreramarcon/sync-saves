@@ -8,6 +8,7 @@ import {
   Trash2,
   MoreVertical,
   FolderOpen,
+  FolderSearch,
 } from "lucide-react";
 import {
   type Game,
@@ -33,6 +34,7 @@ const statusColorMap: Record<string, string> = {
   error: "bg-danger",
   pending: "bg-gray-400",
   idle: "bg-gray-500",
+  not_configured: "bg-yellow-500",
 };
 
 function formatPlayTime(seconds?: number | null): string | null {
@@ -76,7 +78,9 @@ function GameCard({ game }: { game: Game }) {
   const performSync = useSyncStore((state) => state.performSync);
   const performRestore = useSyncStore((state) => state.performRestore);
   const removeGame = useGamesStore((state) => state.removeGame);
+  const configureGamePath = useGamesStore((state) => state.configureGamePath);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isConfiguringPath, setIsConfiguringPath] = useState(false);
   const [saveStats, setSaveStats] = useState<
     GameSaveStatsDto | null | undefined
   >(undefined);
@@ -84,6 +88,7 @@ function GameCard({ game }: { game: Game }) {
   const isTauri = isTauriRuntime();
 
   const isSyncing = game.status === "syncing";
+  const isNotConfigured = game.status === "not_configured";
   const platform = platformConfig[game.platform];
   const statusColor = statusColorMap[game.status] ?? "bg-gray-400";
 
@@ -171,6 +176,37 @@ function GameCard({ game }: { game: Game }) {
     }
   }, [game.local_path]);
 
+  const handleConfigurePath = useCallback(async () => {
+    if (!isTauri) {
+      toast.error("Configuration Error", "Path selection only available in desktop app");
+      return;
+    }
+
+    setIsConfiguringPath(true);
+    try {
+      const { open } = await import("@tauri-apps/plugin-dialog");
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: `Select save folder for ${game.name}`,
+      });
+
+      if (selected && typeof selected === 'string') {
+        const cloudId = game.cloud_game_id || game.id;
+        await configureGamePath(cloudId, selected);
+        toast.success("Path Configured", `${game.name} is now ready to sync`);
+      }
+    } catch (error) {
+      console.error("Failed to configure path:", error);
+      toast.error(
+        "Configuration Failed",
+        error instanceof Error ? error.message : "Unknown error occurred"
+      );
+    } finally {
+      setIsConfiguringPath(false);
+    }
+  }, [game.id, game.cloud_game_id, game.name, isTauri, configureGamePath]);
+
   const handleDropdownAction = useCallback(
     (key: React.Key) => {
       switch (key) {
@@ -254,7 +290,7 @@ function GameCard({ game }: { game: Game }) {
                   Path not found / not a folder
                 </p>
               ) : (
-                <p className="text-xs text-gray-400 leading-snug wrap-break-word">
+                <p className="text-xs text-gray-400 leading-snug break-words">
                   <span>{saveStats.file_count} files</span>
                   <span className="text-gray-600 mx-1">•</span>
                   <span>
@@ -279,7 +315,7 @@ function GameCard({ game }: { game: Game }) {
                   <p className="mt-2 text-[10px] font-bold text-gray-500 tracking-wider whitespace-nowrap">
                     SILKSONG
                   </p>
-                  <p className="text-xs text-gray-400 leading-snug wrap-break-word">
+                  <p className="text-xs text-gray-400 leading-snug break-words">
                     <span>{saveStats.silksong.user_dat_files} slots</span>
                     <span className="text-gray-600 mx-1">•</span>
                     <span>
@@ -333,43 +369,57 @@ function GameCard({ game }: { game: Game }) {
                 <p className="text-xs text-gray-300 font-medium whitespace-nowrap">
                   {timeAgo(game.last_synced_at, { empty: "Never" })}
                   <span className="text-gray-600 mx-1">•</span>
-                  <span className="bg-white/5 px-1.5 py-0.5 rounded text-[10px] text-gray-400">
-                    v{game.last_synced_version}
+                  <span className="bg-white/5 px-1.5 py-0.5 rounded text-[10px] text-gray-400 font-mono">
+                    {game.last_synced_id ? game.last_synced_id.slice(0, 8) : '-'}
                   </span>
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              <Tooltip closeDelay={0}>
-                <Tooltip.Trigger>
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    onPress={handleSync}
-                    isDisabled={isSyncing}
-                  >
-                    <RefreshCw
-                      className={`w-4 h-4 ${
-                        isSyncing ? "animate-spin text-primary-400" : ""
-                      }`}
-                    />
-                  </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Content>Sync Now</Tooltip.Content>
-              </Tooltip>
-              <Tooltip closeDelay={0}>
-                <Tooltip.Trigger>
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    onPress={handleRestore}
-                    isDisabled={isSyncing}
-                  >
-                    <CloudDownload className="w-4 h-4" />
-                  </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Content>Restore from Cloud</Tooltip.Content>
-              </Tooltip>
+              {isNotConfigured ? (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  className="shadow-lg shadow-primary-500/20"
+                  onPress={handleConfigurePath}
+                  isDisabled={isConfiguringPath}
+                >
+                  <FolderSearch className="w-4 h-4" />
+                  Configure Path
+                </Button>
+              ) : (
+                <>
+                  <Tooltip closeDelay={0}>
+                    <Tooltip.Trigger>
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        onPress={handleSync}
+                        isDisabled={isSyncing}
+                      >
+                        <RefreshCw
+                          className={`w-4 h-4 ${isSyncing ? "animate-spin text-primary-400" : ""
+                            }`}
+                        />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Sync Now</Tooltip.Content>
+                  </Tooltip>
+                  <Tooltip closeDelay={0}>
+                    <Tooltip.Trigger>
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        onPress={handleRestore}
+                        isDisabled={isSyncing}
+                      >
+                        <CloudDownload className="w-4 h-4" />
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>Restore from Cloud</Tooltip.Content>
+                  </Tooltip>
+                </>
+              )}
               <Dropdown>
                 <Dropdown.Trigger>
                   <Button isIconOnly size="sm">

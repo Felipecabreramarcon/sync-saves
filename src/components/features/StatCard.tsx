@@ -22,7 +22,7 @@ export default function StatCard({
           className={`absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity ${gradient}`}
         />
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 mb-3 min-w-0">
             <div
               className={`w-10 h-10 rounded-xl flex items-center justify-center ${gradient} shadow-lg shadow-black/10`}
             >
@@ -30,7 +30,7 @@ export default function StatCard({
             </div>
             <span className="text-gray-400 text-sm font-medium">{title}</span>
           </div>
-          <p className="text-3xl font-bold text-white tracking-tight">
+          <p className="text-3xl font-bold text-white tracking-tight truncate">
             {value}
           </p>
           {subtitle && (

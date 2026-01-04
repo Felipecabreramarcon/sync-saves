@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { getAllGames, addGame as tauriAddGame, deleteGame as tauriDeleteGame } from '@/lib/tauri-games'
 import { isTauriRuntime } from '@/lib/utils'
 
-export type SyncStatus = 'synced' | 'syncing' | 'error' | 'pending' | 'idle'
+export type SyncStatus = 'synced' | 'syncing' | 'error' | 'pending' | 'idle' | 'not_configured'
 export type SyncAction = 'upload' | 'download' | 'skip' | 'conflict'
 export type GamePlatform = 'steam' | 'epic' | 'gog' | 'other'
 
@@ -16,8 +16,9 @@ export interface Game {
   local_path: string
   sync_enabled: boolean
   last_synced_at?: string
-  last_synced_version?: number
+  last_synced_id?: string
   status: SyncStatus
+  cloud_game_id?: string // ID from cloud (Supabase games table)
 }
 
 export interface SyncActivity {
@@ -27,7 +28,7 @@ export interface SyncActivity {
   game_cover?: string
   action: SyncAction
   status: 'success' | 'error' | 'pending'
-  version?: number
+  save_version_id?: string
   message?: string
   created_at: string
   device_name?: string
@@ -56,8 +57,10 @@ interface GamesState {
   setStats: (stats: { totalGames: number; totalSaves: number; activeDevices: number }) => void
   
   setSearchQuery: (query: string) => void
-  addGame: (game: Omit<Game, 'id' | 'slug' | 'last_synced_at' | 'last_synced_version' | 'status'>) => Promise<void>
+  addGame: (game: Omit<Game, 'id' | 'slug' | 'last_synced_at' | 'last_synced_id' | 'status'>) => Promise<void>
   loadGames: () => Promise<void>
+  loadCloudGames: () => Promise<void>
+  configureGamePath: (cloudGameId: string, localPath: string) => Promise<void>
   refreshMetrics: () => Promise<void>
   deviceName: string
   setDeviceName: (name: string) => void
@@ -68,7 +71,7 @@ interface GamesState {
     action: SyncAction
     status: 'success' | 'error' | 'pending'
     message?: string
-    version?: number
+    save_version_id?: string
     fileSize?: number
     durationMs?: number
     cloudGameId?: string
@@ -153,7 +156,7 @@ export const useGamesStore = create<GamesState>()(
               sync_enabled: g.sync_enabled,
               status: g.status as SyncStatus,
               last_synced_at: undefined,
-              last_synced_version: 0
+              last_synced_id: g.last_synced_id,
             }))
             set({ games, totalGames: games.length })
           }
@@ -162,6 +165,136 @@ export const useGamesStore = create<GamesState>()(
         } finally {
             set({ isLoading: false })
         }
+      },
+
+      loadCloudGames: async () => {
+        const { supabase } = await import('@/lib/supabase')
+        const { useAuthStore } = await import('@/stores/authStore')
+        const { registerCurrentDevice } = await import('@/lib/devices')
+        
+        const user = useAuthStore.getState().user
+        if (!user) return
+
+        try {
+          // Get current device
+          const device = await registerCurrentDevice(user.id)
+          if (!device) return
+
+          // Fetch all games for user from cloud
+          const { data: cloudGames, error: gamesError } = await (supabase
+            .from('games') as any)
+            .select('id, name, slug, cover_url')
+            .eq('user_id', user.id)
+
+          if (gamesError) throw gamesError
+          if (!cloudGames || cloudGames.length === 0) return
+
+          // Fetch game_paths for this device
+          const { data: paths, error: pathsError } = await (supabase
+            .from('game_paths') as any)
+            .select('game_id, local_path, sync_enabled')
+            .eq('device_id', device.id)
+
+          if (pathsError) throw pathsError
+
+          const pathMap = new Map<string, { game_id: string; local_path: string; sync_enabled: boolean }>(paths?.map((p: any) => [p.game_id, p]) || [])
+          const localGames = get().games
+          const localBySlug = new Map(localGames.map(g => [g.slug, g]))
+
+          // Merge: add cloud games not configured locally
+          const newGames: Game[] = []
+          for (const cg of cloudGames) {
+            const existingLocal = localBySlug.get(cg.slug)
+            if (existingLocal) {
+              // Already in local cache, update cloud_game_id if needed
+              if (!existingLocal.cloud_game_id) {
+                get().updateGame(existingLocal.id, { cloud_game_id: cg.id })
+              }
+              continue
+            }
+
+            const pathInfo = pathMap.get(cg.id)
+            if (pathInfo) {
+              // Has path configured for this device, but not in local - add it
+              newGames.push({
+                id: cg.id, // Use cloud id for now
+                cloud_game_id: cg.id,
+                name: cg.name,
+                slug: cg.slug,
+                cover_url: cg.cover_url || undefined,
+                platform: 'other' as GamePlatform,
+                local_path: pathInfo.local_path,
+                sync_enabled: pathInfo.sync_enabled,
+                status: 'idle',
+              })
+            } else {
+              // No path for this device - show as not_configured
+              newGames.push({
+                id: cg.id,
+                cloud_game_id: cg.id,
+                name: cg.name,
+                slug: cg.slug,
+                cover_url: cg.cover_url || undefined,
+                platform: 'other' as GamePlatform,
+                local_path: '',
+                sync_enabled: true,
+                status: 'not_configured',
+              })
+            }
+          }
+
+          if (newGames.length > 0) {
+            set(state => ({
+              games: [...state.games, ...newGames],
+              totalGames: state.games.length + newGames.length
+            }))
+          }
+        } catch (e) {
+          console.error('Failed to load cloud games:', e)
+        }
+      },
+
+      configureGamePath: async (cloudGameId: string, localPath: string) => {
+        const { supabase } = await import('@/lib/supabase')
+        const { useAuthStore } = await import('@/stores/authStore')
+        const { registerCurrentDevice } = await import('@/lib/devices')
+        const { addGame: tauriAddGameFn } = await import('@/lib/tauri-games')
+
+        const user = useAuthStore.getState().user
+        if (!user) throw new Error('User not authenticated')
+
+        const device = await registerCurrentDevice(user.id)
+        if (!device) throw new Error('Failed to register device')
+
+        const game = get().games.find(g => g.cloud_game_id === cloudGameId || g.id === cloudGameId)
+        if (!game) throw new Error('Game not found')
+
+        // Upsert game_path in cloud
+        const { error: upsertError } = await (supabase
+          .from('game_paths') as any)
+          .upsert({
+            game_id: cloudGameId,
+            device_id: device.id,
+            local_path: localPath,
+            sync_enabled: true,
+          }, { onConflict: 'game_id,device_id' })
+
+        if (upsertError) throw upsertError
+
+        // Add to local SQLite if Tauri runtime
+        if (isTauriRuntime()) {
+          try {
+            await tauriAddGameFn(game.name, localPath, game.platform)
+          } catch (e) {
+            console.warn('Failed to add game to local DB:', e)
+          }
+        }
+
+        // Update store
+        get().updateGame(game.id, {
+          local_path: localPath,
+          status: 'idle',
+        })
       },
 
       refreshMetrics: async () => {
@@ -216,7 +349,7 @@ export const useGamesStore = create<GamesState>()(
               local_path: added.local_path,
               sync_enabled: added.sync_enabled,
               status: added.status as SyncStatus,
-              last_synced_version: 0
+              last_synced_id: undefined
             }
             set(state => ({
               games: [...state.games, game],
@@ -228,7 +361,7 @@ export const useGamesStore = create<GamesState>()(
               id: Math.random().toString(36).substr(2, 9),
               slug: newGame.name.toLowerCase().replace(/\s+/g, '-'),
               status: 'idle',
-              last_synced_version: 0,
+              last_synced_id: undefined,
               sync_enabled: true
             }
             set((state) => ({
@@ -261,7 +394,7 @@ export const useGamesStore = create<GamesState>()(
             game_cover: game?.cover_url,
             action: params.action,
             status: params.status,
-            version: params.version,
+            save_version_id: params.save_version_id,
             message: params.message,
             created_at: now,
             device_name: get().deviceName
@@ -282,7 +415,7 @@ export const useGamesStore = create<GamesState>()(
                         cloudGameId: params.cloudGameId,
                         deviceId: deviceId,
                         action: params.action,
-                        version: params.version ?? null,
+                        save_version_id: params.save_version_id ?? null,
                         status: params.status,
                         message: params.message ?? null,
                         durationMs: params.durationMs ?? null,

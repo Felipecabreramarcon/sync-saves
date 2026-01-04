@@ -48,7 +48,6 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
       const {
         ensureCloudGameId,
         upsertGamePath,
-        getNextVersion,
         createSaveVersion,
         sha256Base64,
       } = await import('@/lib/cloudSync')
@@ -107,9 +106,9 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
           syncEnabled: game.sync_enabled,
         })
 
-        const version = await getNextVersion(cloudGameId)
-        const timestamp = Date.now()
-        const filePath = `${user.id}/${game.slug}/v${version}_${timestamp}.zip`
+        const versionId = crypto.randomUUID()
+        // file path now uses versionId
+        const filePath = `${user.id}/${game.slug}/${versionId}.zip`
 
         const { error: uploadError } = await supabase.storage
           .from('saves')
@@ -129,9 +128,10 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
         // 4. Persist cloud metadata
         const checksum = await sha256Base64(await blob.arrayBuffer())
         await createSaveVersion({
+          id: versionId,
           cloudGameId,
           deviceId: cloudDeviceId,
-          version,
+          // version removed, using id
           filePath,
           fileSize: blob.size,
           checksum,
@@ -154,7 +154,7 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
             deviceId: cloudDeviceId,
             action: 'upload',
             status: 'success',
-            version,
+            save_version_id: versionId,
             message: 'Sync successful',
             durationMs,
             fileSize: blob.size

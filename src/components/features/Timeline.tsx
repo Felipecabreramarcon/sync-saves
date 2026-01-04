@@ -118,9 +118,9 @@ function TimelineItem({ activity }: { activity: SyncActivity }) {
                             <AvatarFallback className="rounded-lg">{activity.game_name[0]}</AvatarFallback>
                         </Avatar>
 
-                        <div>
+                        <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-white text-sm">{activity.game_name}</h4>
+                                <h4 className="font-bold text-white text-sm truncate">{activity.game_name}</h4>
                                 <span className="text-gray-600 text-[10px]">•</span>
                                 <span className={cn("text-xs font-medium flex items-center gap-1", statusColor)}>
                                     <StatusIcon className="w-3 h-3" />
@@ -141,7 +141,7 @@ function TimelineItem({ activity }: { activity: SyncActivity }) {
                             </div>
 
                             {activity.message && (
-                                <p className="mt-2 text-xs text-gray-400 leading-relaxed">
+                                <p className="mt-2 text-xs text-gray-400 leading-relaxed break-words">
                                     {activity.message}
                                 </p>
                             )}

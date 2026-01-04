@@ -1,6 +1,5 @@
 use crate::db;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -17,30 +16,8 @@ pub struct LocalGame {
     platform: String,
     local_path: String,
     sync_enabled: bool,
+    last_synced_id: Option<String>,
     status: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Default)]
-pub struct SilksongProgress {
-    pub save_date: Option<String>,
-    pub play_time_seconds: Option<f64>,
-    pub respawn_scene: Option<String>,
-    pub map_zone: Option<i64>,
-
-    pub health: Option<i64>,
-    pub max_health: Option<i64>,
-    pub geo: Option<i64>,
-    pub silk: Option<i64>,
-    pub silk_max: Option<i64>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Default)]
-pub struct SilksongStats {
-    pub user_dat_files: u64,
-    pub restore_point_files: u64,
-    pub decoded_json_files: u64,
-    pub newest_save_mtime_ms: Option<i64>,
-    pub progress: Option<SilksongProgress>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -51,7 +28,6 @@ pub struct GameSaveStats {
     pub file_count: u64,
     pub total_bytes: u64,
     pub newest_mtime_ms: Option<i64>,
-    pub silksong: Option<SilksongStats>,
 }
 
 fn system_time_to_ms(st: SystemTime) -> i64 {
@@ -60,171 +36,13 @@ fn system_time_to_ms(st: SystemTime) -> i64 {
         .unwrap_or(0)
 }
 
-fn get_i64(v: Option<&Value>) -> Option<i64> {
-    v.and_then(|x| x.as_i64())
-        .or_else(|| v.and_then(|x| x.as_f64()).map(|n| n as i64))
-}
-
-fn detect_silksong(name: &str, slug: &str, path: &str) -> bool {
-    let n = name.to_lowercase();
-    let s = slug.to_lowercase();
-    let p = path.to_lowercase();
-    n.contains("silksong") || s.contains("silksong") || p.contains("hollow knight silksong")
-}
-
-fn newest_json_sidecar(default_dir: &Path) -> Option<PathBuf> {
-    let mut newest: Option<(i64, PathBuf)> = None;
-    for entry in WalkDir::new(default_dir)
-        .follow_links(false)
-        .into_iter()
-        .filter_map(|e| e.ok())
-    {
-        if !entry.file_type().is_file() {
-            continue;
-        }
-        let name = entry.file_name().to_string_lossy().to_string();
-        // Produced by hollow.py: user1.dat.json
-        if !name.to_lowercase().ends_with(".dat.json") {
-            continue;
-        }
-        let mtime_ms = entry
-            .metadata()
-            .ok()
-            .and_then(|m| m.modified().ok())
-            .map(system_time_to_ms)
-            .unwrap_or(0);
-
-        match &newest {
-            None => newest = Some((mtime_ms, entry.path().to_path_buf())),
-            Some((best_ms, _)) if mtime_ms > *best_ms => {
-                newest = Some((mtime_ms, entry.path().to_path_buf()))
-            }
-            _ => {}
-        }
-    }
-    newest.map(|(_, p)| p)
-}
-
-fn try_parse_silksong_progress(decoded_json_path: &Path) -> Option<SilksongProgress> {
-    let text = fs::read_to_string(decoded_json_path).ok()?;
-    let json: Value = serde_json::from_str(&text).ok()?;
-
-    // Known structure from decoded Silksong saves.
-    let pd = json.get("playerData")?.as_object()?;
-
-    let play_time_seconds = pd.get("playTime").and_then(|v| v.as_f64());
-    let save_date = pd
-        .get("date")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
-    let respawn_scene = pd
-        .get("respawnScene")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
-    let map_zone = get_i64(pd.get("mapZone"));
-
-    let health = get_i64(pd.get("health"));
-    let max_health = get_i64(pd.get("maxHealth"));
-    let geo = get_i64(pd.get("geo"));
-    let silk = get_i64(pd.get("silk"));
-    let silk_max = get_i64(pd.get("silkMax"));
-
-    // If we didn't extract anything meaningful, return None.
-    if play_time_seconds.is_none()
-        && save_date.is_none()
-        && respawn_scene.is_none()
-        && map_zone.is_none()
-        && health.is_none()
-        && max_health.is_none()
-        && geo.is_none()
-        && silk.is_none()
-        && silk_max.is_none()
-    {
-        return None;
-    }
-
-    Some(SilksongProgress {
-        save_date,
-        play_time_seconds,
-        respawn_scene,
-        map_zone,
-        health,
-        max_health,
-        geo,
-        silk,
-        silk_max,
-    })
-}
-
-fn compute_silksong_stats(root: &Path) -> SilksongStats {
-    let mut stats = SilksongStats::default();
-    let default_dir = root.join("default");
-
-    // If we don't see the expected structure, treat as unsupported.
-    if !default_dir.exists() || !default_dir.is_dir() {
-        return stats;
-    }
-
-    let mut newest_save_mtime_ms: Option<i64> = None;
-
-    for entry in WalkDir::new(&default_dir)
-        .follow_links(false)
-        .into_iter()
-        .filter_map(|e| e.ok())
-    {
-        if !entry.file_type().is_file() {
-            continue;
-        }
-
-        let path = entry.path();
-        let name = entry.file_name().to_string_lossy().to_string();
-        let lower_name = name.to_lowercase();
-        let rel = path
-            .strip_prefix(&default_dir)
-            .ok()
-            .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or_default();
-        let rel_lower = rel.to_lowercase();
-
-        let mtime_ms = entry
-            .metadata()
-            .ok()
-            .and_then(|m| m.modified().ok())
-            .map(system_time_to_ms);
-
-        if lower_name.starts_with("user") && lower_name.ends_with(".dat") {
-            stats.user_dat_files += 1;
-            if let Some(ms) = mtime_ms {
-                newest_save_mtime_ms = Some(newest_save_mtime_ms.map(|x| x.max(ms)).unwrap_or(ms));
-            }
-        }
-
-        if lower_name.ends_with(".dat.json") {
-            stats.decoded_json_files += 1;
-        }
-
-        if rel_lower.contains("restore_points") {
-            stats.restore_point_files += 1;
-        }
-    }
-
-    stats.newest_save_mtime_ms = newest_save_mtime_ms;
-
-    // Only try to interpret progress when a decoded sidecar exists.
-    if let Some(json_path) = newest_json_sidecar(&default_dir) {
-        stats.progress = try_parse_silksong_progress(&json_path);
-    }
-
-    stats
-}
-
 #[command]
 pub fn get_all_games(app: AppHandle) -> Result<Vec<LocalGame>, String> {
     let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
 
     let mut stmt = conn
         .prepare(
-            "SELECT id, name, slug, cover_url, platform, local_path, sync_enabled, status 
+            "SELECT id, name, slug, cover_url, platform, local_path, sync_enabled, last_synced_id, status 
          FROM games_cache",
         )
         .map_err(|e| e.to_string())?;
@@ -239,7 +57,8 @@ pub fn get_all_games(app: AppHandle) -> Result<Vec<LocalGame>, String> {
                 platform: row.get(4)?,
                 local_path: row.get(5)?,
                 sync_enabled: row.get::<_, i32>(6)? != 0,
-                status: row.get(7)?,
+                last_synced_id: row.get(7)?,
+                status: row.get(8)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -278,6 +97,7 @@ pub fn add_game(
         platform,
         local_path,
         sync_enabled: true,
+        last_synced_id: None,
         status: "idle".to_string(),
     })
 }
@@ -307,7 +127,6 @@ pub fn get_game_save_stats(app: AppHandle, game_id: String) -> Result<GameSaveSt
         file_count: 0,
         total_bytes: 0,
         newest_mtime_ms: None,
-        silksong: None,
     };
 
     if !is_dir {
@@ -341,11 +160,6 @@ pub fn get_game_save_stats(app: AppHandle, game_id: String) -> Result<GameSaveSt
     out.file_count = file_count;
     out.total_bytes = total_bytes;
     out.newest_mtime_ms = newest_mtime_ms;
-
-    // Only run Silksong-specific logic when we can reasonably expect it to work.
-    if detect_silksong(&name, &slug, &local_path) {
-        out.silksong = Some(compute_silksong_stats(path));
-    }
 
     Ok(out)
 }
@@ -384,7 +198,7 @@ pub fn update_game(
     // First, get the current game data
     let mut stmt = conn
         .prepare(
-            "SELECT id, name, slug, cover_url, platform, local_path, sync_enabled, status 
+            "SELECT id, name, slug, cover_url, platform, local_path, sync_enabled, last_synced_id, status 
              FROM games_cache WHERE id = ?1",
         )
         .map_err(|e| e.to_string())?;
@@ -399,7 +213,8 @@ pub fn update_game(
                 platform: row.get(4)?,
                 local_path: row.get(5)?,
                 sync_enabled: row.get::<_, i32>(6)? != 0,
-                status: row.get(7)?,
+                last_synced_id: row.get(7)?,
+                status: row.get(8)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -437,6 +252,7 @@ pub fn update_game(
         platform: new_platform,
         local_path: new_local_path,
         sync_enabled: new_sync_enabled,
+        last_synced_id: current_game.last_synced_id,
         status: current_game.status,
     })
 }

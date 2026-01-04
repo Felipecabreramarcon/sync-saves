@@ -47,7 +47,7 @@ fn create_tables(conn: &Connection) -> Result<()> {
             local_path TEXT,
             sync_enabled INTEGER DEFAULT 1,
             last_synced_at TEXT,
-            last_synced_version INTEGER,
+            last_synced_id TEXT,
             status TEXT DEFAULT 'idle',
             completion_percentage REAL DEFAULT 0,
             play_time_seconds INTEGER DEFAULT 0,
@@ -68,6 +68,10 @@ fn create_tables(conn: &Connection) -> Result<()> {
     );
     let _ = conn.execute(
         "ALTER TABLE games_cache ADD COLUMN last_analyzed_at TEXT",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE games_cache ADD COLUMN last_synced_id TEXT",
         [],
     );
 

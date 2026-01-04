@@ -51,7 +51,7 @@ export interface GamePathRow {
   local_path: string
   sync_enabled: boolean
   last_synced_at: string | null
-  last_synced_version: number | null
+  last_synced_id: string | null
   created_at: string
   updated_at?: string
 }
@@ -61,14 +61,14 @@ export interface GamePathInsert {
   local_path: string
   sync_enabled: boolean
   last_synced_at?: string | null
-  last_synced_version?: number | null
+  last_synced_id?: string | null
   updated_at?: string
 }
 export interface GamePathUpdate {
   local_path?: string
   sync_enabled?: boolean
   last_synced_at?: string | null
-  last_synced_version?: number | null
+  last_synced_id?: string | null
   updated_at?: string
 }
 
@@ -76,7 +76,7 @@ export interface SaveVersionRow {
   id: string
   game_id: string
   device_id: string | null
-  version: number
+  // version removed
   file_path: string
   file_size: number
   checksum: string
@@ -87,7 +87,7 @@ export interface SaveVersionRow {
 export interface SaveVersionInsert {
   game_id: string
   device_id: string | null
-  version: number
+  // version removed
   file_path: string
   file_size: number
   checksum: string
@@ -103,7 +103,7 @@ export interface SyncLogRow {
   game_id: string
   device_id: string | null
   action: 'upload' | 'download' | 'conflict' | 'skip'
-  version: number | null
+  save_version_id: string | null
   status: 'success' | 'error' | 'pending'
   message: string | null
   file_size?: number | null
@@ -114,7 +114,7 @@ export interface SyncLogInsert {
   game_id: string
   device_id: string | null
   action: 'upload' | 'download' | 'conflict' | 'skip'
-  version: number | null
+  save_version_id: string | null
   status: 'success' | 'error' | 'pending'
   message: string | null
   file_size?: number | null

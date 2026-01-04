@@ -8,6 +8,7 @@ export interface LocalGameDto {
   platform: string
   local_path: string
   sync_enabled: boolean
+  last_synced_id?: string
   status: string
 }
 

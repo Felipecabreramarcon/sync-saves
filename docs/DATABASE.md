@@ -60,7 +60,7 @@ CREATE TABLE game_paths (
     local_path TEXT NOT NULL,
     sync_enabled BOOLEAN DEFAULT TRUE,
     last_synced_at TIMESTAMPTZ,
-    last_synced_version INTEGER,
+    last_synced_id UUID,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(game_id, device_id)
 );
@@ -76,13 +76,12 @@ CREATE TABLE save_versions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
     device_id UUID REFERENCES devices(id) ON DELETE SET NULL,
-    version INTEGER NOT NULL,
+    -- version removido: usamos ID único
     file_path TEXT NOT NULL,
     file_size BIGINT NOT NULL,
     checksum TEXT NOT NULL,
     is_latest BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(game_id, version)
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX idx_save_versions_game_id ON save_versions(game_id);
@@ -97,7 +96,7 @@ CREATE TABLE sync_logs (
     game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
     device_id UUID REFERENCES devices(id) ON DELETE SET NULL,
     action TEXT NOT NULL CHECK (action IN ('upload', 'download', 'conflict', 'skip')),
-    version INTEGER,
+    save_version_id UUID,
     status TEXT NOT NULL CHECK (status IN ('success', 'error', 'pending')),
     message TEXT,
     duration_ms INTEGER,
@@ -192,7 +191,7 @@ CREATE TABLE games_cache (
     local_path TEXT,
     sync_enabled INTEGER DEFAULT 1,
     last_synced_at TEXT,
-    last_synced_version INTEGER,
+    last_synced_id TEXT,
     status TEXT DEFAULT 'idle', -- 'idle', 'syncing', 'error'
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
@@ -219,8 +218,8 @@ CREATE TABLE sync_queue (
 saves/
 ├── {user_id}/
 │   ├── {game_slug}/
-│   │   ├── v1_1704067200000.zip
-│   │   └── v2_1704153600000.zip
+│   │   ├── {uuid}.zip
+│   │   └── {uuid}.zip
 ```
 
-**Formato**: `v{version}_{timestamp_ms}.zip`
+**Formato**: `{uuid}.zip`

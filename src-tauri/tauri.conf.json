@@ -43,6 +43,12 @@
   "plugins": {
     "shell": {
       "open": true
+    },
+    "deep-link": {
+      "verbose": true,
+      "schemes": [
+        "sync-saves"
+      ]
     }
   }
 }

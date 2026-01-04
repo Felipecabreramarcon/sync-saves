@@ -14,10 +14,14 @@ import { SaveInput } from "@/components/common/SaveInput";
 export default function Games() {
   const [searchQuery, setSearchQuery] = useState("");
   const modalState = useOverlayState();
-  const { games, loadGames, addGame, isLoading } = useGamesStore();
+  const { games, loadGames, loadCloudGames, addGame, isLoading } = useGamesStore();
 
   useEffect(() => {
-    loadGames();
+    const init = async () => {
+      await loadGames();
+      await loadCloudGames();
+    };
+    init();
   }, []);
 
   const filteredGames = games.filter((game) =>

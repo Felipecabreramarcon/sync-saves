@@ -134,9 +134,72 @@ function App() {
     checkConnection();
     const interval = setInterval(checkConnection, 30000);
 
+    // 3. Deep Link Listener (Auth Callback)
+    const setupDeepLinkListener = async () => {
+      const { listen } = await import("@tauri-apps/api/event");
+      const unlisten = await listen("deep-link://new-url", async (event) => {
+        const url = event.payload as string;
+        console.log("Deep link received:", url);
+
+        // Supabase passes tokens in the hash usually: #access_token=...&refresh_token=...
+        // Or sometimes query params.
+        // We can just let supabase-js handle the URL session parsing if we use setSession
+        // or manually parse it.
+        // Easiest is to manually extract access_token and refresh_token from the URL.
+
+        try {
+          // Check for # or ?
+          // Example: sync-saves://auth/callback#access_token=...&refresh_token=...&token_type=bearer...
+          const { supabase } = await import("@/lib/supabase");
+
+          // Extract fragment
+          const fragment = url.split('#')[1];
+          if (fragment) {
+            const params = new URLSearchParams(fragment);
+            const access_token = params.get('access_token');
+            const refresh_token = params.get('refresh_token');
+
+            if (access_token && refresh_token) {
+              setLoading(true);
+              const { error } = await supabase.auth.setSession({
+                access_token,
+                refresh_token
+              });
+              if (error) throw error;
+              console.log("Session set from deep link!");
+              // Auth state listener will handle the rest
+            }
+          } else {
+            // Should handle error cases or query params (PKCE code flow)
+            // If using PKCE, we get a code query param.
+            const query = url.split('?')[1];
+            if (query) {
+              const params = new URLSearchParams(query);
+              const code = params.get('code');
+              if (code) {
+                setLoading(true);
+                const { error } = await supabase.auth.exchangeCodeForSession(code);
+                if (error) throw error;
+              }
+            }
+          }
+        } catch (e: any) {
+          console.error("Failed to handle deep link auth:", e);
+          toast.error("Login Failed", e.message || "Could not authenticate from link.");
+        } finally {
+          setLoading(false);
+        }
+      });
+      return unlisten;
+    };
+
+    let deepLinkUnlisten: (() => void) | undefined;
+    setupDeepLinkListener().then(unlisten => { deepLinkUnlisten = unlisten; });
+
     return () => {
       subscription.unsubscribe();
       clearInterval(interval);
+      if (deepLinkUnlisten) deepLinkUnlisten();
     };
   }, [setUser, logout, setLoading, setBackendConnected]);
 

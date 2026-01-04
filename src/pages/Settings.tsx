@@ -196,7 +196,7 @@ export default function Settings() {
               </div>
 
               <div className="space-y-6">
-                <div className="space-y-2">
+                <div className="space-y-2 flex flex-col">
                   <Label className="text-sm text-gray-400 font-medium">
                     Device Name
                   </Label>
@@ -260,7 +260,7 @@ export default function Settings() {
 
               <div className="space-y-6">
                 <div className="flex items-center justify-between p-4 rounded-xl bg-bg-elevated/30 border border-white/5 hover:border-white/10 transition-colors cursor-pointer group">
-                  <div className="space-y-0.5 text-left">
+                  <div className="space-y-0.5 text-left min-w-0 flex-1 pr-4">
                     <p className="text-sm font-semibold text-white group-hover:text-primary-300 transition-colors">
                       Launch on Startup
                     </p>
@@ -281,7 +281,7 @@ export default function Settings() {
                 </div>
 
                 <div className="flex items-center justify-between p-4 rounded-xl bg-bg-elevated/30 border border-white/5 hover:border-white/10 transition-colors cursor-pointer group">
-                  <div className="space-y-0.5 text-left">
+                  <div className="space-y-0.5 text-left min-w-0 flex-1 pr-4">
                     <p className="text-sm font-semibold text-white group-hover:text-primary-300 transition-colors">
                       Desktop Notifications
                     </p>
@@ -302,7 +302,7 @@ export default function Settings() {
                 </div>
 
                 <div className="flex items-center justify-between p-4 rounded-xl bg-bg-elevated/30 border border-white/5 hover:border-white/10 transition-colors cursor-pointer group">
-                  <div className="space-y-0.5 text-left">
+                  <div className="space-y-0.5 text-left min-w-0 flex-1 pr-4">
                     <p className="text-sm font-semibold text-white group-hover:text-primary-300 transition-colors">
                       Auto-Sync on File Change
                     </p>
@@ -350,7 +350,7 @@ export default function Settings() {
                   </Avatar>
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-4 border-bg-card" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-lg font-bold text-white truncate">
                     {user?.email || "gamer@example.com"}
                   </p>
@@ -429,25 +429,24 @@ export default function Settings() {
                     const isOnline =
                       device.is_current ||
                       Date.now() - new Date(device.last_seen_at).getTime() <
-                        300000; // 5 min
+                      300000; // 5 min
                     return (
                       <div
                         key={device.id}
                         className="group flex items-center justify-between p-4 rounded-xl bg-bg-elevated/30 border border-white/5 hover:border-white/10 hover:bg-bg-elevated/50 transition-all"
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 min-w-0">
                           <div
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center border border-white/5 bg-bg-elevated/50 transition-colors ${
-                              isOnline
-                                ? "text-primary-400 shadow-lg shadow-primary-500/10"
-                                : "text-gray-600"
-                            }`}
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center border border-white/5 bg-bg-elevated/50 transition-colors ${isOnline
+                              ? "text-primary-400 shadow-lg shadow-primary-500/10"
+                              : "text-gray-600"
+                              }`}
                           >
                             <DeviceIcon className="w-5 h-5" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-white group-hover:text-primary-300 transition-colors">
+                              <span className="text-sm font-bold text-white group-hover:text-primary-300 transition-colors truncate">
                                 {device.name}
                               </span>
                               {device.is_current && (
@@ -463,22 +462,20 @@ export default function Settings() {
                                 size="sm"
                                 variant="tertiary"
                                 color={isOnline ? "success" : "default"}
-                                className={`bg-transparent text-[10px] font-bold uppercase tracking-widest ${
-                                  isOnline ? "text-green-500" : "text-gray-500"
-                                }`}
+                                className={`bg-transparent text-[10px] font-bold uppercase tracking-widest ${isOnline ? "text-green-500" : "text-gray-500"
+                                  }`}
                               >
                                 <span
-                                  className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                                    isOnline ? "bg-green-500" : "bg-gray-500"
-                                  }`}
+                                  className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isOnline ? "bg-green-500" : "bg-gray-500"
+                                    }`}
                                 />
                                 {isOnline ? "online" : "offline"}
                               </Chip>
                             </div>
-                            <p className="text-[11px] text-gray-500 font-medium mt-0.5">
+                            <p className="text-[11px] text-gray-500 font-medium mt-0.5 truncate">
                               {device.os
                                 ? device.os.charAt(0).toUpperCase() +
-                                  device.os.slice(1)
+                                device.os.slice(1)
                                 : "Unknown OS"}{" "}
                               • Last seen {getRelativeTime(device.last_seen_at)}
                             </p>

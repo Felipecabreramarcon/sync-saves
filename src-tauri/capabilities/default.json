@@ -12,6 +12,7 @@
     "core:window:allow-toggle-maximize",
     "core:window:allow-close",
     "shell:allow-open",
+    "deep-link:default",
     "dialog:default",
     "os:default",
     "autostart:default",

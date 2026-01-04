@@ -68,24 +68,13 @@ export async function upsertGamePath(params: {
   return res.data
 }
 
-export async function getNextVersion(cloudGameId: string): Promise<number> {
-  const res = await (supabase
-    .from('save_versions') as any)
-    .select('version')
-    .eq('game_id', cloudGameId)
-    .order('version', { ascending: false })
-    .limit(1)
-
-  if (res.error) throw res.error
-
-  const latest = (res.data?.[0]?.version as number | undefined) ?? 0
-  return latest + 1
-}
+// getNextVersion removed in favor of UUIDs
 
 export async function createSaveVersion(params: {
+  id: string
   cloudGameId: string
   deviceId: string
-  version: number
+  // version removed
   filePath: string
   fileSize: number
   checksum: string
@@ -101,9 +90,10 @@ export async function createSaveVersion(params: {
   const res = await (supabase
     .from('save_versions') as any)
     .insert({
+      id: params.id,
       game_id: params.cloudGameId,
       device_id: params.deviceId,
-      version: params.version,
+      // version removed
       file_path: params.filePath,
       file_size: params.fileSize,
       checksum: params.checksum,
@@ -121,7 +111,7 @@ export async function createSyncLog(params: {
   cloudGameId: string
   deviceId: string | null
   action: 'upload' | 'download' | 'conflict' | 'skip'
-  version: number | null
+  save_version_id: string | null
   status: 'success' | 'error' | 'pending'
   message: string | null
   durationMs: number | null
@@ -133,7 +123,7 @@ export async function createSyncLog(params: {
       game_id: params.cloudGameId,
       device_id: params.deviceId,
       action: params.action,
-      version: params.version,
+      save_version_id: params.save_version_id,
       status: params.status,
       message: params.message,
       duration_ms: params.durationMs,
@@ -160,7 +150,7 @@ export async function fetchActivitiesFromCloud(params: {
         game_id, 
         device_id, 
         action, 
-        version, 
+        save_version_id, 
         status, 
         message, 
         created_at, 
@@ -201,7 +191,7 @@ export async function fetchActivitiesFromCloud(params: {
         game_cover: game?.cover_url ?? undefined,
         action: row.action,
         status: row.status,
-        version: row.version ?? undefined,
+        save_version_id: row.save_version_id ?? undefined,
         message: row.message ?? undefined,
         created_at: row.created_at,
         device_name: device?.name ?? undefined,
@@ -273,7 +263,7 @@ export function toRelativeCreatedAt(activity: SyncActivity): string {
 }
 
 export type CloudSaveVersion = {
-  version: number
+  id: string
   created_at: string
   file_path: string
   file_size: number
@@ -314,7 +304,7 @@ export async function fetchBackupsByGame(params: {
       slug, 
       cover_url, 
       save_versions (
-        version, 
+        id, 
         created_at, 
         file_path, 
         file_size, 
@@ -346,7 +336,7 @@ export async function fetchBackupsByGame(params: {
   return rows.map((g: any) => {
     // Explicit casting for joined relations which is safe here as Supabase returns arrays/objects based on schema
     const versionsRawData = g.save_versions as {
-        version: number
+        id: string
         created_at: string
         file_path: string
         file_size: number
@@ -364,7 +354,7 @@ export async function fetchBackupsByGame(params: {
 
     const versionsRaw = (versionsRawData || [])
       .map((v) => ({
-        version: v.version,
+        id: v.id,
         created_at: v.created_at,
         file_path: v.file_path,
         file_size: v.file_size,
@@ -377,7 +367,7 @@ export async function fetchBackupsByGame(params: {
     const latestVersion = versionsRaw.find((v) => v.is_latest) ?? versionsRaw[0]
     const latestMapped: CloudSaveVersion | undefined = latestVersion
       ? {
-          version: latestVersion.version,
+          id: latestVersion.id,
           created_at: latestVersion.created_at,
           file_path: latestVersion.file_path,
           file_size: latestVersion.file_size,

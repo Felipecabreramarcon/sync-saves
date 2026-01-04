@@ -54,8 +54,8 @@ export default function ActivityItem({ activity }: { activity: SyncActivity }) {
             status.color === "success"
               ? "bg-success/20 text-success"
               : status.color === "danger"
-              ? "bg-danger/20 text-danger"
-              : "bg-warning/20 text-warning"
+                ? "bg-danger/20 text-danger"
+                : "bg-warning/20 text-warning"
           )}
         >
           <ActionIcon className="w-3 h-3" />
