@@ -89,6 +89,7 @@ export async function createSaveVersion(params: {
   filePath: string
   fileSize: number
   checksum: string
+  file_modified_at?: string
 }) {
   // unset previous latest
   await (supabase
@@ -107,6 +108,7 @@ export async function createSaveVersion(params: {
       file_size: params.fileSize,
       checksum: params.checksum,
       is_latest: true,
+      file_modified_at: params.file_modified_at,
     })
     .select('id')
     .single()

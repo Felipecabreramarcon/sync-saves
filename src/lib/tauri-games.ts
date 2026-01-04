@@ -34,6 +34,7 @@ export interface SyncResultDto {
   file_name: string
   base64_data: string
   message: string
+  file_modified_at: string
 }
 
 export async function syncGame(gameId: string): Promise<SyncResultDto> {

@@ -81,6 +81,7 @@ export interface SaveVersionRow {
   file_size: number
   checksum: string
   is_latest: boolean
+  file_modified_at?: string
   created_at: string
 }
 export interface SaveVersionInsert {
@@ -91,6 +92,7 @@ export interface SaveVersionInsert {
   file_size: number
   checksum: string
   is_latest: boolean
+  file_modified_at?: string
 }
 export interface SaveVersionUpdate {
   is_latest?: boolean

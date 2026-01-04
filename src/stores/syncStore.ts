@@ -135,6 +135,7 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
           filePath,
           fileSize: blob.size,
           checksum,
+          file_modified_at: result.file_modified_at, // Pass captured timestamp
         })
 
         const durationMs = Math.round(performance.now() - startedAt)

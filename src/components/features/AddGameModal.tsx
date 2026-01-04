@@ -16,6 +16,7 @@ import {
   Plus,
   AlertTriangle,
   Search,
+  FileText,
 } from "lucide-react";
 import { SaveInput } from "@/components/common/SaveInput";
 import { isProtectedPath, isTauriRuntime } from "@/lib/utils";
@@ -40,6 +41,7 @@ export default function AddGameModal({
   const [isAdding, setIsAdding] = useState(false);
   const [newGameName, setNewGameName] = useState("");
   const [newGamePath, setNewGamePath] = useState("");
+  const [isFolder, setIsFolder] = useState(true);
   const [autoSync, setAutoSync] = useState(true);
 
   const [pcgwIsSearching, setPcgwIsSearching] = useState(false);
@@ -49,12 +51,13 @@ export default function AddGameModal({
   const [pcgwSelectedTitle, setPcgwSelectedTitle] = useState<string>("");
   const [pcgwPaths, setPcgwPaths] = useState<PcgwSavePathDto[]>([]);
 
-  const handleSelectFolder = async () => {
+  const handleSelectPath = async () => {
     try {
       const selected = await open({
-        directory: true,
+        directory: isFolder,
         multiple: false,
-        title: "Select Game Save Folder",
+        title: isFolder ? "Select Game Save Folder" : "Select Game Save File",
+        filters: isFolder ? undefined : [{ name: 'Game Save', extensions: ['*'] }]
       });
 
       if (selected) {
@@ -118,8 +121,8 @@ export default function AddGameModal({
         e instanceof Error
           ? e.message
           : typeof e === "string"
-          ? e
-          : "Failed to query PCGamingWiki.";
+            ? e
+            : "Failed to query PCGamingWiki.";
       setPcgwError(message);
     } finally {
       setPcgwIsSearching(false);
@@ -148,8 +151,8 @@ export default function AddGameModal({
         e instanceof Error
           ? e.message
           : typeof e === "string"
-          ? e
-          : "Failed to load save locations.";
+            ? e
+            : "Failed to load save locations.";
       setPcgwError(message);
     } finally {
       setPcgwIsLoadingPaths(false);
@@ -188,17 +191,34 @@ export default function AddGameModal({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm text-gray-400 font-medium">
-                      Save Folder Location
+                      Save Location ({isFolder ? "Folder" : "File"})
                     </Label>
-                    <Tooltip>
-                      <Tooltip.Trigger>
-                        <Info className="w-3.5 h-3.5 text-gray-600 cursor-help" />
-                      </Tooltip.Trigger>
-                      <Tooltip.Content>
-                        Select the directory where the game stores its .sl2,
-                        .sav or .dat files
-                      </Tooltip.Content>
-                    </Tooltip>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 bg-bg-elevated/30 p-0.5 rounded-lg border border-white/5">
+                        <Button
+                          onPress={() => setIsFolder(true)}
+                          size="sm"
+                          className={`px-2 h-6 min-w-0 text-[10px] rounded-md transition-all ${isFolder ? 'bg-primary-500 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                          <FolderOpen size={12} className="mr-1" /> Folder
+                        </Button>
+                        <Button
+                          onPress={() => setIsFolder(false)}
+                          size="sm"
+                          className={`px-2 h-6 min-w-0 text-[10px] rounded-md transition-all ${!isFolder ? 'bg-primary-500 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                          <FileText size={12} className="mr-1" /> File
+                        </Button>
+                      </div>
+                      <Tooltip>
+                        <Tooltip.Trigger>
+                          <Info className="w-3.5 h-3.5 text-gray-600 cursor-help" />
+                        </Tooltip.Trigger>
+                        <Tooltip.Content>
+                          Select whether the game uses a folder or a single file for saves.
+                        </Tooltip.Content>
+                      </Tooltip>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <SaveInput
@@ -209,10 +229,10 @@ export default function AddGameModal({
                       className="flex-1"
                     />
                     <Button
-                      onPress={handleSelectFolder}
+                      onPress={handleSelectPath}
                       className="bg-primary-900/30 text-primary-400 border border-primary-500/20 h-12 w-12 min-w-12 rounded-xl hover:bg-primary-900/50 transition-colors flex flex-row items-center justify-center"
                     >
-                      <FolderOpen className="w-5 h-5" />
+                      {isFolder ? <FolderOpen className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
                     </Button>
                   </div>
 

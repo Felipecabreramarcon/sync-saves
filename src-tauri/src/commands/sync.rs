@@ -12,6 +12,7 @@ pub struct SyncResult {
     pub file_name: String,
     pub base64_data: String,
     pub message: String,
+    pub file_modified_at: String, // ISO 8601
 }
 
 #[command]
@@ -33,9 +34,15 @@ pub fn sync_game(app: AppHandle, game_id: String) -> Result<SyncResult, String> 
         return Err(format!("Local path does not exist: {}", local_path));
     }
 
+    // Capture modification time
+    let metadata = fs::metadata(src_path).map_err(|e| format!("Failed to read metadata: {}", e))?;
+    let modified_time: chrono::DateTime<chrono::Utc> = metadata.modified()
+        .map_err(|e| format!("Failed to get mtime: {}", e))?
+        .into();
+
     let dst_path = compression::get_temp_zip_path(&slug);
     
-    compression::compress_folder(src_path, &dst_path)
+    compression::compress_path(src_path, &dst_path)
         .map_err(|e| format!("Compression failed: {}", e))?;
 
     let bytes = fs::read(&dst_path).map_err(|e| format!("Failed to read zip: {}", e))?;
@@ -48,6 +55,7 @@ pub fn sync_game(app: AppHandle, game_id: String) -> Result<SyncResult, String> 
         file_name: format!("{}.zip", slug),
         base64_data: b64,
         message: format!("Successfully compressed {}", name),
+        file_modified_at: modified_time.to_rfc3339(),
     })
 }
 
