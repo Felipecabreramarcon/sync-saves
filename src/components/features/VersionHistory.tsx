@@ -53,6 +53,32 @@ export default function VersionHistory({
     state.games.find((g) => g.id === gameId)
   );
 
+  const sortedVersions = useMemo(() => {
+    return [...versions].sort((a, b) => {
+      if (sortOrder === 'uploaded') {
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      } else {
+        const dateA = a.file_modified_at
+          ? new Date(a.file_modified_at).getTime()
+          : 0;
+        const dateB = b.file_modified_at
+          ? new Date(b.file_modified_at).getTime()
+          : 0;
+        return dateB - dateA;
+      }
+    });
+  }, [versions, sortOrder]);
+
+  const latestUploadedId = useMemo(() => {
+    if (versions.length === 0) return null;
+    return [...versions].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0]?.id;
+  }, [versions]);
+
   useEffect(() => {
     if (!cloudGameId || !user) return;
 
@@ -318,32 +344,6 @@ Get-ChildItem -Recurse $Dest | Select-Object FullName
     );
   }
 
-  const sortedVersions = useMemo(() => {
-    return [...versions].sort((a, b) => {
-      if (sortOrder === 'uploaded') {
-        return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      } else {
-        const dateA = a.file_modified_at
-          ? new Date(a.file_modified_at).getTime()
-          : 0;
-        const dateB = b.file_modified_at
-          ? new Date(b.file_modified_at).getTime()
-          : 0;
-        return dateB - dateA;
-      }
-    });
-  }, [versions, sortOrder]);
-
-  const latestUploadedId = useMemo(() => {
-    if (versions.length === 0) return null;
-    return [...versions].sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )[0]?.id;
-  }, [versions]);
-
   if (loading && versions.length === 0) {
     return (
       <div className='p-8 flex justify-center items-center h-64'>
@@ -459,6 +459,34 @@ Get-ChildItem -Recurse $Dest | Select-Object FullName
   );
 }
 
+// Helper to format analysis values based on key type
+const formatAnalysisValue = (key: string, value: any) => {
+  if (value === null || value === undefined) return '-';
+
+  const lowerKey = key.toLowerCase();
+
+  // Detect playtime/duration keys (assumed to be in seconds or minutes)
+  // If the value is large like 253415, it's likely seconds.
+  // 253415s / 3600 = ~70h
+  if (
+    lowerKey.includes('playtime') ||
+    lowerKey.includes('time_played') ||
+    lowerKey.includes('duration')
+  ) {
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue)) {
+      // If it's a huge number, assume seconds. If it's very small relative to play hours, maybe minutes?
+      // Standardizing to: value / 3600 if > 1000 (likely seconds), or value / 60 if smaller.
+      // But user example 253415 is clearly seconds.
+      const hours = numValue / 3600;
+      return `${hours.toFixed(1)}h`;
+    }
+  }
+
+  // Fallback for general strings/numbers
+  return String(value);
+};
+
 // Sub-component for individual version card to keep main clean
 const VersionCard = ({
   version,
@@ -563,7 +591,7 @@ const VersionCard = ({
                         {key.split('.').pop()}
                       </span>
                       <span className='text-[10px] text-primary-100 font-mono font-bold truncate tracking-tighter'>
-                        {String(analysisData[key] ?? '-')}
+                        {formatAnalysisValue(key, analysisData[key])}
                       </span>
                     </div>
                   ))}
