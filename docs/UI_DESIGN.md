@@ -299,9 +299,6 @@ Danger:    [████████████]  Background: error, Hover: dar
 
 ### Cards
 
-Glassmorphism effect com backdrop blur.
-
-```css
 .card {
   background: rgba(39, 39, 42, 0.8);
   backdrop-filter: blur(10px);
@@ -310,6 +307,21 @@ Glassmorphism effect com backdrop blur.
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 ```
+
+### Complex Modals (Fixed Headers)
+
+Para componentes com listas longas dentro de modais (ex: Version History), utilizamos o padrão de header fixo:
+- O container do modal principal perde o scroll (`overflow-hidden`).
+- O header do componente é `flex-none` e tem um fundo sólido ou glass robusto.
+- O conteúdo da lista é envidado em um container `flex-1 overflow-y-auto`.
+- Isso garante que os controles (filtros, busca) estejam sempre visíveis.
+
+### HeroUI v3 Integration (RAC)
+
+Desde a versão 3.0, os componentes de seleção devem seguir o padrão **React Aria Components (RAC)**:
+- Utilizar `selectedKey` e `onSelectionChange` para controle de estado.
+- Utilizar a prop `id` em `ListBox.Item` para identificação estável.
+- Evitar o uso de `value` e `onChange` legados.
 
 ### Status Indicators
 

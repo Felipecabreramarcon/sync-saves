@@ -12,13 +12,62 @@
     "core:window:allow-toggle-maximize",
     "core:window:allow-close",
     "shell:allow-open",
+     {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "run-powershell",
+          "cmd": "powershell.exe",
+          "args": [
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            {
+              "validator": ".*"
+            },
+            {
+              "validator": ".*"
+            }
+          ]
+        }
+      ]
+    },
     "deep-link:default",
     "dialog:default",
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [{ "path": "$HOME/**" }, { "path": "$APPDATA" }, { "path": "$APPDATA/**" }]
+    },
+    {
+      "identifier": "fs:allow-read-dir",
+      "allow": [{ "path": "$HOME/**" }, { "path": "$APPDATA" }, { "path": "$APPDATA/**" }]
+    },
+    {
+      "identifier": "fs:allow-write-file",
+      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/**" }, { "path": "$HOME/**" }]
+    },
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/**" }]
+    },
+    {
+      "identifier": "fs:allow-copy-file",
+      "allow": [{ "path": "$HOME/**" }, { "path": "$APPDATA" }, { "path": "$APPDATA/**" }]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/**" }]
+    },
+    {
+      "identifier": "fs:allow-remove",
+      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/**" }, { "path": "$HOME/**" }]
+    },
     "os:default",
     "autostart:default",
     "notification:default",
     "notification:allow-request-permission",
     "notification:allow-is-permission-granted",
-    "notification:allow-notify"
+    "notification:allow-notify",
+    "fs:default"
   ]
 }

@@ -7,7 +7,10 @@ use zip::ZipWriter;
 
 pub fn compress_path(src_path: &Path, dst_file: &Path) -> io::Result<()> {
     if !src_path.exists() {
-        return Err(io::Error::new(io::ErrorKind::NotFound, "Source path not found"));
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "Source path not found",
+        ));
     }
 
     let file = File::create(dst_file)?;

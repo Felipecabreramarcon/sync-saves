@@ -19,6 +19,11 @@ export interface Game {
   last_synced_id?: string
   status: SyncStatus
   cloud_game_id?: string // ID from cloud (Supabase games table)
+  custom_script_path?: string
+  analysis_config?: {
+    target_path: string // Relative path or filename of the file to analyze within the save
+    tracked_keys: string[] // List of flattened keys to extract
+  }
 }
 
 export interface SyncActivity {
@@ -157,6 +162,8 @@ export const useGamesStore = create<GamesState>()(
               status: g.status as SyncStatus,
               last_synced_at: undefined,
               last_synced_id: g.last_synced_id,
+              custom_script_path: g.custom_script_path,
+              analysis_config: g.analysis_config,
             }))
             set({ games, totalGames: games.length })
           }
@@ -349,7 +356,9 @@ export const useGamesStore = create<GamesState>()(
               local_path: added.local_path,
               sync_enabled: added.sync_enabled,
               status: added.status as SyncStatus,
-              last_synced_id: undefined
+              last_synced_id: undefined,
+              custom_script_path: added.custom_script_path,
+              analysis_config: added.analysis_config,
             }
             set(state => ({
               games: [...state.games, game],

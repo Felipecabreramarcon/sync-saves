@@ -39,7 +39,7 @@ export default function ToastContainer() {
   const { toasts, removeToast } = useToastStore();
 
   return (
-    <div className="fixed bottom-20 md:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
+    <div className="fixed bottom-20 md:bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm">
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => {
           const Icon = iconMap[toast.type];

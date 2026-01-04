@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Card } from "@heroui/react";
 
 interface StatCardProps {
@@ -6,6 +7,11 @@ interface StatCardProps {
   value: string | number;
   subtitle?: string;
   gradient: string;
+  classNames?: {
+    content?: string
+    container?: string
+  }
+
 }
 
 export default function StatCard({
@@ -14,10 +20,11 @@ export default function StatCard({
   value,
   subtitle,
   gradient,
+  classNames
 }: StatCardProps) {
   return (
-    <Card className="bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden group hover:border-primary-500/30 transition-all duration-300">
-      <Card.Content className="p-6 relative">
+    <Card className={cn("bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden group hover:border-primary-500/30 transition-all duration-300", classNames?.container)}>
+      <Card.Content className={cn("p-6 relative", classNames?.content)}>
         <div
           className={`absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity ${gradient}`}
         />

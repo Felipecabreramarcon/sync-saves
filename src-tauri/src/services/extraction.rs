@@ -12,16 +12,16 @@ pub fn extract_zip(zip_path: &Path, target_path: &Path) -> io::Result<()> {
         let file_names: Vec<String> = (0..archive.len())
             .filter_map(|i| archive.by_index(i).ok().map(|f| f.name().to_string()))
             .collect();
-        
+
         if file_names.contains(&"__SYNC_SINGLE_FILE__".to_string()) {
             // Single file mode
             let mut file = archive.by_name("__SYNC_SINGLE_FILE__")?;
-            
+
             // Ensure parent directory of target file exists
             if let Some(parent) = target_path.parent() {
-                 if !parent.exists() {
-                     fs::create_dir_all(parent)?;
-                 }
+                if !parent.exists() {
+                    fs::create_dir_all(parent)?;
+                }
             }
 
             let mut outfile = fs::File::create(target_path)?;

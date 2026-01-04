@@ -18,6 +18,8 @@ pub struct LocalGame {
     sync_enabled: bool,
     last_synced_id: Option<String>,
     status: String,
+    custom_script_path: Option<String>,
+    analysis_config: Option<serde_json::Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -42,13 +44,17 @@ pub fn get_all_games(app: AppHandle) -> Result<Vec<LocalGame>, String> {
 
     let mut stmt = conn
         .prepare(
-            "SELECT id, name, slug, cover_url, platform, local_path, sync_enabled, last_synced_id, status 
+            "SELECT id, name, slug, cover_url, platform, local_path, sync_enabled, last_synced_id, status, custom_script_path, analysis_config 
          FROM games_cache",
         )
         .map_err(|e| e.to_string())?;
 
     let games_iter = stmt
         .query_map([], |row| {
+            let config_json: Option<String> = row.get(10)?;
+            let analysis_config = config_json
+                .and_then(|s| serde_json::from_str(&s).ok());
+
             Ok(LocalGame {
                 id: row.get(0)?,
                 name: row.get(1)?,
@@ -59,6 +65,8 @@ pub fn get_all_games(app: AppHandle) -> Result<Vec<LocalGame>, String> {
                 sync_enabled: row.get::<_, i32>(6)? != 0,
                 last_synced_id: row.get(7)?,
                 status: row.get(8)?,
+                custom_script_path: row.get(9)?,
+                analysis_config,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -99,6 +107,8 @@ pub fn add_game(
         sync_enabled: true,
         last_synced_id: None,
         status: "idle".to_string(),
+        custom_script_path: None,
+        analysis_config: None,
     })
 }
 
@@ -185,6 +195,8 @@ pub struct UpdateGameParams {
     pub platform: Option<String>,
     pub sync_enabled: Option<bool>,
     pub cover_url: Option<String>,
+    pub custom_script_path: Option<String>,
+    pub analysis_config: Option<serde_json::Value>,
 }
 
 #[command]
@@ -198,13 +210,17 @@ pub fn update_game(
     // First, get the current game data
     let mut stmt = conn
         .prepare(
-            "SELECT id, name, slug, cover_url, platform, local_path, sync_enabled, last_synced_id, status 
+            "SELECT id, name, slug, cover_url, platform, local_path, sync_enabled, last_synced_id, status, custom_script_path, analysis_config 
              FROM games_cache WHERE id = ?1",
         )
         .map_err(|e| e.to_string())?;
 
     let current_game = stmt
         .query_row([&game_id], |row| {
+            let config_json: Option<String> = row.get(10)?;
+            let analysis_config = config_json
+                .and_then(|s| serde_json::from_str(&s).ok());
+
             Ok(LocalGame {
                 id: row.get(0)?,
                 name: row.get(1)?,
@@ -215,6 +231,8 @@ pub fn update_game(
                 sync_enabled: row.get::<_, i32>(6)? != 0,
                 last_synced_id: row.get(7)?,
                 status: row.get(8)?,
+                custom_script_path: row.get(9)?,
+                analysis_config,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -226,12 +244,25 @@ pub fn update_game(
     let new_platform = updates.platform.unwrap_or(current_game.platform);
     let new_sync_enabled = updates.sync_enabled.unwrap_or(current_game.sync_enabled);
     let new_cover_url = updates.cover_url.or(current_game.cover_url);
+    let new_custom_script_path = updates.custom_script_path.or(current_game.custom_script_path);
+    
+    // For analysis config, if update is provided, use it, otherwise keep current
+    // Note: If update is provided as explicit null (Option<Value>), it means we want to clear it? 
+    // Or does serde skip missing fields?
+    // In UpdateGameParams, fields are Option<T>. If missing (None), we shouldn't change.
+    // If we want to unset, we'd need Option<Option<T>> but that's complex.
+    // Assuming None means "no change".
+    let new_analysis_config = updates.analysis_config.or(current_game.analysis_config);
+    
+    let analysis_config_str = new_analysis_config
+        .as_ref()
+        .and_then(|v| serde_json::to_string(v).ok());
 
     // Update the database
     conn.execute(
         "UPDATE games_cache 
-         SET name = ?1, slug = ?2, local_path = ?3, platform = ?4, sync_enabled = ?5, cover_url = ?6
-         WHERE id = ?7",
+         SET name = ?1, slug = ?2, local_path = ?3, platform = ?4, sync_enabled = ?5, cover_url = ?6, custom_script_path = ?7, analysis_config = ?8
+         WHERE id = ?9",
         rusqlite::params![
             &new_name,
             &new_slug,
@@ -239,6 +270,8 @@ pub fn update_game(
             &new_platform,
             if new_sync_enabled { 1 } else { 0 },
             &new_cover_url,
+            &new_custom_script_path,
+            &analysis_config_str,
             &game_id
         ],
     )
@@ -254,5 +287,7 @@ pub fn update_game(
         sync_enabled: new_sync_enabled,
         last_synced_id: current_game.last_synced_id,
         status: current_game.status,
+        custom_script_path: new_custom_script_path,
+        analysis_config: new_analysis_config,
     })
 }

@@ -424,9 +424,9 @@ function GameCard({ game }: { game: Game }) {
               )}
               <Dropdown>
                 <Dropdown.Trigger>
-                  <Button isIconOnly size="sm">
+                  <div role="button" className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors cursor-pointer text-white">
                     <MoreVertical className="w-4 h-4" />
-                  </Button>
+                  </div>
                 </Dropdown.Trigger>
                 <Dropdown.Popover>
                   <Dropdown.Menu

@@ -53,6 +53,8 @@ Existem intervalos fixos no código que podem afetar a experiência do usuário:
 - [x] **Feedback Visual**: Toasts para sucesso/erro e timeline de atividades (Logs).
 - [x] **Settings**: Configuração de auto-sync e notificações por jogo.
 - [x] **Estabilização UI**: Correção de layout overflows em Cards, Timeline e Dashboard.
+- [x] **Redesign Version History**: Header compacto e fixo, scroll interno e alinhamento cronológico.
+- [x] **Compatibilidade HeroUI v3**: Implementação de `selectedKey`/`onSelectionChange` em componentes de seleção.
 - [x] **Hotfix Timeline**: Correção de erro de compilação `statusColor` e duplicação de componente.
 
 ### Dados

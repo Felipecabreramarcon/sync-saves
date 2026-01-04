@@ -1,10 +1,10 @@
 use crate::db;
 use crate::services::{compression, extraction};
+use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
+use std::fs;
 use std::path::Path;
 use tauri::{command, AppHandle};
-use base64::{Engine as _, engine::general_purpose};
-use std::fs;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SyncResult {
@@ -18,15 +18,13 @@ pub struct SyncResult {
 #[command]
 pub fn sync_game(app: AppHandle, game_id: String) -> Result<SyncResult, String> {
     let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
-    
+
     let mut stmt = conn
         .prepare("SELECT name, slug, local_path FROM games_cache WHERE id = ?1")
         .map_err(|e| e.to_string())?;
-    
+
     let (name, slug, local_path): (String, String, String) = stmt
-        .query_row([game_id], |row| {
-            Ok((row.get(0)?, row.get(1)?, row.get(2)?))
-        })
+        .query_row([game_id], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))
         .map_err(|e| e.to_string())?;
 
     let src_path = Path::new(&local_path);
@@ -36,12 +34,13 @@ pub fn sync_game(app: AppHandle, game_id: String) -> Result<SyncResult, String> 
 
     // Capture modification time
     let metadata = fs::metadata(src_path).map_err(|e| format!("Failed to read metadata: {}", e))?;
-    let modified_time: chrono::DateTime<chrono::Utc> = metadata.modified()
+    let modified_time: chrono::DateTime<chrono::Utc> = metadata
+        .modified()
         .map_err(|e| format!("Failed to get mtime: {}", e))?
         .into();
 
     let dst_path = compression::get_temp_zip_path(&slug);
-    
+
     compression::compress_path(src_path, &dst_path)
         .map_err(|e| format!("Compression failed: {}", e))?;
 
@@ -62,18 +61,18 @@ pub fn sync_game(app: AppHandle, game_id: String) -> Result<SyncResult, String> 
 #[command]
 pub fn restore_game(app: AppHandle, game_id: String, base64_data: String) -> Result<bool, String> {
     let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
-    
+
     let mut stmt = conn
         .prepare("SELECT slug, local_path FROM games_cache WHERE id = ?1")
         .map_err(|e| e.to_string())?;
-    
+
     let (slug, local_path): (String, String) = stmt
-        .query_row([game_id], |row| {
-            Ok((row.get(0)?, row.get(1)?))
-        })
+        .query_row([game_id], |row| Ok((row.get(0)?, row.get(1)?)))
         .map_err(|e| e.to_string())?;
 
-    let bytes = general_purpose::STANDARD.decode(base64_data).map_err(|e| e.to_string())?;
+    let bytes = general_purpose::STANDARD
+        .decode(base64_data)
+        .map_err(|e| e.to_string())?;
     let temp_zip = compression::get_temp_zip_path(&format!("{}_restore", slug));
     fs::write(&temp_zip, bytes).map_err(|e| e.to_string())?;
 

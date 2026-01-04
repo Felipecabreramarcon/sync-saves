@@ -101,6 +101,9 @@ export default function Dashboard() {
             icon={Monitor}
             title="Active Devices"
             value={activeDevices}
+            classNames={
+              { container: 'p-0' }
+            }
             subtitle={`Primary Device: ${deviceName}`}
             gradient="bg-gradient-to-br from-warning/20 to-orange-600/20"
           />

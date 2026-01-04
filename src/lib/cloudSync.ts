@@ -309,6 +309,8 @@ export type CloudSaveVersion = {
   file_path: string
   file_size: number
   device_name?: string
+  is_latest: boolean
+  file_modified_at?: string
 }
 
 export type CloudGameBackups = {
@@ -328,6 +330,37 @@ export type CloudGameBackups = {
 
 export function formatBytes(bytes?: number | null): string {
   return formatBytesUtil(bytes, { empty: '-' })
+}
+
+export async function fetchGameVersions(cloudGameId: string): Promise<CloudSaveVersion[]> {
+  const res = await (supabase
+    .from('save_versions') as any)
+    .select(`
+      id, 
+      created_at, 
+      file_path, 
+      file_size, 
+      is_latest, 
+      file_modified_at,
+      devices (
+          name
+      )
+    `)
+    .eq('game_id', cloudGameId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (res.error) throw res.error
+
+  return res.data.map((v: any) => ({
+    id: v.id,
+    created_at: v.created_at,
+    file_path: v.file_path,
+    file_size: v.file_size,
+    device_name: v.devices?.name ?? undefined,
+    is_latest: v.is_latest,
+    file_modified_at: v.file_modified_at
+  }))
 }
 
 export async function fetchBackupsByGame(params: {
@@ -404,7 +437,8 @@ export async function fetchBackupsByGame(params: {
       }))
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-    const versions: CloudSaveVersion[] = versionsRaw.map(({ is_latest, ...rest }) => rest)
+    const versions: CloudSaveVersion[] = versionsRaw
+
     const latestVersion = versionsRaw.find((v) => v.is_latest) ?? versionsRaw[0]
     const latestMapped: CloudSaveVersion | undefined = latestVersion
       ? {
@@ -413,6 +447,7 @@ export async function fetchBackupsByGame(params: {
           file_path: latestVersion.file_path,
           file_size: latestVersion.file_size,
           device_name: latestVersion.device_name,
+          is_latest: latestVersion.is_latest,
         }
       : undefined
 
@@ -436,4 +471,17 @@ export async function fetchBackupsByGame(params: {
       last_error,
     } satisfies CloudGameBackups
   })
+}
+
+export async function downloadVersionBlob(filePath: string): Promise<ArrayBuffer | null> {
+  const { data, error } = await supabase.storage
+    .from('saves')
+    .download(filePath)
+
+  if (error) {
+    console.error('Failed to download version blob:', error)
+    return null
+  }
+
+  return await data.arrayBuffer()
 }

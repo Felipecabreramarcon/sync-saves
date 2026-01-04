@@ -10,6 +10,8 @@ export interface LocalGameDto {
   sync_enabled: boolean
   last_synced_id?: string
   status: string
+  custom_script_path?: string
+  analysis_config?: { target_path: string; tracked_keys: string[] }
 }
 
 export async function getAllGames(): Promise<LocalGameDto[]> {
@@ -71,6 +73,8 @@ export interface UpdateGameParams {
   platform?: string
   sync_enabled?: boolean
   cover_url?: string
+  custom_script_path?: string
+  analysis_config?: { target_path: string; tracked_keys: string[] }
 }
 
 export async function updateGame(gameId: string, updates: UpdateGameParams): Promise<LocalGameDto> {

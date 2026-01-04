@@ -52,6 +52,8 @@ fn create_tables(conn: &Connection) -> Result<()> {
             completion_percentage REAL DEFAULT 0,
             play_time_seconds INTEGER DEFAULT 0,
             last_analyzed_at TEXT,
+            custom_script_path TEXT,
+            analysis_config TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )",
         [],
@@ -70,10 +72,9 @@ fn create_tables(conn: &Connection) -> Result<()> {
         "ALTER TABLE games_cache ADD COLUMN last_analyzed_at TEXT",
         [],
     );
-    let _ = conn.execute(
-        "ALTER TABLE games_cache ADD COLUMN last_synced_id TEXT",
-        [],
-    );
+    let _ = conn.execute("ALTER TABLE games_cache ADD COLUMN last_synced_id TEXT", []);
+    let _ = conn.execute("ALTER TABLE games_cache ADD COLUMN custom_script_path TEXT", []);
+    let _ = conn.execute("ALTER TABLE games_cache ADD COLUMN analysis_config TEXT", []);
 
     // Sync queue table
     conn.execute(
