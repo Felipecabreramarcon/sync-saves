@@ -49,6 +49,19 @@ export default function Dashboard() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
+  const recentActivities = useMemo(() => {
+    if (activities.length === 0) return [];
+    return dedupeConsecutiveActivities(
+      filterUserVisibleActivities(activities)
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        ),
+      2 * 60 * 1000
+    ).slice(0, 5);
+  }, [activities]);
+
   const chartData = useMemo(() => {
     // Generate last 7 days
     const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -197,21 +210,10 @@ export default function Dashboard() {
               </SaveButton>
             </div>
             <div className="space-y-3">
-              {activities.length > 0 ? (
-                dedupeConsecutiveActivities(
-                  filterUserVisibleActivities(activities)
-                    .slice()
-                    .sort(
-                      (a, b) =>
-                        new Date(b.created_at).getTime() -
-                        new Date(a.created_at).getTime()
-                    ),
-                  2 * 60 * 1000
-                )
-                  .slice(0, 5)
-                  .map((activity) => (
-                    <ActivityItem key={activity.id} activity={activity} />
-                  ))
+              {recentActivities.length > 0 ? (
+                recentActivities.map((activity) => (
+                  <ActivityItem key={activity.id} activity={activity} />
+                ))
               ) : (
                 <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
                   <p className="text-gray-500">
