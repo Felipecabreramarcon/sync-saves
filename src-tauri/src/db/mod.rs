@@ -58,7 +58,6 @@ fn create_tables(conn: &Connection) -> Result<()> {
         )",
         [],
     )?;
-    )?;
 
     // Version analysis results table
     conn.execute(
