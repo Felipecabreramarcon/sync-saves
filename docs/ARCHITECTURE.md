@@ -79,12 +79,26 @@ src/
 ├── components/          # Componentes reutilizáveis
 │   ├── common/         # SaveButton, SaveInput, ToastContainer
 │   ├── layout/         # Sidebar, PageHeader, MainLayout
-│   └── features/       # GameCard, StatCard, ActivityItem, GameSettingsModal, AddGameModal
+│   ├── features/       # GameCard, StatCard, ActivityItem, AddGameModal
+│   │   ├── GameSettingsModal.tsx  # Modal principal (usa tabs/)
+│   │   └── tabs/       # Tabs extraídas do modal
+│   │       ├── GeneralTab.tsx
+│   │       ├── VersionsTab.tsx
+│   │       └── AnalysisConfigTab.tsx
+│   └── settings/       # Componentes da página Settings
+│       ├── DeviceInfoCard.tsx
+│       ├── SyncSettingsCard.tsx
+│       ├── UserProfileCard.tsx
+│       └── DevicesListCard.tsx
+├── hooks/              # Custom hooks extraídos
+│   ├── useAuthSession.ts      # Sessão auth + deep links
+│   ├── useAutoSync.ts         # Auto-sync + notificações
+│   └── useBackendConnection.ts # Monitor conexão Tauri
 ├── pages/              # Páginas da aplicação
 │   ├── Login.tsx
 │   ├── Dashboard.tsx
 │   ├── Games.tsx
-│   ├── Settings.tsx
+│   ├── Settings.tsx    # Refatorado para usar componentes settings/
 │   └── Logs.tsx
 ├── stores/             # Gerenciamento de estado (Zustand com persistência)
 │   ├── authStore.ts    # Autenticação e estado do usuário
@@ -98,7 +112,7 @@ src/
 │   ├── tauri-games.ts  # Bridge para jogos (CRUD, sync, restore)
 │   ├── tauri-pcgw.ts   # Bridge para PCGamingWiki (sugestão de paths)
 │   ├── devices.ts      # Gestão de dispositivos
-│   └── utils.ts        # Utilitários (cn, isProtectedPath)
+│   └── utils.ts        # Utilitários (cn, formatBytes, isProtectedPath)
 ├── types/              # Definições de tipos TypeScript
 │   ├── database.ts     # Tipos do Supabase
 │   ├── global.d.ts     # Tipos globais (Tauri)
