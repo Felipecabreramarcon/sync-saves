@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { toast } from './toastStore';
-import { executeSync, executeRestore, type SyncResult, type RestoreResult } from '@/services/syncService';
+import {
+  executeSync,
+  executeRestore,
+  type SyncResult,
+  type RestoreResult,
+} from '@/services/syncService';
 import { useGamesStore } from './gamesStore';
 
 interface SyncState {
@@ -15,7 +20,10 @@ interface SyncState {
   setMessage: (message: string) => void;
   setBackendConnected: (connected: boolean) => void;
   performSync: (gameId: string, options?: { force?: boolean }) => Promise<void>;
-  performRestore: (gameId: string, options?: { filePath?: string }) => Promise<void>;
+  performRestore: (
+    gameId: string,
+    options?: { filePath?: string }
+  ) => Promise<void>;
 }
 
 // Map to store timeout IDs for debouncing per game
@@ -67,16 +75,23 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
     } else {
       // Debounce: Wait before syncing
       set({ message: 'Sync scheduled...' });
-      syncDebounceTimers[gameId] = setTimeout(executeSyncWithState, SYNC_DEBOUNCE_MS);
+      syncDebounceTimers[gameId] = setTimeout(
+        executeSyncWithState,
+        SYNC_DEBOUNCE_MS
+      );
     }
   },
 
   performRestore: async (gameId: string, options = {}) => {
     set({ status: 'syncing', progress: 0, message: 'Starting restore...' });
 
-    const result = await executeRestore(gameId, options, (progress, message) => {
-      set({ progress, message });
-    });
+    const result = await executeRestore(
+      gameId,
+      options,
+      (progress, message) => {
+        set({ progress, message });
+      }
+    );
 
     await handleRestoreResult(gameId, result, set);
   },
@@ -96,7 +111,7 @@ async function handleSyncResult(
   if (result.success) {
     if (result.skipped) {
       set({ status: 'idle', progress: 0, message: result.message });
-      
+
       // Log skip action
       await useGamesStore.getState().logActivity({
         gameId,
@@ -122,6 +137,7 @@ async function handleSyncResult(
       useGamesStore.getState().updateGame(gameId, {
         status: 'synced',
         last_synced_at: new Date().toISOString(),
+        cloud_game_id: result.cloudGameId, // Ensure cloud ID is linked
       });
 
       // Log success
@@ -137,7 +153,10 @@ async function handleSyncResult(
         fileSize: result.fileSize,
       });
 
-      toast.success('Sync Complete', `${game?.name || 'Game'} has been backed up to the cloud`);
+      toast.success(
+        'Sync Complete',
+        `${game?.name || 'Game'} has been backed up to the cloud`
+      );
       setTimeout(() => set({ status: 'idle', progress: 0, message: '' }), 3000);
     }
   } else {
@@ -176,7 +195,10 @@ async function handleRestoreResult(
   if (result.success) {
     set({ status: 'success', progress: 100, message: 'Restore complete!' });
 
-    useGamesStore.getState().updateGame(gameId, { status: 'synced' });
+    useGamesStore.getState().updateGame(gameId, {
+      status: 'synced',
+      cloud_game_id: result.cloudGameId, // Ensure cloud ID is linked
+    });
 
     await useGamesStore.getState().logActivity({
       gameId,
@@ -189,7 +211,10 @@ async function handleRestoreResult(
       fileSize: result.fileSize,
     });
 
-    toast.success('Restore Complete', `${game?.name || 'Game'} has been restored from the cloud`);
+    toast.success(
+      'Restore Complete',
+      `${game?.name || 'Game'} has been restored from the cloud`
+    );
     setTimeout(() => set({ status: 'idle', progress: 0, message: '' }), 3000);
   } else {
     set({ status: 'error', message: result.message });

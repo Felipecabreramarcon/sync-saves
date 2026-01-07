@@ -86,6 +86,7 @@ pub fn run() {
             crate::commands::pcgw::pcgw_get_save_locations,
             crate::commands::sync::sync_game,
             crate::commands::sync::restore_game,
+            crate::commands::steam::steam_search_games,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

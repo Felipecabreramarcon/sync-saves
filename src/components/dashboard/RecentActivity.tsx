@@ -139,18 +139,43 @@ function ActivityCard({ activity }: { activity: SyncActivity }) {
     <div className='group flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors cursor-default'>
       <div className='flex items-center gap-3 min-w-0'>
         {/* Icon Status Indicator */}
-        <div
-          className={cn(
-            'w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-white/5 shadow-inner',
-            isSuccess
-              ? 'bg-success/10 text-success'
-              : 'bg-danger/10 text-danger'
-          )}
-        >
-          {isUpload ? (
-            <Upload className='w-4 h-4' />
+        {/* Icon Status Indicator OR Cover */}
+        <div className='relative shrink-0'>
+          {activity.game_cover ? (
+            <div className='w-10 h-10 rounded-lg overflow-hidden border border-white/10 shadow-sm relative group-hover:scale-105 transition-transform duration-300'>
+              <img
+                src={activity.game_cover}
+                alt={activity.game_name}
+                className='w-full h-full object-cover'
+              />
+              <div
+                className={cn(
+                  'absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px]',
+                  isSuccess ? 'text-success-400' : 'text-danger-400'
+                )}
+              >
+                {isUpload ? (
+                  <Upload className='w-4 h-4 drop-shadow-md' />
+                ) : (
+                  <Download className='w-4 h-4 drop-shadow-md' />
+                )}
+              </div>
+            </div>
           ) : (
-            <Download className='w-4 h-4' />
+            <div
+              className={cn(
+                'w-10 h-10 rounded-lg flex items-center justify-center border border-white/5 shadow-inner',
+                isSuccess
+                  ? 'bg-success/10 text-success'
+                  : 'bg-danger/10 text-danger'
+              )}
+            >
+              {isUpload ? (
+                <Upload className='w-5 h-5' />
+              ) : (
+                <Download className='w-5 h-5' />
+              )}
+            </div>
           )}
         </div>
 

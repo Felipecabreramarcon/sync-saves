@@ -85,15 +85,16 @@ pub fn add_game(
     name: String,
     local_path: String,
     platform: String,
+    cover_url: Option<String>,
 ) -> Result<LocalGame, String> {
     let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
     let id = Uuid::new_v4().to_string();
     let slug = name.to_lowercase().replace(" ", "-"); // Simple slug for now
 
     conn.execute(
-        "INSERT INTO games_cache (id, name, slug, platform, local_path, sync_enabled, status)
-         VALUES (?1, ?2, ?3, ?4, ?5, 1, 'idle')",
-        [&id, &name, &slug, &platform, &local_path],
+        "INSERT INTO games_cache (id, name, slug, platform, local_path, sync_enabled, cover_url, status)
+         VALUES (?1, ?2, ?3, ?4, ?5, 1, ?6, 'idle')",
+        rusqlite::params![&id, &name, &slug, &platform, &local_path, &cover_url],
     )
     .map_err(|e| e.to_string())?;
 
@@ -101,7 +102,7 @@ pub fn add_game(
         id,
         name,
         slug,
-        cover_url: None,
+        cover_url, // Use the provided cover_url
         platform,
         local_path,
         sync_enabled: true,

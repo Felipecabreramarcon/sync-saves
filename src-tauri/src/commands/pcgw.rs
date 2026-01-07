@@ -20,6 +20,7 @@ pub struct PcgwSavePath {
 pub struct PcgwSaveLocations {
     pub title: String,
     pub paths: Vec<PcgwSavePath>,
+    pub cover_url: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -101,19 +102,46 @@ pub async fn pcgw_search_games(
 }
 
 #[derive(Debug, Deserialize)]
-struct MwParseResponse {
-    parse: Option<MwParse>,
+struct MwPageQueryResponse {
+    query: Option<MwPageQuery>,
 }
 
 #[derive(Debug, Deserialize)]
-struct MwParse {
-    wikitext: Option<MwWikiText>,
+struct MwPageQuery {
+    #[serde(default)]
+    pages: std::collections::HashMap<String, MwPage>,
 }
 
 #[derive(Debug, Deserialize)]
-struct MwWikiText {
+struct MwPage {
+    #[serde(default)]
+    title: String,
+    thumbnail: Option<MwThumbnail>,
+    revisions: Option<Vec<MwRevision>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct MwThumbnail {
+    source: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct MwRevision {
+    #[serde(default)]
+    slots: Option<MwSlots>,
     #[serde(rename = "*")]
-    text: String,
+    content: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct MwSlots {
+    main: MwSlotMain,
+}
+
+#[derive(Debug, Deserialize)]
+struct MwSlotMain {
+    #[serde(rename = "*")]
+    content: String,
 }
 
 #[tauri::command]
@@ -129,13 +157,18 @@ pub async fn pcgw_get_save_locations(title: String) -> Result<PcgwSaveLocations,
         .build()
         .map_err(|e| format!("Failed to build HTTP client: {e}"))?;
 
+    // We use action=query to get both wikitext (for paths) and pageimages (for cover) in one go
     let resp = client
         .get(PCGW_API)
         .query(&[
-            ("action", "parse"),
-            ("page", title),
-            ("prop", "wikitext"),
+            ("action", "query"),
+            ("titles", title),
+            ("prop", "revisions|pageimages"),
+            ("rvprop", "content"),
+            ("rvslots", "main"),
+            ("pithumbsize", "600"), // Reasonable size for cover
             ("format", "json"),
+            ("redirects", "1"),
         ])
         .send()
         .await
@@ -147,19 +180,33 @@ pub async fn pcgw_get_save_locations(title: String) -> Result<PcgwSaveLocations,
             .text()
             .await
             .unwrap_or_else(|_| "<failed to read body>".to_string());
-        let snippet = body.chars().take(500).collect::<String>();
-        return Err(format!("PCGW returned HTTP {status}. Body: {snippet}"));
+        return Err(format!("PCGW returned HTTP {status}. Body: {body}"));
     }
 
-    let json: MwParseResponse = resp
+    let json: MwPageQueryResponse = resp
         .json()
         .await
         .map_err(|e| format!("Failed to parse PCGW response: {e}"))?;
 
-    let wikitext = json
-        .parse
-        .and_then(|p| p.wikitext)
-        .map(|w| w.text)
+    // Extract the first page (usually only one returned for 'titles' query)
+    let page = json
+        .query
+        .and_then(|q| q.pages.into_values().next())
+        .ok_or_else(|| "No page found".to_string())?;
+    
+    // Extract cover URL
+    let cover_url = page.thumbnail.map(|t| t.source);
+
+    // Extract wikitext
+    // Try 'slots' first (modern), then fallback to direct content (legacy)
+    let wikitext = page
+        .revisions
+        .and_then(|revs| revs.into_iter().next())
+        .and_then(|rev| {
+             rev.slots
+                .map(|s| s.main.content)
+                .or(rev.content)
+        })
         .unwrap_or_default();
 
     let mut paths = vec![];
@@ -205,8 +252,9 @@ pub async fn pcgw_get_save_locations(title: String) -> Result<PcgwSaveLocations,
     });
 
     Ok(PcgwSaveLocations {
-        title: title.to_string(),
+        title: page.title, // Use resolved title
         paths,
+        cover_url,
     })
 }
 

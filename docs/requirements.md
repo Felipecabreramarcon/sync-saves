@@ -98,12 +98,19 @@ Resolver o problema de fragmentação de progresso em jogos piratas e jogos que 
 - **RF007 - Listagem de Dispositivos**: O usuário deve poder visualizar todos os dispositivos vinculados à sua conta.
 - **RF008 - Remoção de Dispositivos**: O usuário deve poder revogar acesso de dispositivos antigos (exceto o atual).
 
+### 4.3 Interface e Experiência do Usuário (UI/UX)
+- **RF009 - Enriquecimento de Metadados**: ✅ O sistema deve integrar-se com APIs externas (Steam Store, PCGamingWiki) para buscar automaticamente capas, títulos oficiais e caminhos de save recomendados durante o processo de adição de jogos.
+  - **Status**: Implementado. Utiliza Steam para busca visual e PCGamingWiki para caminhos.
+
 ### 4.3 Gerenciamento de Jogos
 - **RF009 - Adicionar Jogo**: O usuário deve poder adicionar um jogo especificando:
   - Nome do Jogo.
   - Caminho local da pasta de saves (via Seleção Nativa de Diretório).
-- **RF010 - Sugestão de Caminhos (PCGamingWiki)**: ✅ O sistema deve consultar a API do PCGamingWiki para sugerir caminhos de instalação padrão para o jogo digitado.
-  - **Status**: Implementado via comandos `pcgw_search_games` e `pcgw_get_save_locations`.
+- **RF010 - Enriquecimento de Metadados e Caminhos (PCGamingWiki)**: O sistema deve consultar a API do PCGamingWiki para:
+  - Sugerir caminhos de instalação padrão e locais de save para o jogo.
+  - Obter o nome oficial do jogo.
+  - Buscar e exibir a imagem de capa (cover art) do jogo para enriquecer a UI.
+  - **Status**: 🚧 Parcialmente Implementado. (Busca de título e caminhos via `pcgw_search_games` e `pcgw_get_save_locations` funcionais. Busca de imagens pendente).
 - **RF011 - Edição de Jogo**: O usuário deve poder alterar o caminho local de um jogo já cadastrado.
 - **RF012 - Remoção de Jogo**: O usuário deve poder remover um jogo do monitoramento, optando por excluir ou manter os dados na nuvem.
 - **RF013 - Configuração Individual**: ✅ Cada jogo deve ter configurações sobrescrevíveis de:

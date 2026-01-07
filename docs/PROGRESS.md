@@ -59,6 +59,9 @@ Existem intervalos fixos no código que podem afetar a experiência do usuário:
 - [x] **Deleção Completa**: Remoção segura de jogos limpando cache, sync queue e metadados de análise.
 - [x] **Recent Activity Refactor**: Implementação de Accordion com HeroUI e animações Framer Motion.
 - [x] **Tooltip Refined**: Melhoria na mensagem de erro do tooltip para "Sync failed, click to view logs".
+- [x] **Steam Search**: Integração com Steam Store API para busca de jogos com capas oficiais e preços.
+- [x] **Auto-Discovery**: Preenchimento automático de metadados e busca de caminhos na PCGamingWiki ao selecionar um jogo na Steam.
+- [x] **Add Game UI Overhaul**: Redesign completo do modal de adição com layout responsivo, breadcrumbs visuais e grid de caminhos.
 
 ### Dados
 - [x] **Integridade**: Validação de arquivos via SHA-256 Hash.
@@ -71,3 +74,4 @@ Existem intervalos fixos no código que podem afetar a experiência do usuário:
 1.  **Mover Lógica de Sync para Rust**: Migrar a lógica de `sha256 -> zip -> upload` para o backend Rust para desacoplar da UI.
 2.  **Ativar Sync Queue**: Implementar retry automático para falhas de rede.
 3.  **Configuração Dinâmica**: Permitir que o usuário configure os tempos de debounce e cooldown nas configurações globais.
+4.  **Refinamento de Performance**: Otimizar o carregamento de imagens grandes da Steam (caching local).

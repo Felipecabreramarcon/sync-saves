@@ -26,13 +26,15 @@ export async function getAllGames(): Promise<LocalGameDto[]> {
 export async function addGame(
   name: string,
   localPath: string,
-  platform: string
+  platform: string,
+  coverUrl?: string
 ): Promise<LocalGameDto> {
   try {
     return await invoke<LocalGameDto>('add_game', {
       name,
       localPath,
       platform,
+      coverUrl,
     });
   } catch (error) {
     console.error('Failed to add game:', error);
