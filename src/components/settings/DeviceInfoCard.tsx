@@ -45,7 +45,7 @@ export function DeviceInfoCard({
             className='bg-primary-900/30 text-primary-400 border border-primary-500/20 font-medium h-7'
           >
             <Check className='w-3 h-3 mr-1' />
-            {sysInfo?.os_name || 'Windows 11'}
+            {sysInfo?.os_name || ''}
           </Chip>
         </div>
 

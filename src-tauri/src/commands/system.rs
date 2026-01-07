@@ -32,7 +32,7 @@ pub fn get_system_info(app: AppHandle) -> SystemInfo {
 }
 
 /// Gets the existing device ID or creates a new one if it doesn't exist
-fn get_or_create_device_id(app: &AppHandle) -> Result<String, String> {
+pub(crate) fn get_or_create_device_id(app: &AppHandle) -> Result<String, String> {
     let conn = db::get_connection(app).map_err(|e| e.to_string())?;
 
     // Try to get existing device ID
@@ -183,4 +183,61 @@ pub fn save_app_settings(app: AppHandle, settings: AppSettings) -> Result<bool, 
 #[command]
 pub fn write_file(path: String, content: Vec<u8>) -> Result<(), String> {
     std::fs::write(path, content).map_err(|e| e.to_string())
+}
+
+/// Opens a folder in the system's native file explorer
+#[command]
+pub fn open_folder(path: String) -> Result<(), String> {
+    let path = std::path::Path::new(&path);
+    println!("Opening folder: {}", path.display());
+    
+    // Check if path exists
+    if !path.exists() {
+        return Err(format!("Path does not exist: {}", path.display()));
+    }
+    
+    // Check if it's a directory
+    if !path.is_dir() {
+        return Err(format!("Path is not a directory: {}", path.display()));
+    }
+    
+    // Canonicalize the path to get the absolute path
+    let canonical_path = path.canonicalize()
+        .map_err(|e| format!("Failed to resolve path: {}", e))?;
+    
+    println!("Canonical path: {}", canonical_path.display());
+    
+    #[cfg(target_os = "windows")]
+    {
+        // On Windows, use explorer with the path directly
+        // The path needs to be passed as a string, not a Path object
+        let path_str = canonical_path.to_string_lossy().to_string();
+        // Remove the \\?\ prefix that canonicalize adds on Windows
+        let clean_path = path_str.strip_prefix(r"\\?\").unwrap_or(&path_str);
+        
+        println!("Clean path for explorer: {}", clean_path);
+        
+        std::process::Command::new("explorer")
+            .arg(clean_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open folder: {}", e))?;
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&canonical_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open folder: {}", e))?;
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&canonical_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open folder: {}", e))?;
+    }
+    
+    Ok(())
 }

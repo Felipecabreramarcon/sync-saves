@@ -500,3 +500,98 @@ export async function downloadVersionBlob(filePath: string): Promise<ArrayBuffer
 
   return await data.arrayBuffer()
 }
+
+/**
+ * Delete all cloud data associated with a game.
+ * This includes: storage files, save_versions, sync_logs, game_paths, and the game record itself.
+ * Also cleans up local version_analysis cache entries.
+ */
+export async function deleteGameCloudData(params: {
+  userId: string
+  cloudGameId: string
+}): Promise<void> {
+  const { userId, cloudGameId } = params
+
+  // 1. First get all save_versions to know which storage files to delete
+  const versionsRes = await (supabase
+    .from('save_versions') as any)
+    .select('id, file_path')
+    .eq('game_id', cloudGameId)
+
+  if (versionsRes.error) {
+    console.warn('Failed to fetch versions for deletion:', versionsRes.error)
+  }
+
+  const versions = (versionsRes.data || []) as { id: string; file_path: string }[]
+  
+  // 2. Delete storage bucket files
+  if (versions.length > 0) {
+    const filePaths = versions.map(v => v.file_path).filter(Boolean)
+    if (filePaths.length > 0) {
+      const { error: storageError } = await supabase.storage
+        .from('saves')
+        .remove(filePaths)
+
+      if (storageError) {
+        console.warn('Failed to delete storage files:', storageError)
+        // Continue with DB cleanup even if storage fails
+      }
+    }
+    
+    // 2b. Delete local version_analysis cache entries (Tauri only)
+    const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+    if (isTauri && versions.length > 0) {
+      try {
+        const { deleteVersionAnalyses } = await import('@/lib/tauri-games')
+        const versionIds = versions.map(v => v.id)
+        const deletedCount = await deleteVersionAnalyses(versionIds)
+        console.log(`Deleted ${deletedCount} local version analysis entries`)
+      } catch (e) {
+        console.warn('Failed to delete local version analyses:', e)
+      }
+    }
+  }
+
+  // 3. Delete sync_logs for this game
+  const { error: logsError } = await (supabase
+    .from('sync_logs') as any)
+    .delete()
+    .eq('game_id', cloudGameId)
+
+  if (logsError) {
+    console.warn('Failed to delete sync_logs:', logsError)
+  }
+
+  // 4. Delete save_versions for this game
+  const { error: versionsError } = await (supabase
+    .from('save_versions') as any)
+    .delete()
+    .eq('game_id', cloudGameId)
+
+  if (versionsError) {
+    console.warn('Failed to delete save_versions:', versionsError)
+  }
+
+  // 5. Delete game_paths for this game (all devices)
+  const { error: pathsError } = await (supabase
+    .from('game_paths') as any)
+    .delete()
+    .eq('game_id', cloudGameId)
+
+  if (pathsError) {
+    console.warn('Failed to delete game_paths:', pathsError)
+  }
+
+  // 6. Finally delete the game record itself
+  const { error: gameError } = await (supabase
+    .from('games') as any)
+    .delete()
+    .eq('id', cloudGameId)
+    .eq('user_id', userId)
+
+  if (gameError) {
+    console.warn('Failed to delete game record:', gameError)
+  }
+
+  console.log(`Deleted cloud data for game ${cloudGameId}`)
+}

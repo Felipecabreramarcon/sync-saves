@@ -21,6 +21,8 @@ export default function Logs() {
   const { activities, loadActivities, games } = useGamesStore();
   const { user } = useAuthStore();
 
+  console.log(activities, games);
+
   const [loading, setLoading] = useState(false);
   const [filterGame, setFilterGame] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('timeline');

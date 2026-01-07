@@ -15,10 +15,12 @@ export const supabase = createClient<Database, 'public'>(
 
 // Auth helpers
 export async function signInWithGoogle() {
+  // Use localhost redirect since OAuth happens in Tauri webview
+  // The webview will receive the redirect with tokens which useAuthSession will handle
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: "sync-saves://auth/callback",
+      redirectTo: window.location.origin,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',

@@ -106,6 +106,10 @@ export const useGamesStore = create<GamesState>()(
       })),
       
       removeGame: async (id) => {
+        const game = get().games.find((g) => g.id === id)
+        const cloudGameId = game?.cloud_game_id || game?.id
+        
+        // Delete local DB records
         if (isTauriRuntime()) {
           try {
             await tauriDeleteGame(id)
@@ -113,9 +117,30 @@ export const useGamesStore = create<GamesState>()(
             console.error('Failed to delete game from DB:', e)
           }
         }
+        
+        // Delete cloud data if authenticated and has cloud_game_id
+        const { useAuthStore } = await import('@/stores/authStore')
+        const user = useAuthStore.getState().user
+        
+        if (user && cloudGameId) {
+          try {
+            const { deleteGameCloudData } = await import('@/lib/cloudSync')
+            await deleteGameCloudData({
+              userId: user.id,
+              cloudGameId: cloudGameId,
+            })
+          } catch (e) {
+            console.error('Failed to delete cloud game data:', e)
+            // Continue with local deletion even if cloud fails
+          }
+        }
+        
+        // Update local state
         set((state) => ({
           games: state.games.filter((g) => g.id !== id),
-          totalGames: state.totalGames - 1
+          totalGames: state.totalGames - 1,
+          // Also filter out activities for this game
+          activities: state.activities.filter((a) => a.game_id !== cloudGameId && a.game_id !== id)
         }))
       },
       

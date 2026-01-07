@@ -1,19 +1,19 @@
 /**
  * Sync Service
- * 
- * Extracts business logic from syncStore for better separation of concerns.
- * Handles file compression, upload, download, and restore operations.
+ *
+ * Delegates heavy lifting (Compression, Hash, Upload) to Rust backend.
+ * Handles Restore logic (Download) and state updates.
  */
 
 import { supabase } from '@/lib/supabase';
-import { syncGame, restoreGame } from '@/lib/tauri-games';
+import { syncGame, restoreGame, type AuthConfig } from '@/lib/tauri-games';
 import { useAuthStore } from '@/stores/authStore';
 import { useGamesStore, type Game } from '@/stores/gamesStore';
 import {
   ensureCloudGameId,
   upsertGamePath,
-  createSaveVersion,
   sha256Base64,
+  createSaveVersion,
   getLatestCloudChecksum,
 } from '@/lib/cloudSync';
 import { registerCurrentDevice } from '@/lib/devices';
@@ -46,111 +46,66 @@ export type ProgressCallback = (progress: number, message: string) => void;
 
 /**
  * Executes the sync (upload) operation for a game.
- * Compresses local save files and uploads to cloud storage.
+ * Delegates to Rust 'sync_game' command.
  */
 export async function executeSync(
   gameId: string,
   onProgress?: ProgressCallback
 ): Promise<SyncResult> {
-  const startedAt = performance.now();
+  // const startedAt = performance.now(); // Rust handles timing now
 
   try {
-    onProgress?.(10, 'Compressing files...');
+    onProgress?.(10, 'Preparing sync...');
 
-    // 1. Rust Compression
-    const result = await syncGame(gameId);
+    // 1. Resolve User & Session
+    const user = useAuthStore.getState().user;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!user || !session) {
+      return { success: false, message: 'User not authenticated' };
+    }
+
+    // 2. Resolve Environment Config
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return { success: false, message: 'Missing Supabase configuration' };
+    }
+
+    onProgress?.(30, 'Syncing with cloud...');
+
+    // 3. Call Rust Backend
+    const auth: AuthConfig = {
+      url: supabaseUrl,
+      key: supabaseAnonKey,
+      token: session.access_token,
+      user_id: user.id,
+    };
+
+    const result = await syncGame(gameId, auth);
+
     if (!result.success) {
       return { success: false, message: result.message };
     }
 
-    onProgress?.(50, 'Uploading to cloud...');
+    onProgress?.(100, result.message);
 
-    // 2. Decode Base64 to Blob
-    const blob = base64ToBlob(result.base64_data);
-
-    // 3. Resolve user and game
-    const user = useAuthStore.getState().user;
-    if (!user) {
-      return { success: false, message: 'User not authenticated' };
-    }
-
-    const game = useGamesStore.getState().games.find((g) => g.id === gameId);
-    if (!game) {
-      return { success: false, message: 'Game not found' };
-    }
-
-    // 4. Ensure cloud device + game exist
-    const device = await registerCurrentDevice(user.id);
-    const cloudDeviceId = device?.id ?? null;
-    if (!cloudDeviceId) {
-      return { success: false, message: 'Failed to resolve current device' };
-    }
-
-    const cloudGameId = await ensureCloudGameId(user.id, {
-      name: game.name,
-      slug: game.slug,
-      cover_url: game.cover_url,
-    });
-
-    await upsertGamePath({
-      cloudGameId,
-      deviceId: cloudDeviceId,
-      localPath: game.local_path,
-      syncEnabled: game.sync_enabled,
-    });
-
-    // 5. Compute checksum and check if upload needed
-    const checksum = await sha256Base64(await blob.arrayBuffer());
-    const latestCloudChecksum = await getLatestCloudChecksum(cloudGameId);
-
-    if (latestCloudChecksum && latestCloudChecksum === checksum) {
-      const durationMs = Math.round(performance.now() - startedAt);
-      return {
-        success: true,
-        skipped: true,
-        message: 'Content unchanged, sync skipped',
-        durationMs,
-        cloudGameId,
-        deviceId: cloudDeviceId,
-      };
-    }
-
-    // 6. Upload to Supabase Storage
-    const versionId = crypto.randomUUID();
-    const filePath = `${user.id}/${game.slug}/${versionId}.zip`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('saves')
-      .upload(filePath, blob, { upsert: false });
-
-    if (uploadError) {
-      return { success: false, message: uploadError.message };
-    }
-
-    onProgress?.(100, 'Sync complete!');
-
-    // 7. Persist cloud metadata
-    await createSaveVersion({
-      id: versionId,
-      cloudGameId,
-      deviceId: cloudDeviceId,
-      filePath,
-      fileSize: blob.size,
-      checksum,
-      file_modified_at: result.file_modified_at,
-    });
-
-    const durationMs = Math.round(performance.now() - startedAt);
+    // Note: Rust now handles Cloud Game ID, Device ID creation if missing.
+    // It returns them if successful.
 
     return {
       success: true,
-      message: 'Sync successful',
-      fileSize: blob.size,
-      checksum,
-      versionId,
-      durationMs,
-      cloudGameId,
-      deviceId: cloudDeviceId,
+      skipped: result.skipped,
+      message: result.message,
+      fileSize: result.file_size,
+      checksum: result.checksum,
+      versionId: result.version_id,
+      durationMs: result.duration_ms,
+      cloudGameId: result.cloud_game_id,
+      deviceId: result.device_id,
     };
   } catch (error: any) {
     return { success: false, message: error.message || 'Sync failed' };
@@ -194,7 +149,8 @@ export async function executeRestore(
     });
 
     // 1. Determine download path
-    const downloadPath = options.filePath || await findLatestBackupPath(user.id, game, gameId);
+    const downloadPath =
+      options.filePath || (await findLatestBackupPath(user.id, game, gameId));
     if (!downloadPath) {
       return { success: false, message: 'No backups found for this game' };
     }
@@ -239,6 +195,10 @@ export async function executeRestore(
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+// Helper functions for executeRestore (Download)
+// executeSync (Upload) helpers like ensureCloudGameId etc are now largely handled by Rust,
+// but executeRestore still uses them in JS.
 
 function base64ToBlob(base64Data: string): Blob {
   const byteCharacters = atob(base64Data);

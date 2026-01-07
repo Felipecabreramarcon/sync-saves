@@ -1,7 +1,6 @@
 use crate::db;
 use rusqlite::OptionalExtension;
 use serde::{Deserialize, Serialize};
-use std::fs;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{command, AppHandle};
@@ -177,12 +176,20 @@ pub fn get_game_save_stats(app: AppHandle, game_id: String) -> Result<GameSaveSt
 pub fn delete_game(app: AppHandle, game_id: String) -> Result<bool, String> {
     let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
 
+    // Delete from games_cache
     conn.execute("DELETE FROM games_cache WHERE id = ?1", [&game_id])
         .map_err(|e| e.to_string())?;
 
-    // Also remove from sync queue if any pending
+    // Remove from sync queue if any pending
     conn.execute("DELETE FROM sync_queue WHERE game_id = ?1", [&game_id])
         .map_err(|e| e.to_string())?;
+
+    // Delete version_analysis entries
+    // Since version_analysis is keyed by version_id (UUID) and we don't have a direct link to game_id,
+    // we can't easily clean these up automatically from the Rust side.
+    // The cloud deletion in frontend handles this by deleting save_versions first.
+    // For local cleanup, we could potentially clean all orphan entries periodically,
+    // but for now we rely on the cloud sync to manage version lifecycle.
 
     Ok(true)
 }
@@ -322,4 +329,26 @@ pub fn save_version_analysis(
     .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+#[command]
+pub fn delete_version_analyses(app: AppHandle, version_ids: Vec<String>) -> Result<u32, String> {
+    if version_ids.is_empty() {
+        return Ok(0);
+    }
+
+    let conn = db::get_connection(&app).map_err(|e| e.to_string())?;
+    
+    let mut deleted_count = 0u32;
+    for version_id in version_ids {
+        let result = conn.execute(
+            "DELETE FROM version_analysis WHERE version_id = ?1",
+            [&version_id],
+        );
+        if let Ok(count) = result {
+            deleted_count += count as u32;
+        }
+    }
+
+    Ok(deleted_count)
 }

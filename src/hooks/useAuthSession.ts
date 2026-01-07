@@ -19,6 +19,44 @@ export function useAuthSession() {
     // Initial session check
     const checkInitialSession = async () => {
       try {
+        // Fallback: Check for auth tokens in URL (for when deep links don't work in dev mode)
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+        const queryParams = new URLSearchParams(window.location.search);
+        
+        // Check for OAuth tokens in hash fragment (implicit flow)
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        
+        if (accessToken && refreshToken) {
+          console.log('Found auth tokens in URL hash, setting session...');
+          const { supabase } = await import('@/lib/supabase');
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) {
+            console.error('Failed to set session from URL:', error);
+          } else {
+            // Clear the hash from URL to avoid reprocessing
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }
+        
+        // Check for PKCE code in query params
+        const code = queryParams.get('code');
+        if (code) {
+          console.log('Found auth code in URL query, exchanging for session...');
+          const { supabase } = await import('@/lib/supabase');
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error('Failed to exchange code for session:', error);
+          } else {
+            // Clear the query from URL to avoid reprocessing
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }
+        
+        // Now check for existing session
         const session = await getSession();
         if (session?.user) {
           setUser({

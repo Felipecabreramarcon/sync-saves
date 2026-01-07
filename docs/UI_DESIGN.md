@@ -171,11 +171,12 @@ Status geral, jogos recentes, última sincronização.
 │  │    syncing     │ │    uploaded    │ │    connected   │   │
 │  └────────────────┘ └────────────────┘ └────────────────┘   │
 │                                                              │
-│  Recent Activity                                             │
+│  Recent Activity (Accordion)                                 │
 │  ┌────────────────────────────────────────────────────────┐ │
-│  │ 🎮 Elden Ring        ↑ Uploaded    2 min ago    ✅    │ │
-│  │ 🎮 Baldur's Gate 3   ↓ Downloaded  15 min ago   ✅    │ │
-│  │ 🎮 Hollow Knight     ⏸ Skipped     1 hour ago   ⏭     │ │
+│  │ ⌄ 🎮 Elden Ring      ↑ Uploaded    2 min ago           │ │
+│  │   └─ ℹ️ Sync failed, click to view logs (Tooltip)      │ │
+│  │ > 🎮 Baldur's Gate 3 ↓ Downloaded  15 min ago          │ │
+│  │ > 🎮 Hollow Knight   ⏸ Skipped     1 hour ago           │ │
 │  └────────────────────────────────────────────────────────┘ │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘

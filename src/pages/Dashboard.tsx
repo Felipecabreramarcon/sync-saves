@@ -15,13 +15,8 @@ import PageHeader from '@/components/layout/PageHeader';
 import { useGamesStore } from '@/stores/gamesStore';
 import { useAuthStore } from '@/stores/authStore';
 import StatCard from '@/components/features/StatCard';
-import ActivityItem from '@/components/features/ActivityItem';
-import { SaveButton } from '@/components/common/SaveButton';
+import RecentActivity from '@/components/dashboard/RecentActivity';
 import { Card } from '@heroui/react';
-import {
-  filterUserVisibleActivities,
-  dedupeConsecutiveActivities,
-} from '@/lib/cloudSync';
 import { formatBytes } from '@/lib/utils';
 
 export default function Dashboard() {
@@ -181,40 +176,7 @@ export default function Dashboard() {
           </div>
 
           {/* Recent Activity */}
-          <div className='space-y-4'>
-            <div className='flex items-center justify-between mb-2'>
-              <h2 className='text-lg font-semibold text-white'>
-                Recent Activity
-              </h2>
-              <SaveButton onPress={() => navigate('/logs')}>
-                View All
-              </SaveButton>
-            </div>
-            <div className='space-y-3'>
-              {activities.length > 0 ? (
-                dedupeConsecutiveActivities(
-                  filterUserVisibleActivities(activities)
-                    .slice()
-                    .sort(
-                      (a, b) =>
-                        new Date(b.created_at).getTime() -
-                        new Date(a.created_at).getTime()
-                    ),
-                  2 * 60 * 1000
-                )
-                  .slice(0, 5)
-                  .map((activity) => (
-                    <ActivityItem key={activity.id} activity={activity} />
-                  ))
-              ) : (
-                <div className='text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10'>
-                  <p className='text-gray-500'>
-                    No activity yet. Sync a game to see it here!
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+          <RecentActivity />
         </div>
       </div>
     </div>
