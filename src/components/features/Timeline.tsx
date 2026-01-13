@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
 import {
   GitCommit,
@@ -12,37 +12,43 @@ import { cn } from '@/lib/utils';
 import { type SyncActivity } from '@/stores/gamesStore';
 import { Avatar, AvatarFallback, AvatarImage } from '@heroui/react';
 
-function TimelineItem({ activity }: { activity: SyncActivity }) {
+// ⚡ Performance: Hoisted to avoid recreation on every render
+const actionMap: Record<string, { icon: any; label: string; color: string }> = {
+  upload: {
+    icon: ArrowUpCircle,
+    label: 'Pushed to cloud',
+    color: 'text-success',
+  },
+  download: {
+    icon: ArrowDownCircle,
+    label: 'Pulled from cloud',
+    color: 'text-info',
+  },
+  conflict: {
+    icon: GitMerge,
+    label: 'Merge conflict',
+    color: 'text-warning',
+  },
+  skip: {
+    icon: GitPullRequest,
+    label: 'Skipped sync',
+    color: 'text-gray-400',
+  },
+};
+
+// ⚡ Performance: Memoized to prevent re-renders when parent Timeline updates (e.g. filtering)
+// but specific activity data remains unchanged.
+const TimelineItem = memo(function TimelineItem({
+  activity,
+}: {
+  activity: SyncActivity;
+}) {
   const statusColor =
     activity.status === 'success'
       ? 'text-success'
       : activity.status === 'error'
       ? 'text-danger'
       : 'text-warning';
-
-  const actionMap: Record<string, { icon: any; label: string; color: string }> =
-    {
-      upload: {
-        icon: ArrowUpCircle,
-        label: 'Pushed to cloud',
-        color: 'text-success',
-      },
-      download: {
-        icon: ArrowDownCircle,
-        label: 'Pulled from cloud',
-        color: 'text-info',
-      },
-      conflict: {
-        icon: GitMerge,
-        label: 'Merge conflict',
-        color: 'text-warning',
-      },
-      skip: {
-        icon: GitPullRequest,
-        label: 'Skipped sync',
-        color: 'text-gray-400',
-      },
-    };
 
   const actionInfo = actionMap[activity.action] || actionMap.upload;
   const ActionIcon = actionInfo.icon;
@@ -251,7 +257,7 @@ function TimelineItem({ activity }: { activity: SyncActivity }) {
       </div>
     </div>
   );
-}
+});
 
 interface TimelineProps {
   activities: SyncActivity[];
