@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
 import {
   GitCommit,
@@ -12,7 +12,9 @@ import { cn } from '@/lib/utils';
 import { type SyncActivity } from '@/stores/gamesStore';
 import { Avatar, AvatarFallback, AvatarImage } from '@heroui/react';
 
-function TimelineItem({ activity }: { activity: SyncActivity }) {
+// Memoized to prevent re-renders of individual items when the list updates
+// or parent component re-renders (e.g. loading state changes)
+const TimelineItem = memo(function TimelineItem({ activity }: { activity: SyncActivity }) {
   const statusColor =
     activity.status === 'success'
       ? 'text-success'
@@ -251,13 +253,15 @@ function TimelineItem({ activity }: { activity: SyncActivity }) {
       </div>
     </div>
   );
-}
+});
 
 interface TimelineProps {
   activities: SyncActivity[];
 }
 
-export function Timeline({ activities }: TimelineProps) {
+// Memoized to prevent re-renders when parent state changes (like filters/loading)
+// but the activities list itself hasn't changed.
+export const Timeline = memo(function Timeline({ activities }: TimelineProps) {
   // Group activities by date
   const groups = useMemo(() => {
     const grouped: Record<string, SyncActivity[]> = {};
@@ -319,4 +323,4 @@ export function Timeline({ activities }: TimelineProps) {
       ))}
     </div>
   );
-}
+});
