@@ -321,17 +321,23 @@ export const useGamesStore = create<GamesState>()(
           let totalSize = 0
           let totalFiles = 0
 
-          for (const folder of userFolders) {
+          // ⚡ Bolt Performance: Parallelize file fetching to avoid N+1 waterfall
+          // Fetching files for all folders concurrently reduces total wait time significantly
+          const folderPromises = userFolders.map(async (folder) => {
             const { data: files, error: filesError } = await supabase.storage
               .from('saves')
               .list(`${user.id}/${folder.name}`)
 
-            if (filesError) continue
-            if (files) {
-              totalFiles += files.length
-              totalSize += files.reduce((acc, f) => acc + (f.metadata?.size || 0), 0)
-            }
-          }
+            if (filesError) return []
+            return files || []
+          })
+
+          const allFiles = await Promise.all(folderPromises)
+
+          allFiles.forEach((files) => {
+            totalFiles += files.length
+            totalSize += files.reduce((acc, f) => acc + (f.metadata?.size || 0), 0)
+          })
 
           set({ 
             storageUsage: totalSize, 
