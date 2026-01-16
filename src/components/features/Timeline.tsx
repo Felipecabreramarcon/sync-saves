@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
 import {
   GitCommit,
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { type SyncActivity } from '@/stores/gamesStore';
 import { Avatar, AvatarFallback, AvatarImage } from '@heroui/react';
 
-function TimelineItem({ activity }: { activity: SyncActivity }) {
+const TimelineItem = memo(function TimelineItem({ activity }: { activity: SyncActivity }) {
   const statusColor =
     activity.status === 'success'
       ? 'text-success'
@@ -251,7 +251,7 @@ function TimelineItem({ activity }: { activity: SyncActivity }) {
       </div>
     </div>
   );
-}
+});
 
 interface TimelineProps {
   activities: SyncActivity[];
