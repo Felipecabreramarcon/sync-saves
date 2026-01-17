@@ -21,10 +21,13 @@ pub fn run() {
                 .set_focus();
 
             // If a deep link is passed as an argument (Windows mostly), emit it
-            // Note: Deep link plugin also handles scheme opening, but single instance helps if app is already running.
-            // We might need to check args for url scheme.
-            if let Some(url) = args.iter().find(|a| a.starts_with("sync-saves://")) {
-                let _ = app.emit("deep-link://new-url", url);
+            // Check args for url scheme, handling potential quotes
+            if let Some(url_arg) = args.iter().find(|a| {
+                let clean = a.replace(&['\"', '\''][..], "").trim().to_string();
+                clean.starts_with("sync-saves://")
+            }) {
+                let clean_url = url_arg.replace(&['\"', '\''][..], "").trim().to_string();
+                let _ = app.emit("deep-link://new-url", clean_url);
             }
         }))
         .plugin(tauri_plugin_autostart::init(

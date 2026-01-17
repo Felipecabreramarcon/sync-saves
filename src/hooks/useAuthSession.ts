@@ -102,7 +102,7 @@ export function useAuthSession() {
         });
         useGamesStore.getState().loadActivities();
       } else if (event === 'SIGNED_OUT') {
-        logout();
+        setUser(null);
       }
       setLoading(false);
     });
