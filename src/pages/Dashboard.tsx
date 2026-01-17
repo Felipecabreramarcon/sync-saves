@@ -66,6 +66,27 @@ export default function Dashboard() {
     return last7Days;
   }, [activities]);
 
+  const recentActivities = useMemo(() => {
+    if (activities.length === 0) return [];
+
+    // Filter, sort, and dedupe activities
+    // Optimization: Memoized to prevent re-calculation on every render
+    const filtered = filterUserVisibleActivities(activities);
+
+    // Sort descending by created_at
+    // Ensure we create a copy before sorting to avoid mutating state
+    const sorted = [...filtered].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() -
+        new Date(a.created_at).getTime()
+    );
+
+    // Dedupe consecutive activities within 2 minutes
+    const deduped = dedupeConsecutiveActivities(sorted, 2 * 60 * 1000);
+
+    return deduped.slice(0, 5);
+  }, [activities]);
+
   return (
     <div className='min-h-screen'>
       <PageHeader
@@ -192,20 +213,9 @@ export default function Dashboard() {
             </div>
             <div className='space-y-3'>
               {activities.length > 0 ? (
-                dedupeConsecutiveActivities(
-                  filterUserVisibleActivities(activities)
-                    .slice()
-                    .sort(
-                      (a, b) =>
-                        new Date(b.created_at).getTime() -
-                        new Date(a.created_at).getTime()
-                    ),
-                  2 * 60 * 1000
-                )
-                  .slice(0, 5)
-                  .map((activity) => (
-                    <ActivityItem key={activity.id} activity={activity} />
-                  ))
+                recentActivities.map((activity) => (
+                  <ActivityItem key={activity.id} activity={activity} />
+                ))
               ) : (
                 <div className='text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10'>
                   <p className='text-gray-500'>
