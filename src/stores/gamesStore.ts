@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import {
   getAllGames,
   addGame as tauriAddGame,
@@ -177,9 +176,8 @@ export const useGamesStore = create<GamesState>((set, get) => ({
     if (!user) return;
 
     try {
-      const { fetchActivitiesFromCloud, sortAndDedupActivities } = await import(
-        '@/lib/cloudSync'
-      );
+      const { fetchActivitiesFromCloud, sortAndDedupActivities } =
+        await import('@/lib/cloudSync');
       const cloud = await fetchActivitiesFromCloud({
         userId: user.id,
         limit: 200,

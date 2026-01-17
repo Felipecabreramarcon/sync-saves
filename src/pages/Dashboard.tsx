@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { Gamepad2, Cloud, Monitor, Calendar } from 'lucide-react';
 import {
   AreaChart,
@@ -31,7 +31,6 @@ export default function Dashboard() {
     refreshMetrics,
   } = useGamesStore();
   const { user } = useAuthStore();
-  const navigate = useNavigate();
 
   useEffect(() => {
     refreshMetrics();

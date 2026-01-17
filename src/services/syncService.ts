@@ -9,13 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { syncGame, restoreGame, type AuthConfig } from '@/lib/tauri-games';
 import { useAuthStore } from '@/stores/authStore';
 import { useGamesStore, type Game } from '@/stores/gamesStore';
-import {
-  ensureCloudGameId,
-  upsertGamePath,
-  sha256Base64,
-  createSaveVersion,
-  getLatestCloudChecksum,
-} from '@/lib/cloudSync';
+import { ensureCloudGameId } from '@/lib/cloudSync';
 import { registerCurrentDevice } from '@/lib/devices';
 
 export interface SyncResult {
@@ -199,16 +193,6 @@ export async function executeRestore(
 // Helper functions for executeRestore (Download)
 // executeSync (Upload) helpers like ensureCloudGameId etc are now largely handled by Rust,
 // but executeRestore still uses them in JS.
-
-function base64ToBlob(base64Data: string): Blob {
-  const byteCharacters = atob(base64Data);
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-  return new Blob([byteArray], { type: 'application/zip' });
-}
 
 async function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
