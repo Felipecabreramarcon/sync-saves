@@ -2,8 +2,9 @@ import { Avatar, AvatarImage, AvatarFallback, Chip, Button, Tooltip } from "@her
 import { ArrowUp, ArrowDown, RefreshCw, ChevronRight, Download } from "lucide-react";
 import { type SyncActivity } from "@/stores/gamesStore";
 import { cn, timeAgo } from "@/lib/utils";
+import { memo } from "react";
 
-export default function ActivityItem({ activity }: { activity: SyncActivity }) {
+const ActivityItem = memo(function ActivityItem({ activity }: { activity: SyncActivity }) {
   const actionConfig = {
     upload: { icon: ArrowUp, text: "Uploaded to Cloud", color: "text-success" },
     download: {
@@ -139,4 +140,6 @@ export default function ActivityItem({ activity }: { activity: SyncActivity }) {
       <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-white transition-colors" />
     </div>
   );
-}
+});
+
+export default ActivityItem;
