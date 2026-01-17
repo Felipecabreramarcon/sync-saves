@@ -25,6 +25,7 @@ import {
   UserProfileCard,
   DevicesListCard,
 } from '@/components/settings';
+import { confirmDangerousAction } from '@/lib/confirm';
 
 export default function Settings() {
   const { user } = useAuthStore();
@@ -68,7 +69,11 @@ export default function Settings() {
   }, [user?.id]);
 
   const handleRemoveDevice = async (deviceId: string) => {
-    if (confirm('Are you sure you want to remove this device?')) {
+    const confirmed = await confirmDangerousAction(
+      'Are you sure you want to remove this device?',
+      'Remove Device'
+    );
+    if (confirmed) {
       const success = await removeDevice(deviceId);
       if (success) {
         setDevices(devices.filter((d) => d.id !== deviceId));

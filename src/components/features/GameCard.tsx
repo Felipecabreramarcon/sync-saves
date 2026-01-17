@@ -20,6 +20,7 @@ import { toast } from '@/stores/toastStore';
 import GameSettingsModal from './GameSettingsModal';
 import { getGameSaveStats, type GameSaveStatsDto } from '@/lib/tauri-games';
 import { formatBytes, isTauriRuntime, timeAgo } from '@/lib/utils';
+import { confirmRestore, confirmRemove } from '@/lib/confirm';
 
 const platformConfig: Record<GamePlatform, { label: string; color: string }> = {
   steam: { label: 'STEAM', color: 'bg-blue-600' },
@@ -127,9 +128,7 @@ function GameCard({ game }: { game: Game }) {
   }, [game.id, performSync]);
 
   const handleRestore = useCallback(async () => {
-    const confirmed = window.confirm(
-      `Do you want to restore the latest cloud backup for ${game.name}? This will overwrite your current local saves.`
-    );
+    const confirmed = await confirmRestore(game.name);
     if (!confirmed) return;
 
     try {
@@ -148,9 +147,7 @@ function GameCard({ game }: { game: Game }) {
   }, [game.id, game.name, performRestore]);
 
   const handleDelete = useCallback(async () => {
-    const confirmed = window.confirm(
-      `Are you sure you want to remove "${game.name}" from tracking? This will NOT delete your save files.`
-    );
+    const confirmed = await confirmRemove(game.name);
     if (!confirmed) return;
 
     try {

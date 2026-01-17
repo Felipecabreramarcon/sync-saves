@@ -23,6 +23,7 @@ import { toast } from '@/stores/toastStore';
 import { formatDistanceToNow } from 'date-fns';
 import { isTauriRuntime } from '@/lib/utils';
 import { getVersionAnalysis, saveVersionAnalysis } from '@/lib/tauri-games';
+import { confirmAction } from '@/lib/confirm';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -146,9 +147,8 @@ export default function VersionHistory({
       let extractedData: any = null;
 
       if (isTauriRuntime()) {
-        const { writeFile, remove, mkdir, readFile, readDir } = await import(
-          '@tauri-apps/plugin-fs'
-        );
+        const { writeFile, remove, mkdir, readFile, readDir } =
+          await import('@tauri-apps/plugin-fs');
         const { appDataDir, join } = await import('@tauri-apps/api/path');
         const { Command } = await import('@tauri-apps/plugin-shell');
 
@@ -400,15 +400,17 @@ Get-ChildItem -Recurse $Dest | Select-Object FullName
   const handleRestore = async (version: CloudSaveVersion) => {
     if (!cloudGameId) return;
 
-    if (
-      !confirm(
-        `Are you sure you want to restore the save from ${new Date(
-          version.created_at
-        ).toLocaleString()}? This will overwrite your current local save.`
-      )
-    ) {
-      return;
-    }
+    const confirmed = await confirmAction({
+      title: 'Restore Save',
+      message: `Are you sure you want to restore the save from ${new Date(
+        version.created_at
+      ).toLocaleString()}? This will overwrite your current local save.`,
+      kind: 'warning',
+      okLabel: 'Restore',
+      cancelLabel: 'Cancel',
+    });
+
+    if (!confirmed) return;
 
     setRestoringId(version.id);
     try {

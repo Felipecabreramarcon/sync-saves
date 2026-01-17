@@ -181,8 +181,8 @@ export default function AddGameModal({
         e instanceof Error
           ? e.message
           : typeof e === 'string'
-          ? e
-          : 'Failed to load save locations.';
+            ? e
+            : 'Failed to load save locations.';
       setPcgwError(message);
     } finally {
       setPcgwIsLoadingPaths(false);
@@ -213,6 +213,7 @@ export default function AddGameModal({
                   </Label>
                   <div className='relative'>
                     <SaveInput
+                      className='w-full'
                       placeholder='Start typing to search Steam...'
                       value={steamQuery}
                       onChange={(e) => {
