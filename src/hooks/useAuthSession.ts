@@ -22,11 +22,11 @@ export function useAuthSession() {
         // Fallback: Check for auth tokens in URL (for when deep links don't work in dev mode)
         const hashParams = new URLSearchParams(window.location.hash.slice(1));
         const queryParams = new URLSearchParams(window.location.search);
-        
+
         // Check for OAuth tokens in hash fragment (implicit flow)
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
-        
+
         if (accessToken && refreshToken) {
           console.log('Found auth tokens in URL hash, setting session...');
           const { supabase } = await import('@/lib/supabase');
@@ -38,24 +38,34 @@ export function useAuthSession() {
             console.error('Failed to set session from URL:', error);
           } else {
             // Clear the hash from URL to avoid reprocessing
-            window.history.replaceState({}, document.title, window.location.pathname);
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
           }
         }
-        
+
         // Check for PKCE code in query params
         const code = queryParams.get('code');
         if (code) {
-          console.log('Found auth code in URL query, exchanging for session...');
+          console.log(
+            'Found auth code in URL query, exchanging for session...'
+          );
           const { supabase } = await import('@/lib/supabase');
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
             console.error('Failed to exchange code for session:', error);
           } else {
             // Clear the query from URL to avoid reprocessing
-            window.history.replaceState({}, document.title, window.location.pathname);
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
           }
         }
-        
+
         // Now check for existing session
         const session = await getSession();
         if (session?.user) {
@@ -65,7 +75,7 @@ export function useAuthSession() {
             name: session.user.user_metadata.full_name || session.user.email,
             avatar_url: session.user.user_metadata.avatar_url,
           });
-          
+
           // Load cloud activities after successful auth
           await useGamesStore.getState().loadActivities();
         }
@@ -79,7 +89,9 @@ export function useAuthSession() {
     checkInitialSession();
 
     // Auth state change listener
-    const { data: { subscription } } = onAuthStateChange((event, session: any) => {
+    const {
+      data: { subscription },
+    } = onAuthStateChange((event, session: any) => {
       console.log('Auth Event:', event);
       if (session?.user) {
         setUser({
@@ -113,18 +125,37 @@ export function useDeepLinkAuth() {
 
     const setupDeepLinkListener = async () => {
       const { listen } = await import('@tauri-apps/api/event');
-      
+
       unlisten = await listen('deep-link://new-url', async (event) => {
-        const url = event.payload as string;
-        console.log('Deep link received:', url);
+        let url = event.payload as string;
+        console.log('Deep link received (raw):', url);
+
+        // Sanitize URL (remove quotes and whitespace often added by Windows shell)
+        url = url.replace(/['"]/g, '').trim();
+        console.log('Deep link sanitized:', url);
 
         try {
-          // Try hash fragment first (implicit flow)
-          const fragment = url.split('#')[1];
-          if (fragment) {
-            const params = new URLSearchParams(fragment);
+          toast.success(
+            'Authenticating...',
+            'Received login signal from browser.'
+          );
+
+          // Normalize: Supabase sometimes sends as hash, sometimes as query
+          // Let's try to extract from both locations
+          let params: URLSearchParams | null = null;
+
+          if (url.includes('#')) {
+            const fragment = url.split('#')[1];
+            params = new URLSearchParams(fragment);
+          } else if (url.includes('?')) {
+            const query = url.split('?')[1];
+            params = new URLSearchParams(query);
+          }
+
+          if (params) {
             const access_token = params.get('access_token');
             const refresh_token = params.get('refresh_token');
+            const code = params.get('code');
 
             if (access_token && refresh_token) {
               setLoading(true);
@@ -133,25 +164,27 @@ export function useDeepLinkAuth() {
                 refresh_token,
               });
               if (error) throw error;
-              console.log('Session set from deep link!');
-              return;
+              toast.success('Login Successful', 'Welcome back!');
+              return; // Success
+            }
+
+            if (code) {
+              setLoading(true);
+              const { error } =
+                await supabase.auth.exchangeCodeForSession(code);
+              if (error) throw error;
+              toast.success('Login Successful', 'Welcome back!');
+              return; // Success
             }
           }
 
-          // Try query params (PKCE code flow)
-          const query = url.split('?')[1];
-          if (query) {
-            const params = new URLSearchParams(query);
-            const code = params.get('code');
-            if (code) {
-              setLoading(true);
-              const { error } = await supabase.auth.exchangeCodeForSession(code);
-              if (error) throw error;
-            }
-          }
+          throw new Error('No valid tokens found in link');
         } catch (e: any) {
           console.error('Failed to handle deep link auth:', e);
-          toast.error('Login Failed', e.message || 'Could not authenticate from link.');
+          toast.error(
+            'Login Failed',
+            e.message || 'Could not parse login link.'
+          );
         } finally {
           setLoading(false);
         }
