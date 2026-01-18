@@ -12,37 +12,40 @@ import { cn } from '@/lib/utils';
 import { type SyncActivity } from '@/stores/gamesStore';
 import { Avatar, AvatarFallback, AvatarImage } from '@heroui/react';
 
-const TimelineItem = memo(function TimelineItem({ activity }: { activity: SyncActivity }) {
+const actionMap: Record<string, { icon: any; label: string; color: string }> = {
+  upload: {
+    icon: ArrowUpCircle,
+    label: 'Pushed to cloud',
+    color: 'text-success',
+  },
+  download: {
+    icon: ArrowDownCircle,
+    label: 'Pulled from cloud',
+    color: 'text-info',
+  },
+  conflict: {
+    icon: GitMerge,
+    label: 'Merge conflict',
+    color: 'text-warning',
+  },
+  skip: {
+    icon: GitPullRequest,
+    label: 'Skipped sync',
+    color: 'text-gray-400',
+  },
+};
+
+const TimelineItem = memo(function TimelineItem({
+  activity,
+}: {
+  activity: SyncActivity;
+}) {
   const statusColor =
     activity.status === 'success'
       ? 'text-success'
       : activity.status === 'error'
       ? 'text-danger'
       : 'text-warning';
-
-  const actionMap: Record<string, { icon: any; label: string; color: string }> =
-    {
-      upload: {
-        icon: ArrowUpCircle,
-        label: 'Pushed to cloud',
-        color: 'text-success',
-      },
-      download: {
-        icon: ArrowDownCircle,
-        label: 'Pulled from cloud',
-        color: 'text-info',
-      },
-      conflict: {
-        icon: GitMerge,
-        label: 'Merge conflict',
-        color: 'text-warning',
-      },
-      skip: {
-        icon: GitPullRequest,
-        label: 'Skipped sync',
-        color: 'text-gray-400',
-      },
-    };
 
   const actionInfo = actionMap[activity.action] || actionMap.upload;
   const ActionIcon = actionInfo.icon;
@@ -263,18 +266,17 @@ export const Timeline = memo(function Timeline({ activities }: TimelineProps) {
     const grouped: Record<string, SyncActivity[]> = {};
 
     // Sort all activities by date desc first
-    const sorted = [...activities].sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    const sorted = [...activities].sort((a, b) =>
+      b.created_at.localeCompare(a.created_at)
     );
 
     sorted.forEach((activity) => {
       const date = new Date(activity.created_at);
-      let key = format(date, 'yyyy-MM-dd');
-
-      if (isToday(date)) key = 'Today';
-      else if (isYesterday(date)) key = 'Yesterday';
-      else key = format(date, 'MMMM d, yyyy');
+      const key = isToday(date)
+        ? 'Today'
+        : isYesterday(date)
+        ? 'Yesterday'
+        : format(date, 'MMMM d, yyyy');
 
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(activity);
