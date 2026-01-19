@@ -14,39 +14,45 @@ import {
   Download,
   Upload,
 } from 'lucide-react';
+import { memo, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function RecentActivity() {
   const navigate = useNavigate();
-  const { activities } = useGamesStore();
+  // ⚡ Performance: Select only activities to prevent re-renders on other store updates
+  const activities = useGamesStore(useShallow((state) => state.activities));
 
-  const processedActivities = dedupeConsecutiveActivities(
-    filterUserVisibleActivities(activities)
-      .slice()
-      .sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )
-  ).slice(0, 10);
+  // ⚡ Performance: Memoize expensive filtering, sorting, and grouping
+  const { processedActivities, groups } = useMemo(() => {
+    const processed = dedupeConsecutiveActivities(
+      filterUserVisibleActivities(activities)
+        .slice()
+        // ⚡ Performance: Use localeCompare for date sorting to avoid expensive Date parsing
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    ).slice(0, 10);
 
-  // Group by date
-  const groupedActivities = processedActivities.reduce((groups, activity) => {
-    const date = new Date(activity.created_at);
-    let key = format(date, 'yyyy-MM-dd');
+    // Group by date
+    const grouped = processed.reduce((groups, activity) => {
+      const date = new Date(activity.created_at);
+      let key = format(date, 'yyyy-MM-dd');
 
-    if (isToday(date)) key = 'Today';
-    else if (isYesterday(date)) key = 'Yesterday';
-    else key = format(date, 'MMMM d, yyyy');
+      if (isToday(date)) key = 'Today';
+      else if (isYesterday(date)) key = 'Yesterday';
+      else key = format(date, 'MMMM d, yyyy');
 
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(activity);
-    return groups;
-  }, {} as Record<string, SyncActivity[]>);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(activity);
+      return groups;
+    }, {} as Record<string, SyncActivity[]>);
 
-  const groups = Object.entries(groupedActivities).map(([date, items]) => ({
-    date,
-    items,
-  }));
+    const groupsList = Object.entries(grouped).map(([date, items]) => ({
+      date,
+      items,
+    }));
+
+    return { processedActivities: processed, groups: groupsList };
+  }, [activities]);
 
   if (processedActivities.length === 0) {
     return (
@@ -131,14 +137,18 @@ export default function RecentActivity() {
   );
 }
 
-function ActivityCard({ activity }: { activity: SyncActivity }) {
+// ⚡ Performance: Memoize ActivityCard to prevent unnecessary re-renders in the list
+const ActivityCard = memo(function ActivityCard({
+  activity,
+}: {
+  activity: SyncActivity;
+}) {
   const isUpload = activity.action === 'upload';
   const isSuccess = activity.status === 'success';
 
   return (
     <div className='group flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors cursor-default'>
       <div className='flex items-center gap-3 min-w-0'>
-        {/* Icon Status Indicator */}
         {/* Icon Status Indicator OR Cover */}
         <div className='relative shrink-0'>
           {activity.game_cover ? (
@@ -221,4 +231,4 @@ function ActivityCard({ activity }: { activity: SyncActivity }) {
       </div>
     </div>
   );
-}
+});
