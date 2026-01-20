@@ -228,7 +228,7 @@ export function sortAndDedupActivities(items: SyncActivity[]): SyncActivity[] {
   for (const item of items) {
     byId.set(item.id, item)
   }
-  return [...byId.values()].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  return [...byId.values()].sort((a, b) => b.created_at.localeCompare(a.created_at))
 }
 
 export function filterUserVisibleActivities(items: SyncActivity[]): SyncActivity[] {
@@ -295,7 +295,7 @@ export function sortErrorsFirst(items: SyncActivity[]): SyncActivity[] {
     const aErr = a.status === 'error' ? 1 : 0
     const bErr = b.status === 'error' ? 1 : 0
     if (aErr !== bErr) return bErr - aErr
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    return b.created_at.localeCompare(a.created_at)
   })
 }
 
@@ -450,7 +450,7 @@ export async function fetchBackupsByGame(params: {
         device_name: v.devices?.name ?? undefined,
         is_latest: v.is_latest,
       }))
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
 
     const versions: CloudSaveVersion[] = versionsRaw
 
