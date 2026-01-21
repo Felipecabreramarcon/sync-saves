@@ -14,20 +14,22 @@ import {
   Download,
   Upload,
 } from 'lucide-react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function RecentActivity() {
   const navigate = useNavigate();
   const { activities } = useGamesStore();
 
-  const processedActivities = dedupeConsecutiveActivities(
-    filterUserVisibleActivities(activities)
-      .slice()
-      .sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )
-  ).slice(0, 10);
+  const processedActivities = useMemo(
+    () =>
+      dedupeConsecutiveActivities(
+        filterUserVisibleActivities(activities)
+          .slice()
+          .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      ).slice(0, 10),
+    [activities]
+  );
 
   // Group by date
   const groupedActivities = processedActivities.reduce((groups, activity) => {
