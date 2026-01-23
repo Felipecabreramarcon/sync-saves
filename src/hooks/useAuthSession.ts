@@ -126,69 +126,112 @@ export function useDeepLinkAuth() {
     const setupDeepLinkListener = async () => {
       const { listen } = await import('@tauri-apps/api/event');
 
-      unlisten = await listen('deep-link://new-url', async (event) => {
-        let url = event.payload as string;
-        console.log('Deep link received (raw):', url);
+      const unlistenMain = await listen(
+        'deep-link://new-url',
+        async (event) => {
+          let url = event.payload as string;
+          console.log('Deep link received (raw):', url);
 
-        // Sanitize URL (remove quotes and whitespace often added by Windows shell)
-        url = url.replace(/['"]/g, '').trim();
-        console.log('Deep link sanitized:', url);
+          // Sanitize URL (remove quotes and whitespace often added by Windows shell)
+          url = url.replace(/['"]/g, '').trim();
+          console.log('Deep link sanitized:', url);
 
-        try {
-          toast.success(
-            'Authenticating...',
-            'Received login signal from browser.'
-          );
+          try {
+            toast.success(
+              'Authenticating...',
+              'Received login signal from browser.'
+            );
 
-          // Normalize: Supabase sometimes sends as hash, sometimes as query
-          // Let's try to extract from both locations
-          let params: URLSearchParams | null = null;
+            // Normalize: Supabase sometimes sends as hash, sometimes as query
+            // Let's try to extract from both locations
+            let params: URLSearchParams | null = null;
 
-          if (url.includes('#')) {
-            const fragment = url.split('#')[1];
-            params = new URLSearchParams(fragment);
-          } else if (url.includes('?')) {
-            const query = url.split('?')[1];
-            params = new URLSearchParams(query);
-          }
-
-          if (params) {
-            const access_token = params.get('access_token');
-            const refresh_token = params.get('refresh_token');
-            const code = params.get('code');
-
-            if (access_token && refresh_token) {
-              setLoading(true);
-              const { error } = await supabase.auth.setSession({
-                access_token,
-                refresh_token,
-              });
-              if (error) throw error;
-              toast.success('Login Successful', 'Welcome back!');
-              return; // Success
+            if (url.includes('#')) {
+              const fragment = url.split('#')[1];
+              params = new URLSearchParams(fragment);
+            } else if (url.includes('?')) {
+              const query = url.split('?')[1];
+              params = new URLSearchParams(query);
             }
 
-            if (code) {
-              setLoading(true);
-              const { error } =
-                await supabase.auth.exchangeCodeForSession(code);
-              if (error) throw error;
-              toast.success('Login Successful', 'Welcome back!');
-              return; // Success
-            }
-          }
+            if (params) {
+              const access_token = params.get('access_token');
+              const refresh_token = params.get('refresh_token');
+              const code = params.get('code');
 
-          throw new Error('No valid tokens found in link');
-        } catch (e: any) {
-          console.error('Failed to handle deep link auth:', e);
-          toast.error(
-            'Login Failed',
-            e.message || 'Could not parse login link.'
-          );
-        } finally {
-          setLoading(false);
+              if (access_token && refresh_token) {
+                setLoading(true);
+                const { error } = await supabase.auth.setSession({
+                  access_token,
+                  refresh_token,
+                });
+                if (error) throw error;
+                toast.success('Login Successful', 'Welcome back!');
+
+                // Close the auth window if it exists
+                try {
+                  const { WebviewWindow } =
+                    await import('@tauri-apps/api/webviewWindow');
+                  const authWindow =
+                    await WebviewWindow.getByLabel('auth-google');
+                  if (authWindow) {
+                    await authWindow.close();
+                  }
+                } catch (err) {
+                  console.error('Failed to close auth window:', err);
+                }
+
+                return; // Success
+              }
+
+              if (code) {
+                setLoading(true);
+                const { error } =
+                  await supabase.auth.exchangeCodeForSession(code);
+                if (error) throw error;
+                toast.success('Login Successful', 'Welcome back!');
+
+                // Close the auth window if it exists
+                try {
+                  const { WebviewWindow } =
+                    await import('@tauri-apps/api/webviewWindow');
+                  const authWindow =
+                    await WebviewWindow.getByLabel('auth-google');
+                  if (authWindow) {
+                    await authWindow.close();
+                  }
+                } catch (err) {
+                  console.error('Failed to close auth window:', err);
+                }
+
+                return; // Success
+              }
+            }
+
+            throw new Error('No valid tokens found in link');
+          } catch (e: any) {
+            console.error('Failed to handle deep link auth:', e);
+            toast.error(
+              'Login Failed',
+              e.message || 'Could not parse login link.'
+            );
+          } finally {
+            setLoading(false);
+          }
         }
+      );
+
+      // Debug listener
+      const unlistenDebug = await listen('deep-link://debug', (event) => {
+        const args = event.payload as string[];
+        console.log('Deep link debug args:', args);
+        toast.info('Debug Args', JSON.stringify(args));
       });
+
+      unlisten = () => {
+        unlistenMain();
+        unlistenDebug();
+      };
     };
 
     setupDeepLinkListener();

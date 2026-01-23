@@ -15,19 +15,22 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            // Debug: Emit all args to frontend to help troubleshoot
+            let _ = app.emit("deep-link://debug", args.clone());
+
             let _ = app
                 .get_webview_window("main")
                 .expect("no main window")
                 .set_focus();
 
-            // If a deep link is passed as an argument (Windows mostly), emit it
-            // Check args for url scheme, handling potential quotes
-            if let Some(url_arg) = args.iter().find(|a| {
-                let clean = a.replace(&['\"', '\''][..], "").trim().to_string();
-                clean.starts_with("sync-saves://")
-            }) {
-                let clean_url = url_arg.replace(&['\"', '\''][..], "").trim().to_string();
-                let _ = app.emit("deep-link://new-url", clean_url);
+            // Iterate over all args to find the deep link
+            for arg in args.iter() {
+                // Determine if this arg contains our scheme
+                if arg.contains("sync-saves://") {
+                    // Clean up quotes if present
+                    let clean_url = arg.replace(&['\"', '\''][..], "").trim().to_string();
+                    let _ = app.emit("deep-link://new-url", clean_url);
+                }
             }
         }))
         .plugin(tauri_plugin_autostart::init(
