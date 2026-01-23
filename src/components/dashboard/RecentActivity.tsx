@@ -23,10 +23,7 @@ export default function RecentActivity() {
   const processedActivities = dedupeConsecutiveActivities(
     filterUserVisibleActivities(activities)
       .slice()
-      .sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
   ).slice(0, 10);
 
   // Group by date
