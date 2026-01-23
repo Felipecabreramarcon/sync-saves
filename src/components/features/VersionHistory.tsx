@@ -168,7 +168,7 @@ export default function VersionHistory({
             /[^a-zA-Z0-9.-]/g,
             '_'
           );
-          let tempFilePath = await join(
+          const tempFilePath = await join(
             tempDir,
             `v_${version.id}_${safeTargetName}.zip`
           );
