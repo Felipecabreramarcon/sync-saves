@@ -364,40 +364,17 @@ export const useGamesStore = create<GamesState>((set, get) => ({
   },
 
   refreshMetrics: async () => {
-    const { supabase } = await import('@/lib/supabase');
     const { useAuthStore } = await import('@/stores/authStore');
+    const { fetchUserStorageStats } = await import('@/lib/cloudSync');
     const user = useAuthStore.getState().user;
     if (!user) return;
 
     try {
-      const { data: userFolders, error: foldersError } = await supabase.storage
-        .from('saves')
-        .list(user.id);
-
-      if (foldersError) throw foldersError;
-      if (!userFolders) return;
-
-      let totalSize = 0;
-      let totalFiles = 0;
-
-      for (const folder of userFolders) {
-        const { data: files, error: filesError } = await supabase.storage
-          .from('saves')
-          .list(`${user.id}/${folder.name}`);
-
-        if (filesError) continue;
-        if (files) {
-          totalFiles += files.length;
-          totalSize += files.reduce(
-            (acc, f) => acc + (f.metadata?.size || 0),
-            0
-          );
-        }
-      }
+      const { totalSaves, totalSize } = await fetchUserStorageStats(user.id);
 
       set({
         storageUsage: totalSize,
-        totalSaves: totalFiles,
+        totalSaves: totalSaves,
         totalGames: get().games.length,
       });
     } catch (e) {

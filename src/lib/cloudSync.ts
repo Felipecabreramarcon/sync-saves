@@ -595,3 +595,21 @@ export async function deleteGameCloudData(params: {
 
   console.log(`Deleted cloud data for game ${cloudGameId}`)
 }
+
+export async function fetchUserStorageStats(userId: string): Promise<{ totalSaves: number, totalSize: number }> {
+  const { data, error } = await (supabase
+    .from('save_versions') as any)
+    .select('file_size, games!inner(user_id)')
+    .eq('games.user_id', userId)
+
+  if (error) {
+    console.warn('Failed to fetch storage stats:', error)
+    return { totalSaves: 0, totalSize: 0 }
+  }
+
+  const files = data as { file_size: number }[]
+  const totalSaves = files.length
+  const totalSize = files.reduce((acc, curr) => acc + (curr.file_size || 0), 0)
+
+  return { totalSaves, totalSize }
+}
