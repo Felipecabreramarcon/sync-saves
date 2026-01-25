@@ -55,27 +55,35 @@ export default function Logs() {
   // Filter activities by game
   const filteredActivities = useMemo(() => {
     if (filterGame === 'all') return activities;
+
+    const targetGame = games.find((g) => g.id === filterGame);
+    const targetSlug = targetGame?.slug;
+
     return activities.filter(
       (a) =>
         a.game_id === filterGame ||
-        games.find((g) => g.id === filterGame)?.slug ===
-          a.game_name?.toLowerCase().replace(/\s+/g, '-'),
+        (targetSlug &&
+          targetSlug === a.game_name?.toLowerCase().replace(/\s+/g, '-')),
     );
   }, [activities, filterGame, games]);
 
   // Stats
   const stats = useMemo(() => {
-    const sourceActivities =
-      filterGame === 'all' ? activities : filteredActivities;
-    const uploads = sourceActivities.filter(
-      (a) => a.action === 'upload' && a.status === 'success',
-    ).length;
-    const downloads = sourceActivities.filter(
-      (a) => a.action === 'download' && a.status === 'success',
-    ).length;
-    const errors = sourceActivities.filter((a) => a.status === 'error').length;
+    const sourceActivities = filteredActivities;
+    let uploads = 0;
+    let downloads = 0;
+    let errors = 0;
+
+    for (const a of sourceActivities) {
+      if (a.status === 'error') {
+        errors++;
+      } else if (a.status === 'success') {
+        if (a.action === 'upload') uploads++;
+        else if (a.action === 'download') downloads++;
+      }
+    }
     return { uploads, downloads, errors };
-  }, [activities, filteredActivities, filterGame]);
+  }, [filteredActivities]);
 
   return (
     <div className='min-h-screen'>
