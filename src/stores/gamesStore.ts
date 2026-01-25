@@ -79,7 +79,7 @@ interface GamesState {
     game: Omit<
       Game,
       'id' | 'slug' | 'last_synced_at' | 'last_synced_id' | 'status'
-    >
+    >,
   ) => Promise<void>;
   loadGames: () => Promise<void>;
   loadCloudGames: () => Promise<void>;
@@ -100,6 +100,12 @@ interface GamesState {
     cloudGameId?: string;
     deviceId?: string;
   }) => Promise<void>;
+
+  addGames: (
+    newGames: Array<
+      Omit<Game, 'id' | 'slug' | 'last_synced_at' | 'last_synced_id' | 'status'>
+    >,
+  ) => Promise<void>;
 }
 
 export const useGamesStore = create<GamesState>((set, get) => ({
@@ -158,7 +164,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
       totalGames: state.totalGames - 1,
       // Also filter out activities for this game
       activities: state.activities.filter(
-        (a) => a.game_id !== cloudGameId && a.game_id !== id
+        (a) => a.game_id !== cloudGameId && a.game_id !== id,
       ),
     }));
   },
@@ -328,7 +334,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
     if (!device) throw new Error('Failed to register device');
 
     const game = get().games.find(
-      (g) => g.cloud_game_id === cloudGameId || g.id === cloudGameId
+      (g) => g.cloud_game_id === cloudGameId || g.id === cloudGameId,
     );
     if (!game) throw new Error('Game not found');
 
@@ -342,7 +348,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
         local_path: localPath,
         sync_enabled: true,
       },
-      { onConflict: 'game_id,device_id' }
+      { onConflict: 'game_id,device_id' },
     );
 
     if (upsertError) throw upsertError;
@@ -390,7 +396,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
           totalFiles += files.length;
           totalSize += files.reduce(
             (acc, f) => acc + (f.metadata?.size || 0),
-            0
+            0,
           );
         }
       }
@@ -412,7 +418,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
           newGame.name,
           newGame.local_path,
           newGame.platform,
-          newGame.cover_url
+          newGame.cover_url,
         );
         const game: Game = {
           id: added.id,
@@ -447,6 +453,64 @@ export const useGamesStore = create<GamesState>((set, get) => ({
       }
     } catch (e) {
       console.error(e);
+      throw e;
+    }
+  },
+
+  addGames: async (newGames) => {
+    try {
+      const addedGames: Game[] = [];
+
+      if (isTauriRuntime()) {
+        // Sequential for now as SQLite concurrency might be tricky if not handled in backend
+        // Ideally backend should have add_games_bulk
+        for (const newGame of newGames) {
+          try {
+            const added = await tauriAddGame(
+              newGame.name,
+              newGame.local_path,
+              newGame.platform,
+              newGame.cover_url,
+            );
+            addedGames.push({
+              id: added.id,
+              name: added.name,
+              slug: added.slug,
+              cover_url: added.cover_url,
+              platform: added.platform as GamePlatform,
+              local_path: added.local_path,
+              sync_enabled: added.sync_enabled,
+              status: added.status as SyncStatus,
+              last_synced_id: undefined,
+              custom_script_path: added.custom_script_path,
+              analysis_config: added.analysis_config,
+            });
+          } catch (e) {
+            console.error(`Failed to add game ${newGame.name}:`, e);
+          }
+        }
+      } else {
+        // Mock implementation
+        for (const newGame of newGames) {
+          addedGames.push({
+            ...newGame,
+            id: Math.random().toString(36).substr(2, 9),
+            slug: newGame.name.toLowerCase().replace(/\s+/g, '-'),
+            status: 'idle',
+            last_synced_id: undefined,
+            sync_enabled: true,
+          });
+        }
+      }
+
+      if (addedGames.length > 0) {
+        set((state) => ({
+          games: [...state.games, ...addedGames],
+          totalGames: state.totalGames + addedGames.length,
+        }));
+      }
+    } catch (e) {
+      console.error('Values to add bulk games failed', e);
       throw e;
     }
   },
@@ -508,7 +572,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
                       id: insertedLog.id,
                       created_at: insertedLog.created_at,
                     }
-                  : a
+                  : a,
               ),
             }));
           }

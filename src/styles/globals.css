@@ -1,131 +1,141 @@
 @import "tailwindcss";
 @import "@heroui/styles"; 
 
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Russo+One&display=swap');
 
 @theme {
-  /* Custom colors from tailwind config */
-  --color-bg-primary: #09090b;
-  --color-bg-secondary: #121214;
-  --color-bg-elevated: #18181b;
-  --color-bg-card: #27272a;
-  --color-content-primary: #fafafa;
-  --color-content-secondary: #a1a1aa;
-  --color-content-tertiary: #71717a;
-  --color-border-primary: #27272a;
-  --color-border-secondary: #3f3f46;
-
   /* Fonts */
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Chakra Petch', system-ui, sans-serif;
+  --font-display: 'Russo One', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Backdrop blur */
   --blur-xs: 2px;
 }
 
-/* CSS Variables from UI_DESIGN.md */
 :root {
-  /* Primary - Purple/Violet (Gaming vibe) */
-  --primary-50: #faf5ff;
-  --primary-100: #f3e8ff;
-  --primary-200: #e9d5ff;
-  --primary-300: #d8b4fe;
-  --primary-400: #c084fc;
-  --primary-500: #a855f7;
-  --primary-600: #9333ea;
-  --primary-700: #7c3aed;
-  --primary-800: #6b21a8;
-  --primary-900: #581c87;
+  /* Cyberpunk Palette from Design System */
+  
+  /* Primary - Violet */
+  --color-primary: #7C3AED;
+  --color-primary-50: #F5F3FF;
+  --color-primary-100: #EDE9FE;
+  --color-primary-200: #DDD6FE;
+  --color-primary-300: #C4B5FD;
+  --color-primary-400: #A78BFA;
+  --color-primary-500: #8B5CF6;
+  --color-primary-600: #7C3AED;
+  --color-primary-700: #6D28D9;
+  --color-primary-800: #5B21B6;
+  --color-primary-900: #4C1D95;
 
-  /* Secondary - Cyan */
-  --secondary-400: #22d3ee;
-  --secondary-500: #06b6d4;
-  --secondary-600: #0891b2;
+  /* Secondary - Neon Lavender */
+  --color-secondary: #A78BFA;
 
-  /* Neutrals - Dark Mode */
-  --gray-50: #fafafa;
-  --gray-100: #f4f4f5;
-  --gray-200: #e4e4e7;
-  --gray-300: #d4d4d8;
-  --gray-400: #a1a1aa;
-  --gray-500: #71717a;
-  --gray-600: #52525b;
-  --gray-700: #3f3f46;
-  --gray-800: #27272a;
-  --gray-850: #1f1f23;
-  --gray-900: #18181b;
-  --gray-950: #09090b;
+  /* CTA/Accent - Rose/Pink */
+  --color-cta: #F43F5E;
 
-  /* Status */
-  --success: #22c55e;
-  --warning: #eab308;
-  --error: #ef4444;
-  --info: #3b82f6;
+  /* Backgrounds */
+  --color-background: #0F0F23; /* Deep Navy */
+  --color-bg-card: #18182E;
+  --color-bg-elevated: #21213A;
 
-  /* Background */
-  --bg-primary: var(--gray-950);
-  --bg-secondary: var(--gray-900);
-  --bg-elevated: var(--gray-850);
-  --bg-card: var(--gray-800);
+  /* Text */
+  --color-text: #E2E8F0;
+  --color-text-muted: #94A3B8;
 
-  /* Typography */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* Shadows */
+  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.3);
+  --shadow-neon: 0 0 10px rgba(167, 139, 250, 0.5);
 
   /* Spacing */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-
-  /* Border Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  --radius-full: 9999px;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
 }
 
-/* Base styles */
+/* Base Reset & Typography */
 body {
-  font-family: var(--font-sans);
-  background-color: var(--bg-primary);
-  color: var(--gray-50);
+  font-family: 'Chakra Petch', system-ui, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Glassmorphism Card */
-.glass-card {
-  background: rgba(39, 39, 42, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Russo One', system-ui, sans-serif;
+  font-weight: 400; /* Russo One is naturally bold */
+  letter-spacing: 0.05em;
 }
 
-/* Status pulse animation */
-@keyframes pulse-sync {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+/* Utilities */
+
+/* Primary Button */
+.btn-primary {
+  background: var(--color-cta);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 200ms ease;
+  cursor: pointer;
+  border: none;
+  font-family: 'Chakra Petch', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-
-button {
-  display: flex;
-
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(244, 63, 94, 0.3); /* Glow effect */
 }
 
-.animate-pulse-sync {
-  animation: pulse-sync 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* Secondary Button */
+.btn-secondary {
+  background: transparent;
+  color: var(--color-secondary);
+  border: 2px solid var(--color-secondary);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 200ms ease;
+  cursor: pointer;
+  font-family: 'Chakra Petch', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-secondary:hover {
+  background: rgba(167, 139, 250, 0.1);
+  box-shadow: 0 0 15px rgba(167, 139, 250, 0.2);
+}
+
+/* Card */
+.card {
+  background: var(--color-bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: all 200ms ease;
+}
+
+.card:hover {
+  border-color: rgba(124, 58, 237, 0.3);
+  box-shadow: 0 10px 15px rgba(0,0,0,0.3), 0 0 20px rgba(124, 58, 237, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Neon Text Effect */
+.text-neon {
+  text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
 }
 
 /* Scrollbar styling */
@@ -135,31 +145,20 @@ button {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--gray-900);
-  border-radius: 4px;
+  background: var(--color-background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--gray-700);
+  background: #33334d;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-600);
+  background: #4d4d6b;
 }
 
 /* Selection */
 ::selection {
-  background-color: var(--primary-600);
+  background-color: var(--color-primary);
   color: white;
-}
-
-/* Smooth transitions for interactive elements */
-.transition-interactive {
-  transition: all 0.2s ease-in-out;
-}
-
-/* Hover glow effect */
-.hover-glow:hover {
-  box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
 }

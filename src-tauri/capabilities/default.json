@@ -36,11 +36,67 @@
     "dialog:default",
     {
       "identifier": "fs:allow-read-file",
-      "allow": [{ "path": "$HOME/**" }, { "path": "$APPDATA" }, { "path": "$APPDATA/**" }]
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$APPDATA" },
+        { "path": "$APPDATA/**" },
+        { "path": "C:\\Program Files (x86)\\Steam\\**" },
+        { "path": "C:\\Program Files\\Steam\\**" },
+        { "path": "D:\\Steam\\**" },
+        { "path": "E:\\Steam\\**" },
+        { "path": "C:/Program Files (x86)/Steam/**" },
+        { "path": "C:/Program Files/Steam/**" },
+        { "path": "D:/Steam/**" },
+        { "path": "E:/Steam/**" },
+        { "path": "c:/program files (x86)/steam/**" },
+        { "path": "c:/program files/steam/**" },
+        { "path": "d:/steam/**" },
+        { "path": "e:/steam/**" }
+      ]
     },
     {
       "identifier": "fs:allow-read-dir",
-      "allow": [{ "path": "$HOME/**" }, { "path": "$APPDATA" }, { "path": "$APPDATA/**" }]
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$APPDATA" },
+        { "path": "$APPDATA/**" },
+        { "path": "C:\\Program Files (x86)\\Steam\\**" },
+        { "path": "C:\\Program Files\\Steam\\**" },
+        { "path": "D:\\Steam\\**" },
+        { "path": "E:\\Steam\\**" },
+        { "path": "C:/Program Files (x86)/Steam/**" },
+        { "path": "C:/Program Files/Steam/**" },
+        { "path": "D:/Steam/**" },
+        { "path": "E:/Steam/**" },
+        { "path": "c:/program files (x86)/steam/**" },
+        { "path": "c:/program files/steam/**" },
+        { "path": "d:/steam/**" },
+        { "path": "e:/steam/**" },
+        { "path": "C:/ProgramData/Epic/**" },
+        { "path": "C:/ProgramData/GOG.com/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$APPDATA" },
+        { "path": "$APPDATA/**" },
+        { "path": "C:\\Program Files (x86)\\Steam\\**" },
+        { "path": "C:\\Program Files\\Steam\\**" },
+        { "path": "D:\\Steam\\**" },
+        { "path": "E:\\Steam\\**" },
+        { "path": "C:/Program Files (x86)/Steam/**" },
+        { "path": "C:/Program Files/Steam/**" },
+        { "path": "D:/Steam/**" },
+        { "path": "E:/Steam/**" },
+        { "path": "c:/program files (x86)/steam/**" },
+        { "path": "c:/program files/steam/**" },
+        { "path": "d:/steam/**" },
+        { "path": "e:/steam/**" },
+        { "path": "C:/ProgramData/Epic/**" },
+        { "path": "C:/ProgramData/GOG.com/**" }
+      ]
     },
     {
       "identifier": "fs:allow-write-file",
@@ -56,7 +112,36 @@
     },
     {
       "identifier": "fs:allow-exists",
-      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/**" }]
+      "allow": [
+        { "path": "$APPDATA" },
+        { "path": "$APPDATA/**" },
+        { "path": "C:\\Program Files (x86)\\Steam\\**" },
+        { "path": "C:\\Program Files\\Steam\\**" },
+        { "path": "D:\\Steam\\**" },
+        { "path": "E:\\Steam\\**" },
+        { "path": "C:/Program Files (x86)/Steam/**" },
+        { "path": "C:/Program Files/Steam/**" },
+        { "path": "D:/Steam/**" },
+        { "path": "E:/Steam/**" },
+        { "path": "c:/program files (x86)/steam/**" },
+        { "path": "c:/program files/steam/**" },
+        { "path": "d:/steam/**" },
+        { "path": "e:/steam/**" },
+        { "path": "C:/Program Files (x86)/Steam" },
+        { "path": "C:/Program Files/Steam" },
+        { "path": "D:/Steam" },
+        { "path": "E:/Steam" },
+        { "path": "C:\\Program Files (x86)\\Steam" },
+        { "path": "C:\\Program Files\\Steam" },
+        { "path": "D:\\Steam" },
+        { "path": "E:\\Steam" },
+        { "path": "c:/program files (x86)/steam" },
+        { "path": "c:/program files/steam" },
+        { "path": "d:/steam" },
+        { "path": "e:/steam" },
+        { "path": "C:/ProgramData/Epic" },
+        { "path": "C:/ProgramData/GOG.com" }
+      ]
     },
     {
       "identifier": "fs:allow-remove",

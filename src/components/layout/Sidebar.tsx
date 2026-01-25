@@ -27,23 +27,23 @@ export default function Sidebar() {
   return (
     <aside
       className={`
-        fixed left-0 right-0 bottom-0 top-auto h-16 w-full bg-bg-secondary/50 backdrop-blur-xl border-t border-white/5
+        fixed left-0 right-0 bottom-0 top-auto h-16 w-full bg-[var(--color-bg-elevated)]/80 backdrop-blur-xl border-t border-[var(--color-primary)]/20
         flex flex-row transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] z-40
-        md:left-0 md:right-auto md:bottom-auto md:top-8 md:h-[calc(100vh-2rem)] md:border-t-0 md:border-r md:border-white/5 md:flex-col
+        md:left-0 md:right-auto md:bottom-auto md:top-8 md:h-[calc(100vh-2rem)] md:border-t-0 md:border-r md:border-[var(--color-primary)]/20 md:flex-col
         ${isSidebarCollapsed ? 'md:w-18' : 'md:w-60'}
       `}
     >
       {/* Logo */}
-      <div className='hidden md:flex p-4 items-center gap-3 border-b border-white/5 h-18'>
-        <div className='w-10 h-10 rounded-xl bg-linear-to-br from-primary-500 to-primary-700 flex items-center justify-center shrink-0 shadow-lg shadow-primary-500/20'>
+      <div className='hidden md:flex p-4 items-center gap-3 border-b border-[var(--color-primary)]/20 h-18'>
+        <div className='w-10 h-10 rounded-xl bg-linear-to-br from-[var(--color-primary-500)] to-[var(--color-primary-700)] flex items-center justify-center shrink-0 shadow-lg shadow-[var(--color-primary)]/20'>
           <Cloud className='w-5 h-5 text-white' />
         </div>
         {!isSidebarCollapsed && (
           <div className='overflow-hidden'>
-            <h1 className='font-bold text-white text-base leading-tight tracking-tight whitespace-nowrap'>
+            <h1 className='font-bold text-[var(--color-text)] text-base leading-tight tracking-tight whitespace-nowrap font-display uppercase'>
               Sync Saves
             </h1>
-            <p className='text-[10px] text-gray-400 font-medium whitespace-nowrap'>
+            <p className='text-[10px] text-[var(--color-text-muted)] font-medium whitespace-nowrap tracking-wider'>
               CLOUD MANAGER
             </p>
           </div>
@@ -67,23 +67,23 @@ export default function Sidebar() {
                 transition-all duration-200 group relative overflow-hidden
                 ${
                   isActive
-                    ? 'bg-white/5 text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-[var(--color-primary)]/10 text-white'
+                    : 'text-[var(--color-text-muted)] hover:text-white hover:bg-[var(--color-primary)]/5'
                 }
               `}
             >
               {isActive && (
-                <div className='absolute inset-y-0 left-0 w-1 bg-primary-500 rounded-full' />
+                <div className='absolute inset-y-0 left-0 w-1 bg-[var(--color-primary)] rounded-full shadow-[0_0_10px_var(--color-primary)]' />
               )}
               <Icon
                 className={`w-5 h-5 shrink-0 transition-colors ${
                   isActive
-                    ? 'text-primary-400'
-                    : 'text-gray-400 group-hover:text-white'
+                    ? 'text-[var(--color-primary-400)] drop-shadow-[0_0_5px_var(--color-primary-400)]'
+                    : 'text-[var(--color-text-muted)] group-hover:text-white'
                 }`}
               />
               {!isSidebarCollapsed && (
-                <span className='text-sm font-medium whitespace-nowrap'>
+                <span className='text-sm font-medium whitespace-nowrap font-display tracking-wide'>
                   {item.label}
                 </span>
               )}
@@ -104,22 +104,27 @@ export default function Sidebar() {
       </nav>
 
       {/* User Profile */}
-      <div className='hidden md:block p-3 border-t border-white/5'>
+      <div className='hidden md:block p-3 border-t border-[var(--color-primary)]/20'>
         <div
-          className={`flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group ${
+          className={`flex items-center gap-3 p-2 rounded-xl hover:bg-[var(--color-primary)]/5 transition-colors cursor-pointer group ${
             isSidebarCollapsed ? 'justify-center' : ''
           }`}
         >
           <div className='relative'>
-            <Avatar size='sm'>
+            <Avatar
+              size='sm'
+              className='border border-[var(--color-primary)]/30'
+            >
               <Avatar.Image alt={user?.name || 'User'} src={user?.avatar_url} />
-              <Avatar.Fallback>{user?.name?.charAt(0) || 'U'}</Avatar.Fallback>
+              <Avatar.Fallback className='bg-[var(--color-bg-card)] text-[var(--color-primary)]'>
+                {user?.name?.charAt(0) || 'U'}
+              </Avatar.Fallback>
             </Avatar>
-            <div className='absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-bg-secondary' />
+            <div className='absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[var(--color-bg-elevated)] box-shadow-[0_0_8px_rgba(34,197,94,0.5)]' />
           </div>
           {!isSidebarCollapsed && (
             <div className='overflow-hidden flex-1'>
-              <p className='text-sm font-medium text-white truncate'>
+              <p className='text-sm font-medium text-white truncate font-display'>
                 {user?.name || 'User'}
               </p>
               <div className='flex items-center justify-between'>
@@ -128,7 +133,7 @@ export default function Sidebar() {
                     e.stopPropagation();
                     useAuthStore.getState().logout();
                   }}
-                  className='text-[10px] text-red-400 hover:text-red-300 transition-colors'
+                  className='text-[10px] text-red-400 hover:text-red-300 transition-colors hover:drop-shadow-[0_0_5px_rgba(248,113,113,0.5)]'
                 >
                   Sign Out
                 </button>
@@ -138,9 +143,9 @@ export default function Sidebar() {
           {!isSidebarCollapsed && (
             <NavLink
               to='/settings'
-              className='p-1 rounded-lg hover:bg-white/10 transition-colors'
+              className='p-1 rounded-lg hover:bg-[var(--color-primary)]/10 transition-colors'
             >
-              <Settings className='w-4 h-4 text-gray-500 group-hover:text-white transition-colors' />
+              <Settings className='w-4 h-4 text-[var(--color-text-muted)] group-hover:text-white transition-colors' />
             </NavLink>
           )}
         </div>

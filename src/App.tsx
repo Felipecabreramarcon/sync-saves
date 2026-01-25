@@ -26,9 +26,11 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className='min-h-screen bg-bg-primary flex flex-col items-center justify-center gap-4'>
-        <div className='w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin' />
-        <p className='text-gray-400 font-medium'>Initializing Sync Saves...</p>
+      <div className='min-h-screen bg-[var(--color-background)] flex flex-col items-center justify-center gap-4'>
+        <div className='w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin' />
+        <p className='text-[var(--color-text-muted)] font-medium font-sans'>
+          Initializing Sync Saves...
+        </p>
       </div>
     );
   }

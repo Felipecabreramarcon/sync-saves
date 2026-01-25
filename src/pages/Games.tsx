@@ -26,7 +26,7 @@ export default function Games() {
   }, []);
 
   const filteredGames = games.filter((game) =>
-    game.name.toLowerCase().includes(searchQuery.toLowerCase())
+    game.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleAddGame = async (gameData: {
@@ -56,14 +56,16 @@ export default function Games() {
         title='My Games'
         subtitle='All systems operational'
         rightContent={
-          <Button
-            variant='primary'
-            className='shadow-xl shadow-primary-500/20'
-            onPress={modalState.open}
-          >
-            <Plus className='w-4 h-4' />
-            Add Game
-          </Button>
+          <div className='flex items-center gap-3'>
+            <Button
+              variant='primary'
+              className='shadow-xl shadow-primary-500/20'
+              onPress={modalState.open}
+            >
+              <Plus className='w-4 h-4' />
+              Add Game
+            </Button>
+          </div>
         }
       />
 

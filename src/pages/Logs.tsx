@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import PageHeader from '@/components/layout/PageHeader';
 import { useGamesStore } from '@/stores/gamesStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -58,7 +59,7 @@ export default function Logs() {
       (a) =>
         a.game_id === filterGame ||
         games.find((g) => g.id === filterGame)?.slug ===
-          a.game_name?.toLowerCase().replace(/\s+/g, '-')
+          a.game_name?.toLowerCase().replace(/\s+/g, '-'),
     );
   }, [activities, filterGame, games]);
 
@@ -67,10 +68,10 @@ export default function Logs() {
     const sourceActivities =
       filterGame === 'all' ? activities : filteredActivities;
     const uploads = sourceActivities.filter(
-      (a) => a.action === 'upload' && a.status === 'success'
+      (a) => a.action === 'upload' && a.status === 'success',
     ).length;
     const downloads = sourceActivities.filter(
-      (a) => a.action === 'download' && a.status === 'success'
+      (a) => a.action === 'download' && a.status === 'success',
     ).length;
     const errors = sourceActivities.filter((a) => a.status === 'error').length;
     return { uploads, downloads, errors };
@@ -87,19 +88,20 @@ export default function Logs() {
         }
         showSyncButton={false}
         rightContent={
-          <div className='flex items-center gap-2'>
+          <div className='flex items-center gap-3'>
             {/* View Mode Toggle (only when game selected) */}
             {selectedGame && (
-              <div className='flex bg-white/5 rounded-lg p-0.5 border border-white/10'>
+              <div className='flex bg-[var(--color-bg-card)] rounded-lg p-1 border border-white/5'>
                 <Button
                   size='sm'
                   variant={viewMode === 'timeline' ? 'primary' : 'ghost'}
                   onPress={() => setViewMode('timeline')}
-                  className={`h-7 px-3 rounded-md text-xs font-medium transition-all ${
+                  className={cn(
+                    'h-8 px-4 rounded-md text-xs font-bold uppercase tracking-wider transition-all font-display',
                     viewMode === 'timeline'
-                      ? 'bg-primary-500 text-white'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                      ? 'shadow-[0_0_10px_rgba(124,58,237,0.4)]'
+                      : 'text-[var(--color-text-muted)] hover:text-white bg-transparent',
+                  )}
                 >
                   <Clock className='w-3.5 h-3.5 mr-1.5' />
                   Activity
@@ -108,11 +110,12 @@ export default function Logs() {
                   size='sm'
                   variant={viewMode === 'versions' ? 'primary' : 'ghost'}
                   onPress={() => setViewMode('versions')}
-                  className={`h-7 px-3 rounded-md text-xs font-medium transition-all ${
+                  className={cn(
+                    'h-8 px-4 rounded-md text-xs font-bold uppercase tracking-wider transition-all font-display',
                     viewMode === 'versions'
-                      ? 'bg-primary-500 text-white'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                      ? 'shadow-[0_0_10px_rgba(124,58,237,0.4)]'
+                      : 'text-[var(--color-text-muted)] hover:text-white bg-transparent',
+                  )}
                 >
                   <FileCode className='w-3.5 h-3.5 mr-1.5' />
                   Versions
@@ -123,7 +126,11 @@ export default function Logs() {
             {/* Game Filter */}
             <Dropdown>
               <Dropdown.Trigger>
-                <Button variant='ghost' size='sm'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='border-white/10 hover:border-[var(--color-primary)]/50 text-[var(--color-text-muted)] hover:text-white hover:shadow-[0_0_10px_rgba(124,58,237,0.2)] transition-all font-display uppercase tracking-wider text-xs h-9 bg-transparent'
+                >
                   <Filter className='w-4 h-4 mr-2' />
                   {filterGame === 'all'
                     ? 'All Games'
@@ -137,8 +144,13 @@ export default function Logs() {
                     setFilterGame(key as string);
                     if (key === 'all') setViewMode('timeline');
                   }}
+                  className='bg-[var(--color-bg-card)] border border-white/10'
                 >
-                  <Dropdown.Item id='all' textValue='All Games'>
+                  <Dropdown.Item
+                    id='all'
+                    textValue='All Games'
+                    className='font-display'
+                  >
                     All Games
                   </Dropdown.Item>
                   {games.map((game) => (
@@ -146,6 +158,7 @@ export default function Logs() {
                       key={game.id}
                       id={game.id}
                       textValue={game.name}
+                      className='font-display'
                     >
                       {game.name}
                     </Dropdown.Item>
@@ -159,6 +172,7 @@ export default function Logs() {
               size='sm'
               onPress={handleRefresh}
               isDisabled={loading}
+              className='text-[var(--color-text-muted)] hover:text-white hover:bg-white/5 bg-transparent'
             >
               <RefreshCw
                 className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}
@@ -172,33 +186,68 @@ export default function Logs() {
       <div className='p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto'>
         {/* Stats Summary */}
         {user && activities.length > 0 && (
-          <div className='grid grid-cols-3 gap-4 mb-6'>
-            <div className='bg-bg-elevated/30 rounded-xl p-4 border border-white/5'>
-              <div className='flex items-center gap-2 text-success mb-1'>
-                <ArrowUp className='w-4 h-4' />
-                <span className='text-xs font-medium uppercase tracking-wider'>
+          <div className='grid grid-cols-3 gap-6 mb-12'>
+            {/* Uploads Card */}
+            <div className='relative overflow-hidden group bg-[var(--color-bg-card)] border border-white/5 rounded-2xl p-6 transition-all hover:border-success/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.1)]'>
+              <div className='absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity'>
+                <ArrowUp className='w-16 h-16 text-success' />
+              </div>
+              <div className='flex items-center gap-3 text-success mb-2'>
+                <div className='p-2 rounded-lg bg-success/10 border border-success/20'>
+                  <ArrowUp className='w-4 h-4' />
+                </div>
+                <span className='text-xs font-bold uppercase tracking-widest font-display text-white'>
                   Uploads
                 </span>
               </div>
-              <p className='text-2xl font-bold text-white'>{stats.uploads}</p>
+              <p className='text-4xl font-bold text-white font-display text-neon tracking-wide'>
+                {stats.uploads}
+              </p>
+              <div className='w-full h-1 bg-white/5 mt-4 rounded-full overflow-hidden'>
+                <div className='h-full bg-success/50 w-3/4 rounded-full shadow-[0_0_10px_var(--success)]'></div>
+              </div>
             </div>
-            <div className='bg-bg-elevated/30 rounded-xl p-4 border border-white/5'>
-              <div className='flex items-center gap-2 text-info mb-1'>
-                <ArrowDown className='w-4 h-4' />
-                <span className='text-xs font-medium uppercase tracking-wider'>
+
+            {/* Restores Card */}
+            <div className='relative overflow-hidden group bg-[var(--color-bg-card)] border border-white/5 rounded-2xl p-6 transition-all hover:border-[var(--color-secondary)]/30 hover:shadow-[0_0_20px_rgba(167,139,250,0.1)]'>
+              <div className='absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity'>
+                <ArrowDown className='w-16 h-16 text-[var(--color-secondary)]' />
+              </div>
+              <div className='flex items-center gap-3 text-[var(--color-secondary)] mb-2'>
+                <div className='p-2 rounded-lg bg-[var(--color-secondary)]/10 border border-[var(--color-secondary)]/20'>
+                  <ArrowDown className='w-4 h-4' />
+                </div>
+                <span className='text-xs font-bold uppercase tracking-widest font-display text-white'>
                   Restores
                 </span>
               </div>
-              <p className='text-2xl font-bold text-white'>{stats.downloads}</p>
+              <p className='text-4xl font-bold text-white font-display text-neon tracking-wide'>
+                {stats.downloads}
+              </p>
+              <div className='w-full h-1 bg-white/5 mt-4 rounded-full overflow-hidden'>
+                <div className='h-full bg-[var(--color-secondary)]/50 w-1/2 rounded-full shadow-[0_0_10px_var(--color-secondary)]'></div>
+              </div>
             </div>
-            <div className='bg-bg-elevated/30 rounded-xl p-4 border border-white/5'>
-              <div className='flex items-center gap-2 text-danger mb-1'>
-                <AlertCircle className='w-4 h-4' />
-                <span className='text-xs font-medium uppercase tracking-wider'>
+
+            {/* Errors Card */}
+            <div className='relative overflow-hidden group bg-[var(--color-bg-card)] border border-white/5 rounded-2xl p-6 transition-all hover:border-danger/30 hover:shadow-[0_0_20px_rgba(244,63,94,0.1)]'>
+              <div className='absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity'>
+                <AlertCircle className='w-16 h-16 text-danger' />
+              </div>
+              <div className='flex items-center gap-3 text-danger mb-2'>
+                <div className='p-2 rounded-lg bg-danger/10 border border-danger/20'>
+                  <AlertCircle className='w-4 h-4' />
+                </div>
+                <span className='text-xs font-bold uppercase tracking-widest font-display text-white'>
                   Errors
                 </span>
               </div>
-              <p className='text-2xl font-bold text-white'>{stats.errors}</p>
+              <p className='text-4xl font-bold text-white font-display text-neon tracking-wide'>
+                {stats.errors}
+              </p>
+              <div className='w-full h-1 bg-white/5 mt-4 rounded-full overflow-hidden'>
+                <div className='h-full bg-danger/50 w-1/4 rounded-full shadow-[0_0_10px_var(--danger)]'></div>
+              </div>
             </div>
           </div>
         )}

@@ -12,37 +12,47 @@ import { cn } from '@/lib/utils';
 import { type SyncActivity } from '@/stores/gamesStore';
 import { Avatar, AvatarFallback, AvatarImage } from '@heroui/react';
 
-const TimelineItem = memo(function TimelineItem({ activity }: { activity: SyncActivity }) {
+const TimelineItem = memo(function TimelineItem({
+  activity,
+}: {
+  activity: SyncActivity;
+}) {
   const statusColor =
     activity.status === 'success'
-      ? 'text-success'
+      ? 'text-success drop-shadow-[0_0_3px_rgba(34,197,94,0.5)]'
       : activity.status === 'error'
-      ? 'text-danger'
-      : 'text-warning';
+        ? 'text-danger drop-shadow-[0_0_3px_rgba(244,63,94,0.5)]'
+        : 'text-warning drop-shadow-[0_0_3px_rgba(234,179,8,0.5)]';
 
-  const actionMap: Record<string, { icon: any; label: string; color: string }> =
-    {
-      upload: {
-        icon: ArrowUpCircle,
-        label: 'Pushed to cloud',
-        color: 'text-success',
-      },
-      download: {
-        icon: ArrowDownCircle,
-        label: 'Pulled from cloud',
-        color: 'text-info',
-      },
-      conflict: {
-        icon: GitMerge,
-        label: 'Merge conflict',
-        color: 'text-warning',
-      },
-      skip: {
-        icon: GitPullRequest,
-        label: 'Skipped sync',
-        color: 'text-gray-400',
-      },
-    };
+  const actionMap: Record<
+    string,
+    { icon: any; label: string; color: string; borderColor: string }
+  > = {
+    upload: {
+      icon: ArrowUpCircle,
+      label: 'UPLOAD TO CLOUD',
+      color: 'text-success',
+      borderColor: 'border-success/30',
+    },
+    download: {
+      icon: ArrowDownCircle,
+      label: 'DOWNLOAD FROM CLOUD',
+      color: 'text-[var(--color-secondary)]',
+      borderColor: 'border-[var(--color-secondary)]/30',
+    },
+    conflict: {
+      icon: GitMerge,
+      label: 'MERGE CONFLICT',
+      color: 'text-warning',
+      borderColor: 'border-warning/30',
+    },
+    skip: {
+      icon: GitPullRequest,
+      label: 'SYNC SKIPPED',
+      color: 'text-[var(--color-text-muted)]',
+      borderColor: 'border-[var(--color-text-muted)]/30',
+    },
+  };
 
   const actionInfo = actionMap[activity.action] || actionMap.upload;
   const ActionIcon = actionInfo.icon;
@@ -65,7 +75,7 @@ const TimelineItem = memo(function TimelineItem({ activity }: { activity: SyncAc
         (g) =>
           g.slug === versionInfo.gameSlug ||
           g.cloud_game_id === activity.game_id ||
-          g.id === activity.game_id
+          g.id === activity.game_id,
       );
 
       if (!game) {
@@ -80,15 +90,15 @@ const TimelineItem = memo(function TimelineItem({ activity }: { activity: SyncAc
         'Save Restored',
         `Restored save from ${format(
           new Date(activity.created_at),
-          'MMM d, HH:mm'
-        )}`
+          'MMM d, HH:mm',
+        )}`,
       );
     } catch (error) {
       console.error('Restore failed:', error);
       const { toast } = await import('@/stores/toastStore');
       toast.error(
         'Restore Failed',
-        error instanceof Error ? error.message : 'Unknown error'
+        error instanceof Error ? error.message : 'Unknown error',
       );
     }
   };
@@ -116,7 +126,7 @@ const TimelineItem = memo(function TimelineItem({ activity }: { activity: SyncAc
       // Ask user where to save
       const defaultName = `${activity.game_name.replace(
         /[^a-z0-9]/gi,
-        '_'
+        '_',
       )}_${format(new Date(activity.created_at), 'yyyyMMdd_HHmm')}.zip`;
       const savePath = await save({
         defaultPath: defaultName,
@@ -146,7 +156,7 @@ const TimelineItem = memo(function TimelineItem({ activity }: { activity: SyncAc
       const { toast } = await import('@/stores/toastStore');
       toast.error(
         'Download Failed',
-        error instanceof Error ? error.message : 'Unknown error'
+        error instanceof Error ? error.message : 'Unknown error',
       );
     }
   };
@@ -161,67 +171,87 @@ const TimelineItem = memo(function TimelineItem({ activity }: { activity: SyncAc
       {/* Node on line */}
       <div
         className={cn(
-          'absolute -left-[26px] top-3 w-4 h-4 rounded-full border-2 border-bg-main flex items-center justify-center transition-all bg-bg-elevated/50 z-10',
-          statusColor
+          'absolute -left-[28px] top-3 w-4 h-4 rounded-full border-2 border-[var(--color-bg-elevated)] flex items-center justify-center transition-all bg-[var(--color-background)] z-10 shadow-[0_0_10px_rgba(0,0,0,0.5)]',
+          statusColor,
         )}
       >
         <div
           className={cn(
-            'w-1.5 h-1.5 rounded-full',
+            'w-2 h-2 rounded-full',
             activity.status === 'success'
-              ? 'bg-success'
+              ? 'bg-success shadow-[0_0_5px_var(--success)]'
               : activity.status === 'error'
-              ? 'bg-danger'
-              : 'bg-warning'
+                ? 'bg-danger shadow-[0_0_5px_var(--danger)]'
+                : 'bg-warning shadow-[0_0_5px_var(--warning)]',
           )}
         />
       </div>
 
-      <div className='ml-4 p-4 rounded-xl bg-bg-elevated/20 border border-white/5 hover:bg-bg-elevated/30 hover:border-white/10 transition-all'>
-        <div className='flex items-start justify-between gap-4'>
+      <div
+        className={cn(
+          'ml-4 p-4 rounded-xl transition-all duration-300 border backdrop-blur-md relative overflow-hidden',
+          'bg-[var(--color-bg-card)]/60 hover:bg-[var(--color-bg-card)]/90',
+          'border-white/5 hover:border-[var(--color-primary)]/30',
+          'hover:shadow-[0_0_20px_rgba(124,58,237,0.1)] hover:-translate-y-0.5',
+        )}
+      >
+        {/* Decorative corner accent */}
+        <div
+          className={cn(
+            'absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-[var(--color-primary)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none',
+          )}
+        />
+
+        <div className='flex items-start justify-between gap-4 relative z-10'>
           <div className='flex items-start gap-3 min-w-0 flex-1'>
-            <Avatar className='w-10 h-10 rounded-lg ring-1 ring-white/10 shrink-0'>
+            <Avatar className='w-10 h-10 rounded-lg ring-1 ring-white/10 shrink-0 shadow-lg'>
               <AvatarImage src={activity.game_cover} />
-              <AvatarFallback className='rounded-lg'>
+              <AvatarFallback className='rounded-lg bg-[var(--color-bg-elevated)] text-[var(--color-primary)] font-display'>
                 {activity.game_name[0]}
               </AvatarFallback>
             </Avatar>
 
             <div className='min-w-0 flex-1'>
               <div className='flex items-center gap-2 flex-wrap'>
-                <h4 className='font-bold text-white text-sm truncate max-w-[180px]'>
+                <h4 className='font-bold text-[var(--color-text)] text-sm truncate max-w-[200px] font-display uppercase tracking-wide'>
                   {activity.game_name}
                 </h4>
-                <span
-                  className={cn(
-                    'text-xs font-medium flex items-center gap-1 shrink-0',
-                    actionInfo.color
-                  )}
-                >
-                  <ActionIcon className='w-3 h-3' />
-                  {actionInfo.label}
-                </span>
+                <div className='flex items-center'>
+                  <span
+                    className={cn(
+                      'text-[10px] font-bold flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full uppercase tracking-wider',
+                      'bg-black/30 border border-white/5',
+                      actionInfo.color,
+                    )}
+                  >
+                    <ActionIcon className='w-3 h-3' />
+                    {actionInfo.label}
+                  </span>
+                </div>
               </div>
 
-              <div className='mt-1 flex items-center gap-2 text-xs text-gray-500 flex-wrap'>
-                <span className='font-mono'>
+              <div className='mt-2 flex items-center gap-3 text-xs text-[var(--color-text-muted)] flex-wrap font-mono'>
+                <span className='flex items-center gap-1'>
+                  <i className='w-1.5 h-1.5 rounded-full bg-[var(--color-text-muted)]/50'></i>
                   {format(new Date(activity.created_at), 'MMM d, HH:mm')}
                 </span>
+
                 {activity.save_version_id && (
-                  <span className='px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-[10px] font-mono'>
-                    {activity.save_version_id.slice(0, 8)}
+                  <span className='px-1.5 py-0.5 rounded bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-[var(--color-primary-300)] text-[10px]'>
+                    VER: {activity.save_version_id.slice(0, 7)}
                   </span>
                 )}
+
                 {activity.device_name && (
-                  <span className='text-gray-600'>
-                    via {activity.device_name}
+                  <span className='text-[var(--color-text-muted)] opacity-60'>
+                    @{activity.device_name}
                   </span>
                 )}
               </div>
 
               {activity.message && (
-                <p className='mt-2 text-xs text-gray-400 leading-relaxed break-words'>
-                  {activity.message}
+                <p className='mt-2 text-xs text-gray-400 leading-relaxed break-words border-l-2 border-white/10 pl-3 italic'>
+                  "{activity.message}"
                 </p>
               )}
             </div>
@@ -232,15 +262,15 @@ const TimelineItem = memo(function TimelineItem({ activity }: { activity: SyncAc
             <div className='flex items-center gap-2'>
               <button
                 onClick={handleDownload}
-                className='shrink-0 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all'
+                className='shrink-0 p-2 rounded-lg bg-black/20 hover:bg-[var(--color-primary)]/20 text-[var(--color-text-muted)] hover:text-white transition-all border border-transparent hover:border-[var(--color-primary)]/30'
                 title='Download ZIP'
               >
-                <Download className='w-3.5 h-3.5' />
+                <Download className='w-4 h-4' />
               </button>
 
               <button
                 onClick={handleRestore}
-                className='shrink-0 px-3 py-1.5 rounded-lg bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 text-xs font-medium flex items-center gap-1.5 transition-all border border-primary-500/20 hover:border-primary-500/40'
+                className='shrink-0 px-3 py-2 rounded-lg bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 text-[var(--color-primary-300)] hover:text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all border border-[var(--color-primary)]/20 hover:border-[var(--color-primary)]/40 hover:shadow-[0_0_10px_rgba(124,58,237,0.2)]'
               >
                 <ArrowDownCircle className='w-3.5 h-3.5' />
                 Restore
@@ -265,7 +295,7 @@ export const Timeline = memo(function Timeline({ activities }: TimelineProps) {
     // Sort all activities by date desc first
     const sorted = [...activities].sort(
       (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
 
     sorted.forEach((activity) => {
@@ -288,29 +318,36 @@ export const Timeline = memo(function Timeline({ activities }: TimelineProps) {
 
   if (activities.length === 0) {
     return (
-      <div className='flex flex-col items-center justify-center py-12 text-gray-500'>
-        <GitCommit className='w-12 h-12 mb-4 opacity-20' />
-        <p>No activity history found.</p>
+      <div className='flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]'>
+        <div className='w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4'>
+          <GitCommit className='w-8 h-8 opacity-40' />
+        </div>
+        <p className='font-display tracking-wider text-lg'>SYSTEM LOGS EMPTY</p>
+        <p className='text-sm opacity-50 mt-1'>
+          No sync activity recorded yet.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className='relative pl-8 space-y-8'>
-      {/* Vertical Line */}
-      <div className='absolute left-[11px] top-2 bottom-2 w-px bg-white/10' />
+    <div className='relative pl-8 space-y-12 pb-12'>
+      {/* Vertical Neon Line */}
+      <div className='absolute left-[11px] top-4 bottom-0 w-0.5 bg-gradient-to-b from-[var(--color-primary)]/50 via-[var(--color-primary)]/20 to-transparent shadow-[0_0_8px_var(--color-primary)]' />
 
       {groups.map((group) => (
         <div key={group.date} className='relative'>
           {/* Date Header */}
-          <div className='flex items-center gap-3 mb-6'>
-            <div className='absolute -left-[29px] w-2.5 h-2.5 rounded-full bg-primary-500 ring-4 ring-bg-main' />
-            <h3 className='text-sm font-bold text-gray-400 uppercase tracking-wider'>
-              {group.date}
-            </h3>
+          <div className='flex items-center gap-4 mb-6'>
+            <div className='absolute -left-[26px] w-3 h-3 rounded-full bg-[var(--color-primary)] ring-4 ring-[var(--color-background)] shadow-[0_0_10px_var(--color-primary)]' />
+            <div className='flex items-center gap-2'>
+              <h3 className='text-sm font-bold text-[var(--color-primary)] uppercase tracking-widest font-display text-neon border-b border-[var(--color-primary)]/20 pb-1 pr-4'>
+                {group.date}
+              </h3>
+            </div>
           </div>
 
-          <div className='space-y-6'>
+          <div className='space-y-4'>
             {group.items.map((item) => (
               <TimelineItem key={item.id} activity={item} />
             ))}
