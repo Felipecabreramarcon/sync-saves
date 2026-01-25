@@ -9,7 +9,7 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-  const { isSidebarCollapsed } = useUIStore();
+  const isSidebarCollapsed = useUIStore((state) => state.isSidebarCollapsed);
 
   return (
     <div className='min-h-screen bg-[var(--color-background)] font-sans text-[var(--color-text)]'>

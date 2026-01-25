@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useShallow } from 'zustand/react/shallow';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -21,8 +22,13 @@ const navItems = [
 
 export default function Sidebar() {
   const location = useLocation();
-  const { user } = useAuthStore();
-  const { isSidebarCollapsed, toggleSidebar } = useUIStore();
+  const user = useAuthStore(useShallow((state) => state.user));
+  const { isSidebarCollapsed, toggleSidebar } = useUIStore(
+    useShallow((state) => ({
+      isSidebarCollapsed: state.isSidebarCollapsed,
+      toggleSidebar: state.toggleSidebar,
+    }))
+  );
 
   return (
     <aside
