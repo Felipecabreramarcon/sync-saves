@@ -294,8 +294,7 @@ export const Timeline = memo(function Timeline({ activities }: TimelineProps) {
 
     // Sort all activities by date desc first
     const sorted = [...activities].sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      (a, b) => b.created_at.localeCompare(a.created_at)
     );
 
     sorted.forEach((activity) => {
