@@ -54,6 +54,7 @@ describe('useAuthSession', () => {
   });
 
   afterEach(() => {
+    // @ts-ignore
     window.location = originalLocation;
   });
 

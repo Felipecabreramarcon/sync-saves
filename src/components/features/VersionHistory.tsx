@@ -60,26 +60,19 @@ export default function VersionHistory({
   const sortedVersions = useMemo(() => {
     return [...versions].sort((a, b) => {
       if (sortOrder === 'uploaded') {
-        return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
+        return b.created_at.localeCompare(a.created_at);
       } else {
-        const dateA = a.file_modified_at
-          ? new Date(a.file_modified_at).getTime()
-          : 0;
-        const dateB = b.file_modified_at
-          ? new Date(b.file_modified_at).getTime()
-          : 0;
-        return dateB - dateA;
+        return (b.file_modified_at || '').localeCompare(
+          a.file_modified_at || ''
+        );
       }
     });
   }, [versions, sortOrder]);
 
   const latestUploadedId = useMemo(() => {
     if (versions.length === 0) return null;
-    return [...versions].sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    return [...versions].sort((a, b) =>
+      b.created_at.localeCompare(a.created_at)
     )[0]?.id;
   }, [versions]);
 
