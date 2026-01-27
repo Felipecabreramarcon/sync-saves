@@ -14,23 +14,24 @@ import {
   Download,
   Upload,
 } from 'lucide-react';
+import { memo, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function RecentActivity() {
+const RecentActivity = memo(function RecentActivity() {
   const navigate = useNavigate();
-  const { activities } = useGamesStore();
+  const activities = useGamesStore((state) => state.activities);
 
-  const processedActivities = dedupeConsecutiveActivities(
+  const processedActivities = useMemo(() => dedupeConsecutiveActivities(
     filterUserVisibleActivities(activities)
       .slice()
       .sort(
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )
-  ).slice(0, 10);
+  ).slice(0, 10), [activities]);
 
   // Group by date
-  const groupedActivities = processedActivities.reduce((groups, activity) => {
+  const groupedActivities = useMemo(() => processedActivities.reduce((groups, activity) => {
     const date = new Date(activity.created_at);
     let key = format(date, 'yyyy-MM-dd');
 
@@ -41,12 +42,12 @@ export default function RecentActivity() {
     if (!groups[key]) groups[key] = [];
     groups[key].push(activity);
     return groups;
-  }, {} as Record<string, SyncActivity[]>);
+  }, {} as Record<string, SyncActivity[]>), [processedActivities]);
 
-  const groups = Object.entries(groupedActivities).map(([date, items]) => ({
+  const groups = useMemo(() => Object.entries(groupedActivities).map(([date, items]) => ({
     date,
     items,
-  }));
+  })), [groupedActivities]);
 
   if (processedActivities.length === 0) {
     return (
@@ -129,7 +130,9 @@ export default function RecentActivity() {
       </Accordion>
     </div>
   );
-}
+});
+
+export default RecentActivity;
 
 function ActivityCard({ activity }: { activity: SyncActivity }) {
   const isUpload = activity.action === 'upload';
