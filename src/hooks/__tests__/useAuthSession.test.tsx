@@ -54,6 +54,7 @@ describe('useAuthSession', () => {
   });
 
   afterEach(() => {
+    // @ts-expect-error - JSDOM/Type mismatch for window.location
     window.location = originalLocation;
   });
 
