@@ -55,11 +55,16 @@ export default function Logs() {
   // Filter activities by game
   const filteredActivities = useMemo(() => {
     if (filterGame === 'all') return activities;
+
+    // Optimization: Find the target game once, outside the loop
+    const targetGame = games.find((g) => g.id === filterGame);
+    const targetSlug = targetGame?.slug;
+
     return activities.filter(
       (a) =>
         a.game_id === filterGame ||
-        games.find((g) => g.id === filterGame)?.slug ===
-          a.game_name?.toLowerCase().replace(/\s+/g, '-'),
+        (targetSlug &&
+          targetSlug === a.game_name?.toLowerCase().replace(/\s+/g, '-')),
     );
   }, [activities, filterGame, games]);
 
