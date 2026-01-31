@@ -14,39 +14,45 @@ import {
   Download,
   Upload,
 } from 'lucide-react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function RecentActivity() {
   const navigate = useNavigate();
-  const { activities } = useGamesStore();
+  // Select only activities using a selector to prevent re-renders on unrelated store updates (e.g. isLoading, searchQuery)
+  // We use a simple selector because activities array is often replaced entirely on sync, making shallow comparison expensive for little gain.
+  const activities = useGamesStore((state) => state.activities);
 
-  const processedActivities = dedupeConsecutiveActivities(
-    filterUserVisibleActivities(activities)
-      .slice()
-      .sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )
-  ).slice(0, 10);
+  // Memoize processing to avoid re-calculation on every render
+  const processedActivities = useMemo(() => {
+    return dedupeConsecutiveActivities(
+      filterUserVisibleActivities(activities)
+        .slice()
+        // Sort by date using string comparison (ISO 8601) - much faster than new Date()
+        .sort((a, b) => (b.created_at > a.created_at ? 1 : -1))
+    ).slice(0, 10);
+  }, [activities]);
 
-  // Group by date
-  const groupedActivities = processedActivities.reduce((groups, activity) => {
-    const date = new Date(activity.created_at);
-    let key = format(date, 'yyyy-MM-dd');
+  // Group by date - Memoized
+  const groups = useMemo(() => {
+    const groupedActivities = processedActivities.reduce((groups, activity) => {
+      const date = new Date(activity.created_at);
+      let key = format(date, 'yyyy-MM-dd');
 
-    if (isToday(date)) key = 'Today';
-    else if (isYesterday(date)) key = 'Yesterday';
-    else key = format(date, 'MMMM d, yyyy');
+      if (isToday(date)) key = 'Today';
+      else if (isYesterday(date)) key = 'Yesterday';
+      else key = format(date, 'MMMM d, yyyy');
 
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(activity);
-    return groups;
-  }, {} as Record<string, SyncActivity[]>);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(activity);
+      return groups;
+    }, {} as Record<string, SyncActivity[]>);
 
-  const groups = Object.entries(groupedActivities).map(([date, items]) => ({
-    date,
-    items,
-  }));
+    return Object.entries(groupedActivities).map(([date, items]) => ({
+      date,
+      items,
+    }));
+  }, [processedActivities]);
 
   if (processedActivities.length === 0) {
     return (

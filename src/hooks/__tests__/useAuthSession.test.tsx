@@ -54,6 +54,7 @@ describe('useAuthSession', () => {
   });
 
   afterEach(() => {
+    // @ts-expect-error - JSDOM/TS mismatch on window.location assignment
     window.location = originalLocation;
   });
 
